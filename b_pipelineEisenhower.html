@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapeamentos Gerais — Checkpoint DP Sonova</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --azul:#0083CA;
+  --azul-esc:#003C64;
+  --azul-mid:#6EB4DC;
+  --azul-pale:#E6F3FB;
+  --text:#333333;
+  --muted:#646464;
+  --border:#CCCCCC;
+  --bg:#F5F6F8;
+  --card:#FFFFFF;
+  --go:#1B5E20;
+  --go-bg:#E8F5E9;
+  --nogo:#B71C1C;
+  --nogo-bg:#FFEBEE;
+  --hold:#E65100;
+  --hold-bg:#FFF3E0;
+}
+body{font-family:'Roboto',sans-serif;font-weight:400;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:var(--azul);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;position:sticky;top:0;z-index:200;box-shadow:0 2px 6px rgba(0,0,0,.18);}
+.hdr-left{display:flex;align-items:center;gap:14px;}
+.hdr-icon{width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.hdr-icon i{font-size:20px;}
+.hdr-title{font-family:'Rufina',serif;font-size:17px;font-weight:700;letter-spacing:.3px;}
+.hdr-sub{font-size:11px;opacity:.75;font-weight:300;margin-top:1px;}
+.hdr-right{font-size:11px;opacity:.7;text-align:right;line-height:1.5;}
+
+/* TABS */
+.tabs{background:var(--azul-esc);display:flex;padding:0 20px;gap:0;overflow-x:auto;}
+.tab-btn{padding:11px 18px;background:none;border:none;color:rgba(255,255,255,.6);font-family:'Roboto',sans-serif;font-size:12px;font-weight:400;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:6px;}
+.tab-btn:hover{color:#fff;}
+.tab-btn.active{color:#fff;border-bottom-color:var(--azul-mid);}
+.tab-btn i{font-size:15px;}
+
+/* IMPORT BAR */
+.imp-bar{background:var(--card);border-bottom:1px solid var(--border);padding:9px 24px;display:flex;align-items:center;gap:10px;}
+.imp-bar span{font-size:12px;color:var(--muted);flex:1;}
+.btn-sm{padding:5px 14px;border-radius:5px;font-size:12px;font-weight:400;font-family:'Roboto',sans-serif;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text);}
+.btn-primary{background:var(--azul);color:#fff;border-color:var(--azul);}
+.btn-primary:hover{background:var(--azul-esc);}
+.btn-danger{background:#fff;color:var(--nogo);border-color:var(--nogo);}
+.btn-danger:hover{background:var(--nogo-bg);}
+
+/* MAIN */
+main{padding:20px;max-width:1100px;margin:0 auto;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+/* SECTION HEADER */
+.sec-ttl{font-family:'Rufina',serif;font-size:16px;color:var(--azul-esc);font-weight:700;margin-bottom:4px;}
+.sec-sub{font-size:12px;color:var(--muted);margin-bottom:18px;font-weight:300;}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:22px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;}
+.kpi-n{font-size:32px;font-weight:500;line-height:1;color:var(--azul-esc);}
+.kpi-n.c-alert{color:var(--nogo);}
+.kpi-n.c-warn{color:var(--hold);}
+.kpi-n.c-go{color:var(--go);}
+.kpi-l{font-size:11px;color:var(--muted);margin-top:5px;}
+
+/* PIPELINE */
+.pipeline{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:12px;margin-bottom:24px;overflow-x:auto;}
+.pipe-src{background:var(--azul);color:#fff;border-radius:8px;padding:18px 20px;text-align:center;min-width:120px;flex-shrink:0;}
+.pipe-src .pn{font-size:30px;font-weight:500;line-height:1;}
+.pipe-src .pl{font-size:10px;opacity:.85;margin-top:4px;font-weight:400;}
+.pipe-arrow{color:var(--border);font-size:24px;flex-shrink:0;text-align:center;}
+.dest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.dest-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;border-top:3px solid var(--azul-mid);}
+.dest-card.d-audit{border-top-color:var(--nogo);}
+.dest-card.d-jur{border-top-color:var(--hold);}
+.dest-card.d-proj{border-top-color:var(--azul-esc);}
+.dest-card .dn{font-size:26px;font-weight:500;color:var(--azul-esc);line-height:1;}
+.dest-card.d-audit .dn{color:var(--nogo);}
+.dest-card .dl{font-size:10px;color:var(--muted);margin-top:4px;font-weight:400;}
+.dest-bar-wrap{margin-top:8px;height:3px;background:#EEE;border-radius:2px;}
+.dest-bar{height:3px;border-radius:2px;background:var(--azul);}
+.d-audit .dest-bar{background:var(--nogo);}
+
+/* CHART WRAPPERS */
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;}
+.chart-wrap{position:relative;width:100%;}
+
+/* EISENHOWER */
+.eis-axis-top{display:grid;grid-template-columns:1fr 1fr;margin-bottom:4px;}
+.eis-axis-label{text-align:center;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+.eis-outer{display:grid;grid-template-rows:1fr 1fr;gap:3px;}
+.eis-row{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.eis-q{padding:16px;min-height:160px;border-radius:6px;}
+.q1{background:#FFEBEE;}
+.q2{background:#E8EAF6;}
+.q3{background:#FFF8E1;}
+.q4{background:#F1F8E9;}
+.eis-qlabel{font-size:11px;font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.q1 .eis-qlabel{color:var(--nogo);}
+.q2 .eis-qlabel{color:#283593;}
+.q3 .eis-qlabel{color:var(--hold);}
+.q4 .eis-qlabel{color:var(--go);}
+.eis-items{display:flex;flex-direction:column;gap:5px;}
+.eis-item{background:#fff;border-radius:4px;padding:7px 9px;font-size:11px;line-height:1.35;color:var(--text);}
+.eis-item-pilar{font-size:9px;color:var(--muted);margin-top:2px;}
+.eis-row-labels{display:grid;grid-template-rows:1fr 1fr;margin-right:6px;}
+.eis-row-label{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;display:flex;align-items:center;}
+
+/* RESPONSAVEIS */
+.resp-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;}
+.resp-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
+.resp-leg-dot{width:10px;height:10px;border-radius:2px;display:inline-block;}
+
+/* TIMELINE */
+.tl-list{display:flex;flex-direction:column;gap:10px;}
+.tl-row{display:flex;align-items:flex-start;gap:14px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;}
+.tl-week{font-size:11px;color:var(--muted);min-width:105px;line-height:1.5;}
+.tl-badge{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:500;min-width:82px;text-align:center;flex-shrink:0;}
+.bg-go{background:var(--go-bg);color:var(--go);}
+.bg-nogo{background:var(--nogo-bg);color:var(--nogo);}
+.bg-hold{background:var(--hold-bg);color:var(--hold);}
+.tl-motivo{font-size:12px;color:var(--text);line-height:1.45;}
+.tl-rev{font-size:10px;color:var(--muted);}
+
+/* IMPORT MODAL - faux (no position:fixed) */
+.modal-wrap{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:20px;}
+.modal-wrap.open{display:flex;}
+.modal-box{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:24px;width:95%;max-width:540px;}
+.modal-box h3{font-family:'Rufina',serif;font-size:18px;color:var(--azul-esc);margin-bottom:8px;}
+.modal-box p{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5;}
+.modal-box textarea{width:100%;height:170px;font-size:11px;font-family:monospace;padding:10px;border:1px solid var(--border);border-radius:6px;resize:vertical;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+.modal-note{font-size:10px;color:var(--muted);margin-top:10px;padding:8px;background:#F9F9F9;border-radius:4px;line-height:1.5;}
+.drop-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--border);border-radius:8px;padding:32px 20px;cursor:pointer;transition:border-color .15s,background .15s;}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--azul);background:var(--azul-pale);}
+.dz-title{font-size:14px;font-weight:500;color:var(--text);}
+.dz-sub{font-size:11px;color:var(--muted);}
+.modal-note code{font-size:10px;background:#EEE;padding:1px 4px;border-radius:3px;}
+
+/* VBA SNIPPET */
+.vba-box{background:var(--azul-esc);color:#e8f4fd;border-radius:8px;padding:16px;font-size:11px;font-family:monospace;line-height:1.6;overflow-x:auto;margin-top:16px;}
+.vba-comment{color:#6EB4DC;}
+
+/* FOOTER */
+footer{text-align:center;padding:16px;font-size:11px;color:var(--muted);margin-top:24px;}
+
+@media(max-width:640px){
+  .dest-grid{grid-template-columns:repeat(2,1fr);}
+  .pipeline{grid-template-columns:1fr;gap:8px;}
+  .pipe-arrow{transform:rotate(90deg);}
+  .eis-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-icon"><i class="ti ti-map-2" aria-hidden="true"></i></div>
+    <div>
+      <div class="hdr-title">Mapeamentos Gerais — Checkpoint DP Sonova</div>
+      <div class="hdr-sub">Pipeline · Eisenhower · Responsáveis · GO / NO GO</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div id="hdr-data">Dados demonstrativos</div>
+    <div>Anderson Marinho · Igarapé Digital</div>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab-btn active" data-panel="geral">
+    <i class="ti ti-layout-dashboard" aria-hidden="true"></i> Visão geral
+  </button>
+  <button class="tab-btn" data-panel="eisenhower">
+    <i class="ti ti-grid-dots" aria-hidden="true"></i> Eisenhower
+  </button>
+  <button class="tab-btn" data-panel="responsaveis">
+    <i class="ti ti-users" aria-hidden="true"></i> Responsáveis
+  </button>
+  <button class="tab-btn" data-panel="semanal">
+    <i class="ti ti-calendar-check" aria-hidden="true"></i> GO / NO GO
+  </button>
+  <button class="tab-btn" data-panel="macro">
+    <i class="ti ti-code" aria-hidden="true"></i> Macro VBA
+  </button>
+</div>
+
+<div class="imp-bar">
+  <i class="ti ti-database" style="color:var(--muted);font-size:15px;" aria-hidden="true"></i>
+  <span id="imp-status">Demonstração ativa — dados baseados no Checkpoint_DP_Sonova_v2. Cole o JSON exportado para usar seus dados reais.</span>
+  <button class="btn-sm" onclick="loadDemo()">Demo</button>
+  <button class="btn-sm btn-danger" onclick="clearAll()">Limpar tudo</button>
+  <button class="btn-sm btn-primary" onclick="openModal()">Importar JSON</button>
+</div>
+
+<main>
+
+<!-- PANEL: VISAO GERAL -->
+<div class="panel active" id="panel-geral">
+  <div class="sec-ttl">Pipeline de fluxo — ENTRADA_UNICA</div>
+  <div class="sec-sub">Distribuição das entradas pelos destinos após triagem (macro TriarEntradaDP)</div>
+  <div class="kpi-grid" id="kpi-geral"></div>
+  <div class="pipeline" id="pipeline"></div>
+  <div class="sec-ttl" style="margin-top:8px;">Distribuição por pilar</div>
+  <div class="sec-sub">Volume de entradas agrupado por área de atuação do DP</div>
+  <div class="chart-box">
+    <div class="chart-wrap" id="pilar-wrap">
+      <canvas id="chartPilar" role="img" aria-label="Gráfico de barras horizontais com quantidade de entradas por pilar do DP"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL: EISENHOWER -->
+<div class="panel" id="panel-eisenhower">
+  <div class="sec-ttl">Quadrante de Eisenhower</div>
+  <div class="sec-sub">Entradas ativas classificadas por urgência e importância — base para decisão GO / NO GO</div>
+  <div class="eis-axis-top">
+    <div class="eis-axis-label"><i class="ti ti-bolt" style="font-size:12px;" aria-hidden="true"></i> Urgente</div>
+    <div class="eis-axis-label"><i class="ti ti-clock" style="font-size:12px;" aria-hidden="true"></i> Não urgente</div>
+  </div>
+  <div class="eis-outer" id="eis-outer"></div>
+  <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;">
+    <span>Importante</span>
+    <span>Não importante</span>
+  </div>
+</div>
+
+<!-- PANEL: RESPONSAVEIS -->
+<div class="panel" id="panel-responsaveis">
+  <div class="sec-ttl">Carga por responsável</div>
+  <div class="sec-sub">Total de entradas ativas por pessoa, detalhado por status — identifica sobrecarga e gargalos</div>
+  <div class="chart-box">
+    <div class="chart-wrap" id="resp-wrap">
+      <canvas id="chartResp" role="img" aria-label="Gráfico de barras horizontais empilhadas mostrando carga de trabalho por responsável e status"></canvas>
+    </div>
+    <div class="resp-legend" id="resp-legend"></div>
+  </div>
+</div>
+
+<!-- PANEL: GO / NO GO -->
+<div class="panel" id="panel-semanal">
+  <div class="sec-ttl">Histórico GO / NO GO / HOLD ON</div>
+  <div class="sec-sub">Decisões semanais do Checkpoint — registro completo via macro RevisarCheckpointSemanal</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);max-width:400px;margin-bottom:22px;" id="kpi-semanal"></div>
+  <div class="tl-list" id="timeline"></div>
+</div>
+
+<!-- PANEL: MACRO VBA -->
+<div class="panel" id="panel-macro">
+  <div class="sec-ttl">Macro VBA — ExportarParaMapeamento</div>
+  <div class="sec-sub">Cole este módulo no arquivo <strong>.xlsm</strong> para gerar o JSON de importação. Salvar como .xlsm antes de ativar macros.</div>
+  <div class="chart-box">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Estrutura JSON gerada pela macro:</p>
+    <div class="vba-box" id="vba-code">Carregando...</div>
+    <p style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5;">
+      <strong>Como usar:</strong> No Excel, habilitar macros (salvar como .xlsm) → Ferramentas → Macros → <code>ExportarParaMapeamento</code> → Executar → copiar conteúdo do arquivo gerado → colar no botão "Importar JSON" desta página.
+    </p>
+  </div>
+</div>
+
+</main>
+
+<!-- MODAL IMPORT -->
+<div class="modal-wrap" id="modal-wrap" onclick="handleOverlayClick(event)">
+  <div class="modal-box">
+    <h3>Importar JSON</h3>
+    <p>Selecione o arquivo <code>.json</code> gerado pela macro <code>ExportarParaMapeamento</code>.</p>
+    <label class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept=".json" style="display:none" onchange="handleFile(this.files[0])">
+      <i class="ti ti-file-type-json" style="font-size:36px;color:var(--azul-mid);" aria-hidden="true"></i>
+      <div class="dz-title">Clique para selecionar o arquivo</div>
+      <div class="dz-sub">ou arraste e solte aqui · apenas .json</div>
+    </label>
+    <div id="file-feedback" style="display:none;padding:10px 14px;border-radius:6px;font-size:12px;margin-top:10px;"></div>
+    <div class="modal-btns">
+      <button class="btn-sm" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<footer>Checkpoint DP Sonova v2 — Mapeamentos Gerais &nbsp;·&nbsp; Anderson Marinho | Igarapé Digital</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ===== DEMO DATA =====
+const DEMO = {
+  exportado_em: "16/05/2026 22:00",
+  entradas: [
+    {id:"ENT-0516-098",data:"16/05",pilar:"eSocial",assunto:"Divergência S-1210 IRRF — validar base tributável",urgencia:"Alta",importancia:"Alta",responsavel:"Anderson",destino:"AUDITORIA_RISCOS",status:"Novo"},
+    {id:"ENT-0516-099",data:"16/05",pilar:"Ponto",assunto:"Ponto laboratório — devolver inconsistências até 15h",urgencia:"Alta",importancia:"Alta",responsavel:"Anderson",destino:"FUP",status:"Aguardando"},
+    {id:"ENT-0516-100",data:"16/05",pilar:"Geral DP",assunto:"Criar dashboard Checkpoint DP — projeto consolidação",urgencia:"Média",importancia:"Alta",responsavel:"Anderson",destino:"PROJETOS",status:"Em andamento"},
+    {id:"ENT-0516-005",data:"16/05",pilar:"Geral DP",assunto:"Implantação Riscos Psicossociais NR-1",urgencia:"Média",importancia:"Alta",responsavel:"Anderson",destino:"FUP",status:"Aguardando"},
+    {id:"PRJ-0516-099",data:"16/05",pilar:"Admissão",assunto:"Trilha de onboarding — RH / DP",urgencia:"Média",importancia:"Média",responsavel:"Jair",destino:"PROJETOS",status:"Planejado"},
+    {id:"ENT-0510-045",data:"10/05",pilar:"Folha",assunto:"Conferência folha maio — provisões 13°",urgencia:"Alta",importancia:"Alta",responsavel:"Jair",destino:"ACOES",status:"Em andamento"},
+    {id:"ENT-0508-032",data:"08/05",pilar:"Rescisão",assunto:"Rescisão pendente — colaborador AC",urgencia:"Alta",importancia:"Alta",responsavel:"Jair",destino:"ACOES",status:"Em andamento"},
+    {id:"ENT-0507-028",data:"07/05",pilar:"Benefícios",assunto:"Inclusão plano saúde — novos admitidos",urgencia:"Média",importancia:"Média",responsavel:"Jair",destino:"FUP",status:"Aguardando"},
+    {id:"ENT-0505-019",data:"05/05",pilar:"Jurídico",assunto:"Audiência CLT — reclamante Uniaudio",urgencia:"Alta",importancia:"Alta",responsavel:"Anderson",destino:"JURIDICO_TRABALHISTA",status:"Aguardando"},
+    {id:"ENT-0502-011",data:"02/05",pilar:"eSocial",assunto:"DCTFWeb competência abril",urgencia:"Baixa",importancia:"Alta",responsavel:"Jair",destino:"ACOES",status:"Concluído"},
+    {id:"ENT-0428-088",data:"28/04",pilar:"Geral DP",assunto:"Automação preenchedor ADP férias",urgencia:"Baixa",importancia:"Média",responsavel:"Anderson",destino:"BACKLOG",status:"Backlog"},
+    {id:"ENT-0425-071",data:"25/04",pilar:"Admissão",assunto:"Integração novo colaborador AudioClin",urgencia:"Baixa",importancia:"Baixa",responsavel:"Jair",destino:"ACOES",status:"Concluído"},
+    {id:"ENT-0423-060",data:"23/04",pilar:"Folha",assunto:"Revisão adicional noturno — AudioClin",urgencia:"Média",importancia:"Alta",responsavel:"Anderson",destino:"AUDITORIA_RISCOS",status:"Em andamento"},
+  ],
+  checkpoint: [
+    {semana:"Semana 19/2026",data:"16/05/2026",decisao:"HOLD ON",motivo:"Folha em aberto, aguardando retorno de gestores sobre inconsistências de ponto",revisor:"Anderson"},
+    {semana:"Semana 18/2026",data:"09/05/2026",decisao:"GO",motivo:"Ações concluídas, riscos mapeados e monitorados sem críticos abertos",revisor:"Anderson"},
+    {semana:"Semana 17/2026",data:"02/05/2026",decisao:"GO",motivo:"DCTFWeb entregue no prazo, sem riscos críticos pendentes",revisor:"Anderson"},
+    {semana:"Semana 16/2026",data:"25/04/2026",decisao:"NO GO",motivo:"Rescisão pendente bloqueada por documentação faltante — risco trabalhista",revisor:"Anderson"},
+    {semana:"Semana 15/2026",data:"18/04/2026",decisao:"GO",motivo:"Sem itens críticos. Onboarding Jair em andamento conforme PDI",revisor:"Anderson"},
+  ]
+};
+
+let DATA = JSON.parse(JSON.stringify(DEMO));
+let chartPilar = null, chartResp = null;
+
+// ===== TABS =====
+document.getElementById('tabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn[data-panel]');
+  if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const panel = document.getElementById('panel-' + btn.dataset.panel);
+  if (panel) panel.classList.add('active');
+  if (btn.dataset.panel === 'responsaveis') renderResp();
+  if (btn.dataset.panel === 'geral') renderPilar();
+  if (btn.dataset.panel === 'macro') renderMacro();
+});
+
+// ===== MODAL =====
+function openModal() {
+  document.getElementById('file-feedback').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  document.getElementById('modal-wrap').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-wrap').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target === document.getElementById('modal-wrap')) closeModal(); }
+
+function handleFile(file) {
+  if (!file) return;
+  const fb = document.getElementById('file-feedback');
+  if (!file.name.endsWith('.json')) {
+    fb.style.display = 'block';
+    fb.style.background = 'var(--nogo-bg)';
+    fb.style.color = 'var(--nogo)';
+    fb.textContent = 'Arquivo inválido. Selecione um arquivo .json gerado pela macro ExportarParaMapeamento.';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      DATA = JSON.parse(ev.target.result);
+      closeModal();
+      const ne = DATA.entradas ? DATA.entradas.length : 0;
+      const nc = DATA.checkpoint ? DATA.checkpoint.length : 0;
+      document.getElementById('imp-status').textContent =
+        'Arquivo: ' + file.name + ' · ' + (DATA.exportado_em || '') + ' · ' + ne + ' entradas, ' + nc + ' checkpoints.';
+      document.getElementById('hdr-data').textContent = DATA.exportado_em || file.name;
+      renderAll();
+    } catch(err) {
+      fb.style.display = 'block';
+      fb.style.background = 'var(--nogo-bg)';
+      fb.style.color = 'var(--nogo)';
+      fb.textContent = 'Erro ao ler o arquivo: ' + err.message;
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+// Drag and drop
+document.addEventListener('DOMContentLoaded', function() {
+  const dz = document.getElementById('drop-zone');
+  if (!dz) return;
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', function() { dz.classList.remove('drag-over'); });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+  dz.addEventListener('click', function() { document.getElementById('file-input').click(); });
+});
+function loadDemo() {
+  DATA = JSON.parse(JSON.stringify(DEMO));
+  document.getElementById('imp-status').textContent = 'Demonstração ativa — baseada nos dados reais do Checkpoint_DP_Sonova_v2.';
+  document.getElementById('hdr-data').textContent = 'Dados demonstrativos';
+  renderAll();
+}
+function clearAll() {
+  if (!confirm('Limpar todos os dados do dashboard?\n\nO estado de demonstração será removido. Use "Demo" para recarregar os dados de exemplo.')) return;
+  DATA = { exportado_em: '', entradas: [], checkpoint: [] };
+  document.getElementById('imp-status').textContent = 'Dashboard limpo. Importe um JSON ou clique em Demo para recarregar.';
+  document.getElementById('hdr-data').textContent = 'Sem dados';
+  if (chartPilar) { chartPilar.destroy(); chartPilar = null; }
+  if (chartResp)  { chartResp.destroy();  chartResp = null; }
+  document.getElementById('kpi-geral').innerHTML = '';
+  document.getElementById('pipeline').innerHTML = '';
+  document.getElementById('pilar-wrap').innerHTML = '<canvas id="chartPilar" role="img" aria-label="Gráfico de pilares"></canvas>';
+  document.getElementById('eis-outer').innerHTML = '';
+  document.getElementById('kpi-semanal').innerHTML = '';
+  document.getElementById('timeline').innerHTML = '';
+  document.getElementById('resp-wrap').innerHTML = '<canvas id="chartResp" role="img" aria-label="Gráfico de responsáveis"></canvas>';
+  document.getElementById('resp-legend').innerHTML = '';
+}
+
+// ===== RENDER GERAL =====
+function renderGeral() {
+  const e = DATA.entradas;
+  const total = e.length;
+  const urg = e.filter(x => x.urgencia === 'Alta' && x.importancia === 'Alta').length;
+  const abertos = e.filter(x => !['Concluído','Cancelado','Backlog'].includes(x.status)).length;
+  const fup = e.filter(x => x.destino === 'FUP' && x.status === 'Aguardando').length;
+
+  document.getElementById('kpi-geral').innerHTML = `
+    <div class="kpi"><div class="kpi-n">${total}</div><div class="kpi-l">Total de entradas</div></div>
+    <div class="kpi"><div class="kpi-n c-alert">${urg}</div><div class="kpi-l">Urgente + importante</div></div>
+    <div class="kpi"><div class="kpi-n c-warn">${abertos}</div><div class="kpi-l">Em aberto</div></div>
+    <div class="kpi"><div class="kpi-n">${fup}</div><div class="kpi-l">FUPs aguardando</div></div>
+  `;
+
+  const DESTS = [
+    {key:'ACOES',label:'Ações',cls:''},
+    {key:'FUP',label:'FUP',cls:''},
+    {key:'PROJETOS',label:'Projetos',cls:'d-proj'},
+    {key:'AUDITORIA_RISCOS',label:'Auditoria',cls:'d-audit'},
+    {key:'JURIDICO_TRABALHISTA',label:'Jurídico',cls:'d-jur'},
+    {key:'BACKLOG',label:'Backlog',cls:''},
+  ];
+  const counts = {};
+  DESTS.forEach(d => counts[d.key] = e.filter(x => x.destino === d.key).length);
+  const maxC = Math.max(...Object.values(counts), 1);
+
+  document.getElementById('pipeline').innerHTML = `
+    <div class="pipe-src">
+      <div class="pn">${total}</div>
+      <div class="pl">ENTRADA_UNICA</div>
+    </div>
+    <div class="pipe-arrow"><i class="ti ti-arrow-right" aria-hidden="true"></i></div>
+    <div class="dest-grid">
+      ${DESTS.map(d => `
+        <div class="dest-card ${d.cls}">
+          <div class="dn">${counts[d.key]}</div>
+          <div class="dl">${d.label}</div>
+          <div class="dest-bar-wrap"><div class="dest-bar" style="width:${Math.round(counts[d.key]/maxC*100)}%"></div></div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// ===== RENDER PILAR =====
+function renderPilar() {
+  const map = {};
+  DATA.entradas.forEach(e => { map[e.pilar] = (map[e.pilar]||0) + 1; });
+  const sorted = Object.entries(map).sort((a,b) => b[1]-a[1]);
+  const labels = sorted.map(x => x[0]);
+  const values = sorted.map(x => x[1]);
+
+  const wrap = document.getElementById('pilar-wrap');
+  wrap.style.height = Math.max(180, labels.length * 38 + 50) + 'px';
+
+  if (chartPilar) chartPilar.destroy();
+  chartPilar = new Chart(document.getElementById('chartPilar'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Entradas',
+        data: values,
+        backgroundColor: '#0083CA',
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+        y: { ticks: { font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ===== RENDER EISENHOWER =====
+function renderEisenhower() {
+  const ativas = DATA.entradas.filter(x => !['Concluído','Cancelado','Backlog'].includes(x.status));
+  const q1=[], q2=[], q3=[], q4=[];
+  ativas.forEach(e => {
+    const u = e.urgencia === 'Alta';
+    const i = e.importancia === 'Alta';
+    if (u && i) q1.push(e);
+    else if (!u && i) q2.push(e);
+    else if (u && !i) q3.push(e);
+    else q4.push(e);
+  });
+
+  const fmtQ = (items) => {
+    if (!items.length) return '<div style="font-size:11px;color:var(--muted);padding:4px 0;">Nenhum item</div>';
+    const shown = items.slice(0,4);
+    const more = items.length > 4 ? `<div style="font-size:10px;color:var(--muted);padding:3px 0;">+${items.length-4} itens</div>` : '';
+    return shown.map(e => `
+      <div class="eis-item">
+        ${e.assunto.length > 60 ? e.assunto.slice(0,60)+'…' : e.assunto}
+        <div class="eis-item-pilar">${e.pilar} · ${e.responsavel}</div>
+      </div>
+    `).join('') + more;
+  };
+
+  const rows = [
+    [
+      {q:q1,cls:'q1',icon:'ti-flame',label:'Fazer agora'},
+      {q:q2,cls:'q2',icon:'ti-calendar-plus',label:'Agendar'},
+    ],
+    [
+      {q:q3,cls:'q3',icon:'ti-arrows-transfer-down',label:'Delegar'},
+      {q:q4,cls:'q4',icon:'ti-archive',label:'Backlog'},
+    ]
+  ];
+
+  document.getElementById('eis-outer').innerHTML = rows.map(row => `
+    <div class="eis-row">
+      ${row.map(({q,cls,icon,label}) => `
+        <div class="eis-q ${cls}">
+          <div class="eis-qlabel">
+            <i class="ti ${icon}" style="font-size:13px;" aria-hidden="true"></i>
+            ${label} <span style="font-size:10px;opacity:.7;">(${q.length})</span>
+          </div>
+          <div class="eis-items">${fmtQ(q)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+// ===== RENDER RESPONSAVEIS =====
+function renderResp() {
+  const STATUS_COLORS = {
+    'Novo': '#0083CA',
+    'Em andamento': '#003C64',
+    'Aguardando': '#6EB4DC',
+    'Planejado': '#9E9E9E',
+    'Concluído': '#2E7D32',
+    'Backlog': '#BDBDBD',
+    'Cancelado': '#E57373',
+  };
+
+  const map = {};
+  DATA.entradas.forEach(e => {
+    if (!map[e.responsavel]) map[e.responsavel] = {};
+    map[e.responsavel][e.status] = (map[e.responsavel][e.status]||0) + 1;
+  });
+
+  const people = Object.keys(map);
+  const statuses = [...new Set(DATA.entradas.map(e => e.status))];
+
+  const wrap = document.getElementById('resp-wrap');
+  wrap.style.height = Math.max(160, people.length * 52 + 70) + 'px';
+
+  if (chartResp) chartResp.destroy();
+  chartResp = new Chart(document.getElementById('chartResp'), {
+    type: 'bar',
+    data: {
+      labels: people,
+      datasets: statuses.map(s => ({
+        label: s,
+        data: people.map(p => map[p][s]||0),
+        backgroundColor: STATUS_COLORS[s] || '#9E9E9E',
+        borderRadius: 3,
+        borderSkipped: false,
+      }))
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { stacked: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+        y: { stacked: true, ticks: { font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  document.getElementById('resp-legend').innerHTML = statuses.map(s => `
+    <div class="resp-leg-item">
+      <span class="resp-leg-dot" style="background:${STATUS_COLORS[s]||'#9E9E9E'}"></span>
+      ${s}
+    </div>
+  `).join('');
+}
+
+// ===== RENDER SEMANAL =====
+function renderSemanal() {
+  const ck = DATA.checkpoint;
+  const go = ck.filter(c => c.decisao === 'GO').length;
+  const nogo = ck.filter(c => c.decisao === 'NO GO').length;
+  const hold = ck.filter(c => c.decisao === 'HOLD ON').length;
+
+  document.getElementById('kpi-semanal').innerHTML = `
+    <div class="kpi" style="border-top:3px solid var(--go)"><div class="kpi-n c-go">${go}</div><div class="kpi-l">GO</div></div>
+    <div class="kpi" style="border-top:3px solid var(--nogo)"><div class="kpi-n c-alert">${nogo}</div><div class="kpi-l">NO GO</div></div>
+    <div class="kpi" style="border-top:3px solid var(--hold)"><div class="kpi-n c-warn">${hold}</div><div class="kpi-l">HOLD ON</div></div>
+  `;
+
+  document.getElementById('timeline').innerHTML = ck.map(c => {
+    const cls = c.decisao === 'GO' ? 'bg-go' : c.decisao === 'NO GO' ? 'bg-nogo' : 'bg-hold';
+    const icon = c.decisao === 'GO' ? 'ti-circle-check' : c.decisao === 'NO GO' ? 'ti-circle-x' : 'ti-circle-pause';
+    return `
+      <div class="tl-row">
+        <div class="tl-week">
+          <div style="font-weight:500;font-size:12px;">${c.semana}</div>
+          <div style="font-size:10px;color:var(--muted);">${c.data}</div>
+        </div>
+        <div class="tl-badge ${cls}"><i class="ti ${icon}" style="font-size:12px;vertical-align:-2px;" aria-hidden="true"></i> ${c.decisao}</div>
+        <div>
+          <div class="tl-motivo">${c.motivo}</div>
+          <div class="tl-rev"><i class="ti ti-user" style="font-size:11px;" aria-hidden="true"></i> ${c.revisor}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== RENDER MACRO =====
+function renderMacro() {
+  document.getElementById('vba-code').innerHTML = `<span class="vba-comment">' ============================================================
+' ExportarParaMapeamento — Checkpoint DP Sonova v2
+' Colar em modulo VBA no arquivo .xlsm
+' Gera JSON compativel com Mapeamentos Gerais
+' Anderson Marinho | Igarapé Digital
+' ============================================================</span>
+
+Sub ExportarParaMapeamento()
+    Dim fso As Object, ts As Object
+    Dim caminho As String, json As String
+    Dim wsE As Worksheet, wsC As Worksheet
+    Dim i As Long, ultima As Long
+
+    caminho = Environ("USERPROFILE") & "\\Downloads\\checkpoint_export.json"
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set ts = fso.CreateTextFile(caminho, True, True)
+
+    Set wsE = ThisWorkbook.Sheets("ENTRADA_UNICA")
+    Set wsC = ThisWorkbook.Sheets("CHECKPOINT_SEMANAL")
+
+    json = "{" & Chr(10)
+    json = json & "  ""exportado_em"": """ & Format(Now, "dd/mm/yyyy hh:mm") & """," & Chr(10)
+    json = json & "  ""entradas"": [" & Chr(10)
+
+    ultima = wsE.Cells(wsE.Rows.Count, 1).End(xlUp).Row
+    Dim sep As String: sep = ""
+    For i = 2 To ultima
+        If wsE.Cells(i, 1).Value <> "" Then
+            json = json & sep & "    {"
+            json = json & """id"":"""        & wsE.Cells(i, 1) & ""","
+            json = json & """data"":"""      & Format(wsE.Cells(i, 2), "dd/mm") & ""","
+            json = json & """pilar"":"""     & wsE.Cells(i, 8) & ""","
+            json = json & """assunto"":"""   & wsE.Cells(i, 5) & ""","
+            json = json & """urgencia"":""" & wsE.Cells(i, 10) & ""","
+            json = json & """importancia"":""" & wsE.Cells(i, 11) & ""","
+            json = json & """responsavel"":""" & wsE.Cells(i, 14) & ""","
+            json = json & """destino"":"""   & wsE.Cells(i, 18) & ""","
+            json = json & """status"":"""    & wsE.Cells(i, 19) & """}"
+            sep = "," & Chr(10)
+        End If
+    Next i
+
+    json = json & Chr(10) & "  ]," & Chr(10) & "  ""checkpoint"": [" & Chr(10)
+    ultima = wsC.Cells(wsC.Rows.Count, 1).End(xlUp).Row
+    sep = ""
+    For i = 2 To ultima
+        If wsC.Cells(i, 1).Value <> "" Then
+            json = json & sep & "    {"
+            json = json & """semana"":"""  & wsC.Cells(i, 3) & ""","
+            json = json & """data"":"""    & Format(wsC.Cells(i, 2), "dd/mm/yyyy") & ""","
+            json = json & """decisao"":""" & wsC.Cells(i, 5) & ""","
+            json = json & """motivo"":"""  & wsC.Cells(i, 6) & ""","
+            json = json & """revisor"":""" & wsC.Cells(i, 7) & """}"
+            sep = "," & Chr(10)
+        End If
+    Next i
+
+    json = json & Chr(10) & "  ]" & Chr(10) & "}"
+    ts.Write json
+    ts.Close
+
+    MsgBox "JSON exportado para:" & Chr(10) & caminho & Chr(10) & Chr(10) & _
+           "Abra o arquivo, copie todo o conteudo e cole no botao 'Importar JSON'.", _
+           vbInformation, "Exportacao concluida"
+End Sub`;
+}
+
+// ===== RENDER ALL =====
+function renderAll() {
+  renderGeral();
+  renderPilar();
+  renderEisenhower();
+  renderSemanal();
+}
+
+renderAll();
+</script>
+</body>
+</html>
