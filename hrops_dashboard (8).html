@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HROps Dashboard · Sonova Brasil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root{
+  --p:#0083CA;--dk:#003C64;--md:#005A64;--lt:#6EB4DC;
+  --ac:#7D0041;--tx:#333;--mu:#646464;--bd:#CCC;
+  --bg:#F4F6F9;--ok:#28A745;--wn:#FFC107;--er:#DC3545;
+  --sw:278px;--hh:54px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Roboto',sans-serif;font-weight:300;color:var(--tx);background:var(--bg);min-height:100vh}
+h1,h2,h3,h4{font-family:'Rufina',serif;font-weight:700}
+
+/* HEADER */
+#hdr{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--p);
+  display:flex;align-items:center;padding:0 16px;z-index:200;gap:10px;flex-wrap:nowrap}
+#hdr h1{color:#fff;font-size:16px;flex:1;white-space:nowrap}
+#hdr .sub{color:rgba(255,255,255,.5);font-size:11px;font-weight:300;white-space:nowrap}
+.hbtn{border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 12px;border-radius:4px;
+  cursor:pointer;font-size:12px;font-family:'Roboto',sans-serif;background:rgba(255,255,255,.15);
+  transition:background .2s;white-space:nowrap}
+.hbtn:hover{background:rgba(255,255,255,.28)}
+.hbtn.danger{border-color:rgba(220,53,69,.7);background:rgba(220,53,69,.2)}
+.hbtn.danger:hover{background:rgba(220,53,69,.45)}
+#file-input{display:none}
+
+/* DROP ZONE */
+#drop-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:calc(100vh - var(--hh));margin-top:var(--hh)}
+.drop-box{width:460px;border:2px dashed var(--p);border-radius:12px;padding:52px 40px;
+  text-align:center;cursor:pointer;background:#fff;transition:.2s}
+.drop-box:hover,.drop-box.over{background:#EBF5FB;border-color:var(--dk)}
+.drop-icon{font-size:44px;color:var(--p);margin-bottom:14px}
+.drop-box h2{font-size:18px;color:var(--dk);margin-bottom:6px}
+.drop-box p{color:var(--mu);font-size:12px;line-height:1.6}
+.restore-note{margin-top:14px;padding:12px 20px;background:#fff;border:1px solid var(--bd);
+  border-radius:8px;font-size:13px;color:var(--dk);display:flex;align-items:center;gap:10px}
+.restore-note button{background:var(--p);color:#fff;border:none;padding:5px 14px;
+  border-radius:4px;cursor:pointer;font-size:12px;font-family:'Roboto',sans-serif}
+
+/* LAYOUT */
+#dash{display:none;margin-top:var(--hh);min-height:calc(100vh - var(--hh))}
+#dash.on{display:flex}
+
+/* SIDEBAR */
+#sb{width:var(--sw);min-width:var(--sw);background:#fff;border-right:1px solid var(--bd);
+  height:calc(100vh - var(--hh));position:sticky;top:var(--hh);overflow-y:auto;
+  padding:10px;display:flex;flex-direction:column}
+.sb-ttl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);
+  padding:8px 2px 6px;border-bottom:1px solid var(--bd);margin-bottom:4px;
+  font-family:'Roboto',sans-serif;font-weight:500}
+.fg{margin-bottom:6px}
+.flrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.fl{font-size:10px;color:var(--mu);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.fl-acts{display:flex;gap:2px;align-items:center;font-size:10px}
+.fl-acts a{color:var(--p);cursor:pointer;text-decoration:none}
+.fl-acts a:hover{text-decoration:underline}
+.fl-acts span{color:var(--bd)}
+#sb select{width:100%;border:1px solid var(--bd);border-radius:4px;padding:2px 5px;
+  font-size:11.5px;font-family:'Roboto',sans-serif;color:var(--tx);background:#fff;outline:none}
+#sb select:focus{border-color:var(--p)}
+#sb select[multiple]{min-height:48px;max-height:82px}
+#btn-clr-all{width:100%;background:var(--er);border:none;color:#fff;
+  padding:8px;border-radius:4px;cursor:pointer;font-size:12px;font-family:'Roboto',sans-serif;
+  margin-top:8px;font-weight:500;transition:.2s}
+#btn-clr-all:hover{background:#b02a37}
+
+/* DUAL RANGE SLIDER */
+.drs-wrap{padding:4px 0 2px}
+.drs{position:relative;height:22px;margin:0 6px}
+.drs-track{position:absolute;left:0;right:0;top:9px;height:4px;background:#e0e0e0;border-radius:2px}
+.drs-fill{position:absolute;top:0;height:100%;background:var(--p);border-radius:2px}
+.drs input[type=range]{position:absolute;left:-6px;right:-6px;width:calc(100% + 12px);
+  appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;
+  height:4px;top:9px;margin:0}
+.drs input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:15px;height:15px;border-radius:50%;background:var(--p);cursor:pointer;
+  pointer-events:all;border:2px solid #fff;box-shadow:0 0 0 1px var(--p)}
+.drs input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;
+  background:var(--p);cursor:pointer;pointer-events:all;border:2px solid #fff;
+  box-shadow:0 0 0 1px var(--p)}
+.drs-lbls{display:flex;justify-content:space-between;font-size:10px;color:var(--mu);margin-top:4px}
+.drs-clr{font-size:10px;color:var(--p);cursor:pointer;text-align:right;display:block;margin-top:1px}
+.drs-clr:hover{text-decoration:underline}
+
+/* MAIN */
+#main{flex:1;padding:16px 18px;overflow-y:auto;min-width:0;padding-bottom:72px}
+#dinfo{font-size:12px;color:var(--mu);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+#dinfo strong{color:var(--p);font-size:14px}
+
+/* SECTIONS */
+.sec{margin-bottom:24px}
+.stt{font-size:15px;color:var(--dk);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--p)}
+
+/* KPIs */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:9px}
+.kc{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:13px;border-top:3px solid var(--p)}
+.kc.ac{border-top-color:var(--ac)}.kc.ok{border-top-color:var(--ok)}
+.kc.wn{border-top-color:var(--wn)}.kc.er{border-top-color:var(--er)}
+.kl{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;font-weight:500;margin-bottom:4px}
+.kv{font-size:22px;color:var(--dk);line-height:1}
+.ks{font-size:10.5px;color:var(--mu);margin-top:3px}
+
+/* CHARTS */
+.cgrid{display:grid;gap:11px}
+.c3{grid-template-columns:repeat(3,1fr)}.c2{grid-template-columns:repeat(2,1fr)}.c1{grid-template-columns:1fr}
+.cc{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:13px;overflow:hidden}
+.cc-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;gap:6px}
+.cc-hdr h4{font-size:12px;color:var(--dk);font-weight:500;font-family:'Roboto',sans-serif;flex:1;margin:0}
+.cc-hdr .cc-actions{display:flex;gap:4px;align-items:center;flex-shrink:0}
+/* botão expandir */
+.btn-expand{background:none;border:1px solid var(--bd);border-radius:4px;cursor:pointer;
+  padding:2px 6px;font-size:11px;color:var(--mu);font-family:'Roboto',sans-serif;
+  transition:background .15s,color .15s;white-space:nowrap}
+.btn-expand:hover{background:var(--p);color:#fff;border-color:var(--p)}
+/* wrapper do canvas com scroll em ambas direções */
+.cw{position:relative;height:205px;overflow:auto}
+.cw.tall{height:280px}.cw.sh{height:108px}.cw.auto{height:auto;min-height:160px;overflow-y:auto}
+/* overlay modal de expansão */
+#expand-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;
+  display:flex;align-items:center;justify-content:center}
+#expand-box{background:#fff;border-radius:10px;width:94vw;height:86vh;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+#expand-hdr{background:var(--dk);color:#fff;padding:10px 16px;display:flex;
+  align-items:center;justify-content:space-between}
+#expand-hdr span{font-size:13px;font-family:'Rufina',serif}
+#expand-close{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;
+  border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;font-family:'Roboto',sans-serif}
+#expand-wrap{flex:1;overflow:auto;padding:16px;position:relative}
+#expand-wrap canvas{display:block}
+
+
+/* DRILL DOWN */
+.drill-panel{margin-top:10px;border:1px solid var(--bd);border-radius:8px;background:#fff;overflow:hidden}
+.drill-head{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#F8F9FA;border-bottom:1px solid var(--bd);padding:8px 10px}
+.drill-title{font-size:12px;color:var(--dk);font-weight:500}
+.drill-actions{display:flex;align-items:center;gap:6px}
+.drill-actions button{background:#fff;border:1px solid var(--bd);border-radius:4px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:'Roboto',sans-serif;color:var(--mu)}
+.drill-actions button:hover{border-color:var(--p);color:var(--p)}
+.drill-table-wrap{max-height:230px;overflow:auto}
+.drill-table{width:100%;border-collapse:collapse;font-size:11px}
+.drill-table thead{background:var(--dk);color:#fff;position:sticky;top:0;z-index:1}
+.drill-table th,.drill-table td{padding:6px 8px;text-align:left;white-space:nowrap;border-bottom:1px solid #F0F0F0}
+.drill-table th{cursor:pointer;user-select:none}
+.drill-table th:hover{background:var(--p)}
+.drill-table th.dsa{background:var(--p)}.drill-table th.dsd{background:var(--p)}
+.drill-table tbody tr:hover{background:#F0F8FF}
+.drill-note{font-size:11px;color:var(--mu);padding:7px 10px;background:#FFF;border-top:1px solid #F0F0F0}
+
+/* ORG */
+.org-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px}
+.org-card{background:var(--bg);border:1px solid var(--bd);border-radius:6px;overflow:hidden}
+.org-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;cursor:pointer}
+.org-hdr:hover{background:#edf5fc}
+.org-nm{font-size:12px;font-weight:500;color:var(--dk)}
+.org-ct{font-size:10.5px;color:var(--mu)}
+.org-tog{background:var(--p);color:#fff;border:none;border-radius:50%;width:20px;height:20px;
+  font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;line-height:1;font-family:monospace}
+.org-list{display:none;padding:0 10px 9px;font-size:11px;color:var(--tx);line-height:1.7;
+  border-top:1px solid var(--bd);margin-top:0;padding-top:7px}
+
+/* ALERTS */
+.atabs{display:flex;gap:3px}
+.atab{padding:5px 13px;border-radius:4px 4px 0 0;border:1px solid var(--bd);
+  background:#fff;cursor:pointer;font-size:12px;font-family:'Roboto',sans-serif;
+  color:var(--mu);border-bottom:none}
+.atab.on{background:var(--p);color:#fff;border-color:var(--p)}
+.atab-body{background:#fff;border:1px solid var(--bd);border-radius:0 8px 8px 8px;overflow:auto;max-height:320px}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--dk);color:#fff;position:sticky;top:0;z-index:1}
+thead th{padding:8px 10px;text-align:left;font-weight:500;white-space:nowrap;
+  cursor:pointer;user-select:none;font-size:11px}
+thead th:hover{background:var(--p)}
+thead th.sa::after{content:' ▲';font-size:9px}
+thead th.sd::after{content:' ▼';font-size:9px}
+tbody tr{border-bottom:1px solid #F0F0F0}
+tbody tr:hover{background:#F0F8FF}
+tbody td{padding:6px 10px;white-space:nowrap}
+.bs{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:500}
+.b-ok{background:#D4EDDA;color:#155724}
+.b-wn{background:#FFF3CD;color:#856404}
+.b-er{background:#F8D7DA;color:#721C24}
+
+/* GRID */
+.gtb{display:flex;gap:8px;margin-bottom:9px;align-items:center}
+.gsrch{flex:1;padding:7px 10px;border:1px solid var(--bd);border-radius:4px;
+  font-size:12px;font-family:'Roboto',sans-serif;outline:none}
+.gsrch:focus{border-color:var(--p)}
+.bexp{background:var(--p);color:#fff;border:none;padding:7px 13px;border-radius:4px;
+  cursor:pointer;font-size:12px;font-family:'Roboto',sans-serif;transition:.2s}
+.bexp:hover{background:var(--dk)}
+.dtw{overflow:auto;background:#fff;border:1px solid var(--bd);border-radius:8px}
+.chk-col{width:34px;text-align:center !important;cursor:default !important}
+tbody tr.sel-row td{background:#FFFDE7 !important}
+
+/* PAGINATION */
+.pg{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:8px;font-size:12px;color:var(--mu)}
+.pg button{background:#fff;border:1px solid var(--bd);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:12px}
+.pg button:hover:not(:disabled){border-color:var(--p);color:var(--p)}
+.pg button:disabled{opacity:.4;cursor:default}
+
+/* SELECTION BAR */
+#sel-bar{position:fixed;bottom:0;left:0;right:0;height:50px;background:var(--dk);color:#fff;
+  display:flex;align-items:center;padding:0 18px;gap:10px;z-index:300;
+  transform:translateY(100%);transition:transform .25s}
+#sel-bar.on{transform:translateY(0)}
+#sel-count{font-size:13px;flex:1}
+.sel-btn{border:none;color:#fff;padding:6px 14px;border-radius:4px;cursor:pointer;
+  font-size:12px;font-family:'Roboto',sans-serif}
+#btn-cmp{background:var(--p)}.btn-desel{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4) !important}
+
+/* COMPARISON MODAL */
+#cmp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;
+  display:flex;align-items:center;justify-content:center}
+#cmp-modal{background:#fff;border-radius:10px;width:94%;max-width:980px;
+  max-height:88vh;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 8px 32px rgba(0,0,0,.25)}
+#cmp-hdr{background:var(--dk);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+#cmp-hdr h3{font-size:14px}
+#cmp-hdr-btns{display:flex;gap:8px;align-items:center}
+#cmp-hdr-btns button{border:1px solid rgba(255,255,255,.4);color:#fff;
+  padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;
+  font-family:'Roboto',sans-serif;background:rgba(255,255,255,.15)}
+#cmp-hdr-btns button:hover{background:rgba(255,255,255,.28)}
+#cmp-body{flex:1;overflow:auto;padding:16px;display:grid;grid-template-columns:250px 1fr;gap:14px}
+#cmp-radar-wrap{height:260px}
+#cmp-tbl-wrap{overflow:auto}
+#cmp-tbl{width:100%;border-collapse:collapse;font-size:12px}
+#cmp-tbl th{background:var(--dk);color:#fff;padding:7px 10px;text-align:left;font-size:11px;white-space:nowrap}
+#cmp-tbl td{padding:6px 10px;border-bottom:1px solid #F0F0F0;white-space:nowrap}
+#cmp-tbl tr:nth-child(even) td{background:#F8F9FA}
+#cmp-tbl .row-lbl{font-weight:500;color:var(--dk);background:var(--bg) !important}
+
+/* MENOR APRENDIZ */
+.apz-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+.apz-chip{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 10px;font-size:11px}
+.apz-chip strong{color:var(--dk)}
+
+/* CMP CHIPS */
+.cmp-chip{display:inline-flex;align-items:center;gap:4px;background:var(--p);color:#fff;
+  border-radius:12px;padding:3px 10px 3px 8px;font-size:11px;font-family:'Roboto',sans-serif}
+.cmp-chip button{background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;
+  font-size:13px;padding:0;line-height:1;margin-left:2px}
+.cmp-chip button:hover{color:#fff}
+
+/* TOAST */
+.toast{position:fixed;bottom:66px;right:16px;background:var(--ok);color:#fff;
+  padding:9px 16px;border-radius:6px;font-size:13px;z-index:600;
+  opacity:0;transition:opacity .3s,transform .3s;transform:translateY(8px)}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* RESPONSIVE */
+@media(max-width:980px){.c3{grid-template-columns:1fr 1fr}#sb{display:none}}
+@media(max-width:600px){.c3,.c2{grid-template-columns:1fr}.kgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){#cmp-body{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <h1>HROps Dashboard</h1>
+  <span class="sub">Uso interno · Sonova Brasil</span>
+  <button class="hbtn" id="btn-save" style="display:none">Salvar Sessao</button>
+  <button class="hbtn danger" id="btn-reset" style="display:none">Resetar</button>
+  <label class="hbtn" id="file-label">Carregar CSV
+    <input type="file" id="file-input" accept=".csv,.txt,.tsv" style="display:none">
+  </label>
+</header>
+
+<div id="drop-zone">
+  <label class="drop-box" for="file-input" id="drop-target">
+    <div class="drop-icon">&#128202;</div>
+    <h2>Arraste o arquivo CSV aqui</h2>
+    <p>ou clique para selecionar</p>
+    <p style="margin-top:8px;font-size:11px">Exportacao SRA do ADP &middot; Separador ; &middot; ISO-8859-1 ou UTF-8</p>
+  </label>
+  <div class="restore-note" id="restore-note" style="display:none">
+    <span>Sessao salva detectada.</span>
+    <button id="btn-restore">Restaurar dados</button>
+  </div>
+</div>
+
+<div id="dash">
+  <aside id="sb">
+    <div class="sb-ttl">Filtros</div>
+    <div id="fctrl"></div>
+    <button id="btn-clr-all">&#10006; Limpar todos os filtros</button>
+  </aside>
+  <main id="main">
+    <div id="dinfo"></div>
+
+    <section class="sec">
+      <h2 class="stt">Visao Geral</h2>
+      <div class="kgrid" id="kpi"></div>
+      <div id="apz-section" style="margin-top:10px;display:none">
+        <div class="cc"><h4>Menor Aprendiz por CNPJ</h4><div class="apz-grid" id="apz-grid"></div></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2 class="stt">Estrutura Organizacional</h2>
+      <div class="cgrid c3">
+        <div class="cc" id="cc-uf-hc">
+          <div class="cc-hdr"><h4>Headcount por Estado (UF)</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-uf-hc','Headcount por Estado (UF)')">&#8599; Expandir</button></div></div>
+          <div class="cw"><canvas id="ch-uf-hc"></canvas></div>
+        </div>
+        <div class="cc" id="cc-cr">
+          <div class="cc-hdr"><h4>Headcount por Empresa</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-cr','Headcount por Empresa')">&#8599; Expandir</button></div></div>
+          <div class="cw auto" id="ch-cr-wrap" style="max-height:280px"><canvas id="ch-cr"></canvas></div>
+        </div>
+        <div class="cc" id="cc-vinc">
+          <div class="cc-hdr"><h4>Vinculo Empregaticio</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-vinc','Vinculo Empregaticio')">&#8599; Expandir</button></div></div>
+          <div class="cw"><canvas id="ch-vinc"></canvas></div>
+        </div>
+      </div>
+      <div class="cgrid c3" style="margin-top:11px">
+        <div class="cc" id="cc-uf-sal">
+          <div class="cc-hdr"><h4>Massa Salarial por Estado (R$)</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-uf-sal','Massa Salarial por Estado')">&#8599; Expandir</button></div></div>
+          <div class="cw"><canvas id="ch-uf-sal"></canvas></div>
+        </div>
+        <div class="cc" id="cc-uf-tempo">
+          <div class="cc-hdr"><h4>Tempo Medio de Servico por Estado (meses)</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-uf-tempo','Tempo Medio de Servico por Estado')">&#8599; Expandir</button></div></div>
+          <div class="cw"><canvas id="ch-uf-tempo"></canvas></div>
+        </div>
+        <div class="cc" id="cc-func-grp">
+          <div class="cc-hdr"><h4>Grupo de Funcao</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-func-grp','Grupo de Funcao')">&#8599; Expandir</button></div></div>
+          <div class="cw"><canvas id="ch-func-grp"></canvas></div>
+        </div>
+      </div>
+      <div class="cc" style="margin-top:11px">
+        <h4>Organograma &mdash; Chefias e Equipes <small style="font-weight:300;color:var(--mu)">(clique em + para expandir)</small></h4>
+        <div class="org-grid" id="org-grid"></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2 class="stt">Folha de Pagamento</h2>
+      <div class="cgrid c3">
+        <div class="cc" id="cc-esc">
+          <div class="cc-hdr"><h4>Escala de Trabalho</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-esc','Escala de Trabalho')">&#8599; Expandir</button></div></div>
+          <div class="cw"><canvas id="ch-esc"></canvas></div>
+        </div>
+        <div class="cc" id="cc-faixa">
+          <div class="cc-hdr"><h4>Distribuicao por Faixa Salarial</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-faixa','Distribuicao por Faixa Salarial')">&#8599; Expandir</button></div></div>
+          <div class="cw"><canvas id="ch-faixa"></canvas></div>
+        </div>
+        <div class="cc" id="cc-ins">
+          <div class="cc-hdr"><h4>Grau de Instrucao</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-ins','Grau de Instrucao')">&#8599; Expandir</button></div></div>
+          <div class="cw"><canvas id="ch-ins"></canvas></div>
+        </div>
+      </div>
+      <div class="cgrid c1" style="margin-top:11px">
+        <div class="cc" id="cc-var">
+          <div class="cc-hdr"><h4>Variacao Salarial &mdash; Atual vs. Anterior (%)</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-var','Variacao Salarial Atual vs. Anterior')">&#8599; Expandir</button></div></div>
+          <div class="cw tall" id="ch-var-wrap"><canvas id="ch-var"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2 class="stt">Analytics</h2>
+      <div class="cgrid c2">
+        <div class="cc" id="cc-sc">
+          <div class="cc-hdr">
+            <h4>Tempo de Servico x Salario &nbsp;<small style="color:var(--er);font-weight:400">&#9733; = Selecionados</small></h4>
+            <div class="cc-actions">
+              <button id="btn-cmp-inline" onclick="openComparison()" style="background:var(--p);color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:'Roboto',sans-serif">Comparar</button>
+              <button class="btn-expand" onclick="expandChart('ch-sc','Tempo de Servico x Salario')">&#8599;</button>
+            </div>
+          </div>
+          <div class="cw tall"><canvas id="ch-sc"></canvas></div>
+        </div>
+        <div class="cc" id="cc-demo">
+          <div class="cc-hdr"><h4>Demografico</h4><div class="cc-actions"><button class="btn-expand" onclick="expandChart('ch-et','Faixa Etaria')">&#8599;</button></div></div>
+          <div class="cw sh"><canvas id="ch-et"></canvas></div>
+          <div style="height:6px"></div>
+          <div class="cw sh"><canvas id="ch-func"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2 class="stt">Alertas &amp; Compliance</h2>
+      <div class="atabs" id="atabs">
+        <button class="atab on" data-tab="exp">Experiencia</button>
+        <button class="atab" data-tab="avi">Aviso Previo</button>
+        <button class="atab" data-tab="aft">Afastamentos</button>
+        <button class="atab" data-tab="sind">Sindicato</button>
+      </div>
+      <div class="atab-body" id="alert-body"></div>
+    </section>
+
+    <section class="sec">
+      <h2 class="stt">Quadro de Colaboradores</h2>
+      <div class="gtb">
+        <input type="text" class="gsrch" id="gsrch" placeholder="Buscar por nome, matricula, CPF, funcao, chefia...">
+        <button class="bexp" id="btn-exp">Exportar CSV</button>
+      </div>
+      <div class="dtw" id="dtw"></div>
+      <div class="pg" id="pg"></div>
+    </section>
+  </main>
+</div>
+
+<!-- EXPAND OVERLAY -->
+<div id="expand-overlay" style="display:none">
+  <div id="expand-box">
+    <div id="expand-hdr">
+      <span id="expand-title"></span>
+      <button id="expand-close">&#215; Fechar</button>
+    </div>
+    <div id="expand-wrap"></div>
+  </div>
+</div>
+
+<!-- SELECTION BAR -->
+<div id="sel-bar">
+  <span id="sel-count"></span>
+  <button class="sel-btn" id="btn-cmp">Comparar</button>
+  <button class="sel-btn btn-desel" id="btn-sel-clr">Desmarcar todos</button>
+</div>
+
+<!-- COMPARISON MODAL -->
+<div id="cmp-overlay" style="display:none">
+  <div id="cmp-modal">
+    <div id="cmp-hdr">
+      <h3>Comparacao de Colaboradores</h3>
+      <div id="cmp-hdr-btns">
+        <button id="btn-desel-modal">Desmarcar todos</button>
+        <button id="cmp-close">&#215; Fechar</button>
+      </div>
+    </div>
+    <!-- Seletor de colaboradores no topo do modal -->
+    <div id="cmp-sel-bar" style="padding:10px 16px 6px;border-bottom:1px solid var(--bd);background:#F8F9FA;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--mu);font-weight:500;white-space:nowrap">Adicionar colaborador:</span>
+      <select id="cmp-add-sel" style="flex:1;min-width:200px;max-width:340px;border:1px solid var(--bd);border-radius:4px;padding:4px 7px;font-size:12px;font-family:'Roboto',sans-serif;color:var(--tx);background:#fff;outline:none">
+        <option value="">-- selecionar --</option>
+      </select>
+      <button id="cmp-add-btn" style="background:var(--p);color:#fff;border:none;padding:5px 13px;border-radius:4px;cursor:pointer;font-size:12px;font-family:'Roboto',sans-serif">Adicionar</button>
+      <div id="cmp-chips" style="display:flex;gap:5px;flex-wrap:wrap;flex:1"></div>
+    </div>
+    <div id="cmp-body">
+      <div id="cmp-radar-wrap"><canvas id="cmp-radar"></canvas></div>
+      <div id="cmp-tbl-wrap"><table id="cmp-tbl"></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+// ── DRILL DOWN GLOBAL ─────────────────────────────────────────────────────
+const DRILL = {};
+function setDrill(canvasId, title, labels, groups, note=''){
+  DRILL[canvasId] = { title, labels, groups, note };
+}
+function groupRowsBy(key){
+  const m={};
+  FILT.forEach(r=>{
+    const v = key==='funcGrupo' ? (r._fg||'N/I') : (g(r,CM[key])||'N/I');
+    if(!m[v])m[v]=[];
+    m[v].push(r);
+  });
+  return m;
+}
+function pctVarRow(r){
+  const at=brl(g(r,CM.sal)), an=brl(g(r,CM.salAnt));
+  return an ? ((at-an)/an*100) : null;
+}
+// drillSort: { k: null, d: 1 } por painel
+const DRILL_COLS=[
+  {k:'mat',  l:'Matricula', fn:(r)=>g(r,CM.mat)||'-'},
+  {k:'nome', l:'Nome',      fn:(r)=>g(r,CM.nome)||'-'},
+  {k:'funcao',l:'Funcao',   fn:(r)=>g(r,CM.funcao)||'-'},
+  {k:'chefia',l:'Chefia',   fn:(r)=>g(r,CM.chefia)||'-'},
+  {k:'cr',   l:'CR',        fn:(r)=>g(r,CM.crNome)||'-'},
+  {k:'sal',  l:'Salario',   fn:(r)=>fBRL(brl(g(r,CM.sal))), sort:(r)=>brl(g(r,CM.sal))},
+  {k:'salAnt',l:'Sal.Ant.', fn:(r)=>brl(g(r,CM.salAnt))?fBRL(brl(g(r,CM.salAnt))):'-', sort:(r)=>brl(g(r,CM.salAnt))},
+  {k:'var',  l:'Var.%',     fn:(r)=>{const p=pctVarRow(r);return p===null?'-':p.toFixed(1)+'%';}, sort:(r)=>pctVarRow(r)??-Infinity},
+];
+
+function renderDrillBody(rows, sortK, sortD){
+  const sorted=[...rows];
+  if(sortK){
+    const col=DRILL_COLS.find(c=>c.k===sortK);
+    sorted.sort((a,b)=>{
+      const av=col.sort?col.sort(a):String(col.fn(a));
+      const bv=col.sort?col.sort(b):String(col.fn(b));
+      if(typeof av==='number'&&typeof bv==='number')return(av-bv)*sortD;
+      return String(av).localeCompare(String(bv),'pt-BR')*sortD;
+    });
+  }
+  return sorted.slice(0,500).map(r=>`<tr>${DRILL_COLS.map(c=>`<td>${escH(String(c.fn(r)))}</td>`).join('')}</tr>`).join('');
+}
+
+function renderDrillHead(sortK, sortD){
+  return DRILL_COLS.map(c=>{
+    const cls=sortK===c.k?(sortD>0?'dsa':'dsd'):'';
+    return `<th class="${cls}" data-dk="${c.k}" style="cursor:pointer;user-select:none">${c.l}${sortK===c.k?(sortD>0?' ▲':' ▼'):''}</th>`;
+  }).join('');
+}
+
+function showDrill(canvasId, idx, datasetIndex=0, container=null){
+  const cfg=DRILL[canvasId];
+  if(!cfg || idx==null || idx<0)return;
+  let rows=(cfg.groups[idx]||[]).filter(Boolean);
+  let label=cfg.labels[idx]||'Selecionado';
+  if(cfg.mode==='matrix'){ rows=((cfg.groups[datasetIndex]||[])[idx]||[]).filter(Boolean); label=((cfg.labels[datasetIndex]||[])[idx])||'Selecionado'; }
+
+  // container: se veio do expand usa #expand-wrap, senão usa o .cc pai
+  let target=container;
+  if(!target){
+    const cv=document.getElementById(canvasId);
+    if(!cv)return;
+    target=cv.closest('.cc');
+  }
+  if(!target)return;
+
+  target.querySelectorAll('.drill-panel').forEach(el=>el.remove());
+  const panel=document.createElement('div');
+  panel.className='drill-panel';
+  const exportName=`drill_${(cfg.title||canvasId).replace(/[^a-z0-9]+/gi,'_').toLowerCase()}_${String(label).replace(/[^a-z0-9]+/gi,'_').toLowerCase()}.csv`;
+
+  let sortK=null, sortD=1;
+
+  function rebuildTable(){
+    const tbody=panel.querySelector('.drill-tbody');
+    const thead=panel.querySelector('.drill-thead-row');
+    if(tbody)tbody.innerHTML=renderDrillBody(rows,sortK,sortD)||'<tr><td colspan="8">Nenhum colaborador encontrado.</td></tr>';
+    if(thead)thead.innerHTML=renderDrillHead(sortK,sortD);
+  }
+
+  panel.innerHTML=`
+    <div class="drill-head">
+      <div class="drill-title">${escH(cfg.title)}: ${escH(label)} · ${rows.length} colaborador${rows.length!==1?'es':''}</div>
+      <div class="drill-actions">
+        <button type="button" data-act="export">Exportar CSV</button>
+        <button type="button" data-act="close">Fechar</button>
+      </div>
+    </div>
+    <div class="drill-table-wrap">
+      <table class="drill-table">
+        <thead><tr class="drill-thead-row">${renderDrillHead(sortK,sortD)}</tr></thead>
+        <tbody class="drill-tbody">${renderDrillBody(rows,sortK,sortD)||'<tr><td colspan="8">Nenhum colaborador encontrado.</td></tr>'}</tbody>
+      </table>
+    </div>
+    ${cfg.note?`<div class="drill-note">${escH(cfg.note)}</div>`:''}`;
+
+  target.appendChild(panel);
+  if(!container) panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  panel.querySelector('[data-act="close"]').onclick=()=>panel.remove();
+  panel.querySelector('[data-act="export"]').onclick=()=>exportRowsCSV(rows, exportName);
+
+  panel.querySelector('.drill-table').addEventListener('click',e=>{
+    const th=e.target.closest('th[data-dk]');
+    if(!th)return;
+    const k=th.dataset.dk;
+    if(sortK===k)sortD*=-1; else{sortK=k;sortD=1;}
+    rebuildTable();
+  });
+}
+function exportRowsCSV(rows, filename){
+  const cols=[['mat','Matricula'],['nome','Nome'],['funcao','Funcao'],['chefia','Chefia'],['crNome','CR'],['sal','Salario'],['salAnt','Salario Anterior'],['vinculo','Vinculo'],['uf','UF'],['empresa','Empresa'],['cnpj','CNPJ']];
+  const header=cols.map(c=>c[1]).join(';');
+  const body=rows.map(r=>cols.map(([k])=>`"${String(getVal(r,k)||'').replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob=new Blob([header+'\n'+body],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);
+}
+const DrillDownPlugin={
+  id:'hropsDrillDown',
+  afterEvent(chart,args){
+    const id=chart.canvas && chart.canvas.id;
+    if(!id || !DRILL[id])return;
+    const evt=args.event;
+    if(evt.type==='mousemove'){
+      const pts=chart.getElementsAtEventForMode(evt.native,'nearest',{intersect:true},true);
+      chart.canvas.style.cursor=pts.length?'pointer':'default';
+    }
+    if(evt.type==='click'){
+      const pts=chart.getElementsAtEventForMode(evt.native,'nearest',{intersect:true},true);
+      if(pts.length)showDrill(id,pts[0].index,pts[0].datasetIndex);
+    }
+  }
+};
+Chart.register(DrillDownPlugin);
+
+// ── PALETTE & SHARED CONFIG ────────────────────────────────────────────────
+const PAL = ['#0083CA','#003C64','#6EB4DC'];
+const DL  = (fmt) => ({ anchor:'end', align:'top', offset:2, font:{size:10}, color:'#444',
+  formatter: fmt || (v => v > 0 ? v : '') });
+const fK = v => { if(v>=1000000) return (v/1000000).toFixed(v%1000000===0?0:1)+'M'; if(v>=1000) return Math.round(v/1000)+'k'; return v>0?String(Math.round(v)):''; };
+const DL_BRL = DL(v => v > 0 ? fK(v) : '');
+// Rótulo dentro da barra para gráficos horizontais (evita corte)
+const DL_H = (fmt) => ({ anchor:'end', align:'left', offset:4, font:{size:10}, color:'#fff',
+  formatter: fmt || (v => v > 0 ? v : '') });
+const DL_H_DARK = (fmt) => ({ anchor:'end', align:'left', offset:4, font:{size:9}, color:'#333',
+  formatter: fmt || (v => v > 0 ? v : '') });
+const DL_PIE = { anchor:'center', align:'center', font:{size:11}, color:'#fff',
+  formatter:(v,ctx) => { const t=ctx.dataset.data.reduce((a,b)=>a+b,0); return t&&v?`${v}\n${Math.round(v/t*100)}%`:''; }};
+const DL_OFF = { display:false };
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let ALL=[], CM={}, FILT=[], gPage=1, gSort=null, gDir=1, gTab='exp', gQ='';
+const PS=25;
+let charts={}, cmpChart=null;
+let selected=new Set();
+let salRangeMin=0, salRangeMax=0;
+const LS_F='hrops_f_v2', LS_D='hrops_d_v1';
+const F={empresa:[],cnpj:[],empCod:[],cr:[],funcGrupo:[],funcao:[],vinculo:[],situacao:[],
+         sexo:[],chefia:[],instrucao:[],uf:[],cidade:[],sind:[],tempo:'',salMin:'',salMax:'',
+         incAdm:false,incSal:false,incExp:false};
+const alertSort={exp:{k:null,d:1},avi:{k:null,d:1},aft:{k:null,d:1},sind:{k:null,d:1}};
+
+// ── FUNCAO GRUPO ──────────────────────────────────────────────────────────
+const FUNC_KEYWORDS = [
+  ['fonoaudiolog','Fonoaudiologo'],['fono','Fonoaudiologo'],
+  ['diretor','Diretor'],['diretora','Diretor'],
+  ['gerente','Gerente'],['gestora','Gestor'],['gestor','Gestor'],
+  ['coordenador','Coordenador'],['coordenadora','Coordenador'],
+  ['supervisor','Supervisor'],['supervisora','Supervisor'],
+  ['analista','Analista'],
+  ['assistente','Assistente'],
+  ['especialista','Especialista'],
+  ['tecnico','Tecnico'],['tecnica','Tecnico'],
+  ['auxiliar','Auxiliar'],
+  ['operador','Operador'],['operadora','Operador'],
+  ['estagiario','Estagiario'],['estagiária','Estagiario'],
+  ['aprendiz','Menor Aprendiz'],
+];
+function getFuncGrupo(nome) {
+  const n = norm(nome||'');
+  for (const [kw, label] of FUNC_KEYWORDS) { if (n.includes(kw)) return label; }
+  const first = (nome||'').trim().split(/\s+/)[0];
+  return first ? first.charAt(0).toUpperCase()+first.slice(1).toLowerCase() : 'Outro';
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+const norm  = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+const brl   = s => { if(!s)return 0; return parseFloat((s+'').replace(/\./g,'').replace(',','.'))||0; };
+const fBRL  = n => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(n);
+const fNum  = n => new Intl.NumberFormat('pt-BR').format(n);
+const g     = (row,k) => k?(row[k]||''):'';
+const escH  = s => (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+function parseDate(s){
+  if(!s||s.length<8)return null;
+  const p=s.split('/');
+  if(p.length<3)return null;
+  const dt=new Date(+p[2],+p[1]-1,+p[0]);
+  return isNaN(dt.getTime())?null:dt;
+}
+const TODAY=(()=>{const d=new Date();d.setHours(0,0,0,0);return d;})();
+const diffDays=dt=>dt?Math.round((dt-TODAY)/86400000):null;
+function parseTempo(s){
+  if(!s)return 0;
+  const a=parseInt((s.match(/(-?\d+)\s*anos?/)||[])[1])||0;
+  const m=parseInt((s.match(/(\d+)\s*m[eê]ses?/)||[])[1])||0;
+  return Math.max(0,a*12+m);
+}
+
+// ── CSV PARSER ROBUSTO ────────────────────────────────────────────────────
+function stripBOM(text){
+  return (text||'').replace(/^\uFEFF/,'').replace(/^ï»¿/,'');
+}
+function countSepOutsideQuotes(line,sep){
+  let ct=0,q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(q&&line[i+1]==='"'){i++;continue;}
+      q=!q;continue;
+    }
+    if(ch===sep&&!q)ct++;
+  }
+  return ct;
+}
+function detectDelimiter(lines){
+  const sample=lines.slice(0,12).filter(l=>l.trim());
+  const seps=[';',',','\t','|'];
+  let best=';',bestScore=-1;
+  seps.forEach(sep=>{
+    const counts=sample.map(l=>countSepOutsideQuotes(l,sep)).filter(n=>n>0);
+    if(!counts.length)return;
+    const avg=counts.reduce((a,b)=>a+b,0)/counts.length;
+    const consistent=counts.filter(n=>n===counts[0]).length;
+    const score=avg*10+consistent;
+    if(score>bestScore){bestScore=score;best=sep;}
+  });
+  return best;
+}
+function splitLine(line,sep=';'){
+  const res=[];let cur='',q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){
+      if(q&&line[i+1]==='"'){cur+='"';i++;continue;}
+      q=!q;continue;
+    }
+    if(ch===sep&&!q){res.push(cur);cur='';continue;}
+    cur+=ch;
+  }
+  res.push(cur);return res;
+}
+function knownColumnScore(headers){
+  const h=headers.map(norm);
+  const wanted=['cnpj','nome empregado','matricula','matrícula','salario mensal','salário mensal','data da admissao','data da admissão','funcao - nome','função - nome'];
+  return wanted.filter(w=>h.includes(norm(w))).length;
+}
+function parseCSV(text,forcedSep){
+  text=stripBOM(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const rawLines=text.split('\n');
+  const lines=rawLines.filter(l=>l.trim());
+  if(lines.length<2)return {rows:[],diagnostic:{reason:'Arquivo sem linhas suficientes'}};
+
+  const sep=forcedSep||detectDelimiter(lines);
+  const headers=splitLine(lines[0],sep).map(h=>stripBOM(h).trim().replace(/^"|"$/g,''));
+  if(headers.length<2)return {rows:[],diagnostic:{reason:'Cabecalho com apenas uma coluna',sep,headers}};
+
+  buildCM(headers);
+  const rows=lines.slice(1).map(ln=>{
+    const vals=splitLine(ln,sep);
+    const row={};
+    headers.forEach((h,i)=>row[h]=(vals[i]||'').trim().replace(/^"|"$/g,''));
+    return row;
+  }).filter(r=>Object.values(r).some(v=>(v||'').trim()));
+
+  rows.forEach(r=>{ r._fg=getFuncGrupo(g(r,CM.funcao)); });
+  return {rows,diagnostic:{sep,headers:headers.length,knownColumns:knownColumnScore(headers),lines:lines.length}};
+}
+function parseCSVRowsOnly(text,forcedSep){
+  const parsed=parseCSV(text,forcedSep);
+  return parsed.rows || [];
+}
+
+// ── COLUMN MAP ────────────────────────────────────────────────────────────
+function buildCM(headers){
+  const find=(...cands)=>{
+    for(const c of cands){
+      if(headers.includes(c))return c;
+      const cn=norm(c);
+      const f=headers.find(h=>norm(h)===cn);
+      if(f)return f;
+    }
+    return null;
+  };
+  CM={
+    cnpj:     find('CNPJ'),
+    empresa:  find('Nome Comercial','Razao Social Empresa Origem','Empresa - Código','Empresa - Codigo'),
+    empCod:   find('Empresa - Código','Empresa - Codigo','Código Empresa','Codigo Empresa','Empresa Código','Empresa Codigo'),
+    mat:      find('Matrícula','Matricula'),
+    nome:     find('Nome Empregado'),
+    sexo:     find('Sexo Empregado'),
+    adm:      find('Data da Admissão','Data da Admissao'),
+    sit:      find('Situação do Empregado','Situacao do Empregado'),
+    afSigla:  find('Sigla do Afastamento'),
+    afData:   find('Data Afastamento Cessão','Data Afastamento Cessao'),
+    funcao:   find('Função - Nome','Funcao - Nome'),
+    funcGrupo:'_fg',
+    crNome:   find('Centro de Resultado - Nome'),
+    sal:      find('Salário Mensal','Salario Mensal'),
+    salAnt:   find('Salario Anterior','Salário Anterior'),
+    salH:     find('Salário por Hora','Salario por Hora'),
+    idade:    find('Idade'),
+    chefia:   find('Chefia Imediata - Nome'),
+    vinculo:  find('Vínculo Empregatício - Nome','Vinculo Empregaticio - Nome'),
+    instrucao:find('Grau de Instrução - Nome','Grau de Instrucao - Nome'),
+    fimExp:   find('Data Fim Experiência/Renovação','Data Fim Experiencia/Renovacao'),
+    fimAviso: find('Data Fim Aviso Previo Ind'),
+    tempo:    find('Tempo de Serviço','Tempo de Servico'),
+    escala:   find('Escala - Nome'),
+    uf:       find('Endereço - UF','Endereco - UF'),
+    cidade:   find('Nome Município Estabelecimento','Nome Municipio Estabelecimento'),
+    sind:     find('Sindicato - Razão Social','Sindicato - Razao Social'),
+    assocS:   find('Associado ao Sindicato'),
+    contribS: find('Desconta Contribuição Sindical','Desconta Contribuicao Sindical'),
+    catProf:  find('Categoria Profissional - Nome'),
+    pcd:      find('PCD','Portador de Deficiência','Portador de Deficiencia','Tipo de Deficiência'),
+    aftUltD:  find('Ultimo Afastamento - Data Afas'),
+    aftUltR:  find('Ultimo Afastamento - Data Ret'),
+    aftUltM:  find('Ultimo Afastamento - Motivo'),
+    cpf:      find('CPF','CPF Empregado','CPF do Empregado','Cpf Empregado','Nro. CPF','Nr. CPF','Numero CPF','Número CPF','Numero do CPF'),
+  };
+}
+
+// ── FILE LOAD ─────────────────────────────────────────────────────────────
+function showLoadDiagnostic(msg,detail){
+  let box=document.getElementById('load-diagnostic');
+  if(!box){
+    box=document.createElement('div');
+    box.id='load-diagnostic';
+    box.style.cssText='margin-top:12px;max-width:720px;background:#fff;border:1px solid var(--bd);border-left:4px solid var(--p);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--tx);line-height:1.5;white-space:pre-wrap';
+    const dz=document.getElementById('drop-zone');
+    if(dz)dz.appendChild(box);
+  }
+  box.style.display='block';
+  box.textContent=msg+(detail?'\n'+detail:'');
+}
+function decodeBuffer(buffer,encoding){
+  try{return new TextDecoder(encoding,{fatal:false}).decode(buffer);}
+  catch(e){return null;}
+}
+function loadFile(file){
+  if(!file){showLoadDiagnostic('Nenhum arquivo selecionado.');return;}
+  showLoadDiagnostic('Lendo arquivo: '+file.name,'Tamanho: '+fNum(file.size)+' bytes');
+
+  const r=new FileReader();
+  r.onerror=()=>showLoadDiagnostic('Erro ao ler o arquivo.','Tente salvar novamente como CSV UTF-8 ou CSV separado por ponto-e-virgula.');
+  r.onload=e=>{
+    const buffer=e.target.result;
+    const candidates=[];
+    const bytes=new Uint8Array(buffer.slice(0,4));
+    const hasUtf8Bom=bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF;
+
+    const encodings=hasUtf8Bom?['utf-8','windows-1252','iso-8859-1']:['utf-8','windows-1252','iso-8859-1'];
+    encodings.forEach(enc=>{
+      const text=decodeBuffer(buffer,enc);
+      if(!text)return;
+      const parsed=parseCSV(text);
+      const d=parsed.diagnostic||{};
+      const score=(parsed.rows?parsed.rows.length:0)+(d.headers||0)*2+(d.knownColumns||0)*80;
+      candidates.push({enc,text,parsed,score});
+    });
+
+    candidates.sort((a,b)=>b.score-a.score);
+    const best=candidates[0];
+    if(!best||!best.parsed.rows||!best.parsed.rows.length){
+      showLoadDiagnostic('Nao foi possivel interpretar o CSV.', candidates.map(c=>`${c.enc}: linhas=${c.parsed.rows.length}, colunas=${c.parsed.diagnostic.headers||0}, separador=${c.parsed.diagnostic.sep||'N/I'}, colunas_ADP=${c.parsed.diagnostic.knownColumns||0}`).join('\n'));
+      alert('Nao foi possivel carregar o CSV. Veja o diagnostico abaixo da area de upload.');
+      return;
+    }
+
+    showLoadDiagnostic('CSV carregado com diagnostico:',`Encoding: ${best.enc}${hasUtf8Bom?' com BOM':''}\nSeparador: ${best.parsed.diagnostic.sep==='\t'?'TAB':best.parsed.diagnostic.sep}\nColunas: ${best.parsed.diagnostic.headers}\nLinhas: ${best.parsed.rows.length}\nColunas ADP reconhecidas: ${best.parsed.diagnostic.knownColumns}`);
+    processData(best.parsed.rows);
+  };
+  r.readAsArrayBuffer(file);
+}
+function processData(data){
+  if(!data.length){alert('Sem dados.');return;}
+  ALL=data;
+  const sals=ALL.map(r=>brl(g(r,CM.sal))).filter(s=>s>0);
+  salRangeMin=sals.length?Math.floor(Math.min(...sals)):0;
+  salRangeMax=sals.length?Math.ceil(Math.max(...sals)):50000;
+  restoreF();
+  initDash();
+}
+
+function initDash(){
+  selected.clear();
+  document.getElementById('drop-zone').style.display='none';
+  document.getElementById('dash').classList.add('on');
+  document.getElementById('btn-save').style.display='';
+  document.getElementById('btn-reset').style.display='';
+  buildFilterUI();
+  applyFilters();
+}
+
+// ── FILTER UI ────────────────────────────────────────────────────────────
+function buildFilterUI(){
+  const ctrl=document.getElementById('fctrl');
+  ctrl.innerHTML='';
+  const uniq=key=>[...new Set(ALL.map(r=>g(r,CM[key])).filter(Boolean))].sort();
+
+  function mkMulti(id,label,vals,fkey){
+    const div=document.createElement('div');div.className='fg';
+    div.innerHTML=`
+      <div class="flrow">
+        <label class="fl">${label}</label>
+        <div class="fl-acts">
+          <a data-fk="${fkey}" data-act="all">Todos</a><span>|</span>
+          <a data-fk="${fkey}" data-act="clr">Limpar</a>
+        </div>
+      </div>
+      <input type="text" class="f-srch" placeholder="Buscar..." style="width:100%;border:1px solid var(--bd);border-radius:4px 4px 0 0;border-bottom:none;padding:3px 6px;font-size:11px;font-family:'Roboto',sans-serif;outline:none;box-sizing:border-box">
+      <select id="${id}" multiple style="border-radius:0 0 4px 4px">${vals.map(v=>`<option value="${escH(v)}">${escH(v)}</option>`).join('')}</select>`;
+    ctrl.appendChild(div);
+    const sel=div.querySelector('select');
+    const srch=div.querySelector('.f-srch');
+    if(F[fkey]&&F[fkey].length) [...sel.options].forEach(o=>{ if(F[fkey].includes(o.value))o.selected=true; });
+    sel.addEventListener('change',()=>{ F[fkey]=[...sel.selectedOptions].map(o=>o.value); applyFilters();saveF(); });
+    // busca interna: filtra opções visíveis mas mantém selecionadas
+    srch.addEventListener('input',()=>{
+      const kw=srch.value.toLowerCase();
+      [...sel.options].forEach(o=>{ o.style.display=(!kw||o.text.toLowerCase().includes(kw))?'':'none'; });
+    });
+    div.querySelectorAll('.fl-acts a').forEach(a=>a.addEventListener('click',e=>{
+      e.preventDefault();
+      if(e.target.dataset.act==='all'){ [...sel.options].forEach(o=>o.selected=true); F[e.target.dataset.fk]=[...sel.options].map(o=>o.value); }
+      else { [...sel.options].forEach(o=>o.selected=false); F[e.target.dataset.fk]=[]; }
+      applyFilters();saveF();
+    }));
+  }
+
+  function mkSingle(id,label,opts,fkey){
+    const div=document.createElement('div');div.className='fg';
+    div.innerHTML=`
+      <div class="flrow">
+        <label class="fl">${label}</label>
+        <div class="fl-acts"><a data-fk="${fkey}" data-act="clr">Limpar</a></div>
+      </div>
+      <select id="${id}"><option value="">Todos</option>
+      ${opts.map(o=>`<option value="${escH(o.v)}">${escH(o.l)}</option>`).join('')}</select>`;
+    ctrl.appendChild(div);
+    const sel=div.querySelector('select');
+    if(F[fkey])sel.value=F[fkey];
+    sel.addEventListener('change',()=>{ F[fkey]=sel.value; applyFilters();saveF(); });
+    div.querySelector('.fl-acts a').addEventListener('click',e=>{ e.preventDefault();sel.value='';F[fkey]='';applyFilters();saveF(); });
+  }
+
+  // ── CNPJ (com label empresa)
+  const cnpjMap={};
+  ALL.forEach(r=>{ const c=g(r,CM.cnpj),e=g(r,CM.empresa); if(c&&!cnpjMap[c])cnpjMap[c]=e.split(' ').slice(0,2).join(' '); });
+  const cnpjVals=Object.entries(cnpjMap).sort((a,b)=>a[0].localeCompare(b[0]))
+    .map(([c,e])=>c+' — '+e);
+  if(cnpjVals.length>1) mkMulti('f-cnpj','CNPJ / Empresa',cnpjVals,'cnpj');
+
+  // ── EMPRESA CODIGO
+  if(CM.empCod){const ec=[...new Set(ALL.map(r=>g(r,CM.empCod)).filter(Boolean))].sort();if(ec.length>1)mkMulti('f-ec','Empresa Codigo',ec,'empCod');}
+
+  const em=uniq('empresa'); if(em.length>1) mkMulti('f-em','Nome Empresa',em,'empresa');
+  const cr=uniq('crNome');  if(cr.length)   mkMulti('f-cr','Centro de Resultado',cr,'cr');
+  const fg=uniq('funcGrupo'); if(fg.length) mkMulti('f-fg','Grupo de Funcao',fg,'funcGrupo');
+  const fn=uniq('funcao');  if(fn.length)   mkMulti('f-fn','Funcao (Detalhe)',fn,'funcao');
+  const vi=uniq('vinculo'); if(vi.length)   mkMulti('f-vi','Vinculo',vi,'vinculo');
+  const st=uniq('sit');     if(st.length)   mkMulti('f-st','Situacao',st,'situacao');
+  const sx=uniq('sexo');    if(sx.length)   mkMulti('f-sx','Sexo',sx,'sexo');
+  const ch=uniq('chefia');  if(ch.length)   mkMulti('f-ch','Chefia',ch,'chefia');
+  const ins=uniq('instrucao'); if(ins.length) mkMulti('f-in','Instrucao',ins,'instrucao');
+  const uf=uniq('uf');      if(uf.length)   mkMulti('f-uf','UF (Residencia)',uf,'uf');
+  const ct=uniq('cidade');  if(ct.length)   mkMulti('f-ct','Cidade (Estab.)',ct,'cidade');
+  const sd=uniq('sind');    if(sd.length)   mkMulti('f-sd','Sindicato',sd,'sind');
+
+  mkSingle('f-tp','Tempo de Servico',[
+    {v:'0-6',l:'0 – 6 meses'},{v:'7-12',l:'7 – 12 meses'},{v:'13-24',l:'13 – 24 meses'},
+    {v:'25-36',l:'25 – 36 meses'},{v:'37-60',l:'37 – 60 meses'},
+    {v:'61-120',l:'61 – 120 meses (5–10 anos)'},{v:'121-9999',l:'121+ meses (10+ anos)'},
+  ],'tempo');
+
+  // ── FILTRO DADOS INCOMPLETOS (sem data)
+  (()=>{
+    const div=document.createElement('div');div.className='fg';
+    div.innerHTML=`
+      <div class="flrow" style="margin-bottom:4px">
+        <label class="fl">Dados Incompletos</label>
+        <a class="fl-acts" id="f-inc-clr" style="color:var(--p);cursor:pointer;font-size:10px">Limpar</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="f-inc-adm" ${F.incAdm?'checked':''}> Sem data de admissao
+        </label>
+        <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="f-inc-sal" ${F.incSal?'checked':''}> Sem salario
+        </label>
+        <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="f-inc-exp" ${F.incExp?'checked':''}> Sem data de experiencia
+        </label>
+      </div>`;
+    ctrl.appendChild(div);
+    const chkAdm=div.querySelector('#f-inc-adm');
+    const chkSal=div.querySelector('#f-inc-sal');
+    const chkExp=div.querySelector('#f-inc-exp');
+    const clr=div.querySelector('#f-inc-clr');
+    const onChange=()=>{
+      F.incAdm=chkAdm.checked;
+      F.incSal=chkSal.checked;
+      F.incExp=chkExp.checked;
+      applyFilters();saveF();
+    };
+    chkAdm.addEventListener('change',onChange);
+    chkSal.addEventListener('change',onChange);
+    chkExp.addEventListener('change',onChange);
+    clr.addEventListener('click',e=>{
+      e.preventDefault();
+      chkAdm.checked=false;chkSal.checked=false;chkExp.checked=false;
+      F.incAdm=false;F.incSal=false;F.incExp=false;
+      applyFilters();saveF();
+    });
+  })();
+
+  // ── DUAL RANGE SLIDER (Faixa Salarial)
+  const step=Math.max(100,Math.round((salRangeMax-salRangeMin)/100));
+  const div=document.createElement('div');div.className='fg';
+  div.innerHTML=`
+    <div class="flrow">
+      <label class="fl">Faixa Salarial (R$)</label>
+      <a class="drs-clr" id="drs-clr">Limpar</a>
+    </div>
+    <div class="drs-wrap">
+      <div class="drs" id="drs">
+        <div class="drs-track"><div class="drs-fill" id="drs-fill"></div></div>
+        <input type="range" class="drs-min" id="drs-min" min="${salRangeMin}" max="${salRangeMax}" step="${step}" value="${salRangeMin}">
+        <input type="range" class="drs-max" id="drs-max" min="${salRangeMin}" max="${salRangeMax}" step="${step}" value="${salRangeMax}">
+      </div>
+      <div class="drs-lbls"><span id="drs-lbl-min">${fBRL(salRangeMin)}</span><span id="drs-lbl-max">${fBRL(salRangeMax)}</span></div>
+    </div>`;
+  ctrl.appendChild(div);
+  setupDualRange();
+  document.getElementById('drs-clr').addEventListener('click',()=>{
+    document.getElementById('drs-min').value=salRangeMin;
+    document.getElementById('drs-max').value=salRangeMax;
+    F.salMin='';F.salMax='';updateDrsFill();applyFilters();saveF();
+  });
+}
+
+function setupDualRange(){
+  const rMin=document.getElementById('drs-min'),rMax=document.getElementById('drs-max');
+  if(!rMin)return;
+  if(F.salMin)rMin.value=+F.salMin;
+  if(F.salMax)rMax.value=+F.salMax;
+  updateDrsFill();
+  [rMin,rMax].forEach(el=>el.addEventListener('input',()=>{
+    let lo=parseInt(rMin.value),hi=parseInt(rMax.value);
+    if(lo>hi){const t=lo;lo=hi;hi=t;rMin.value=lo;rMax.value=hi;}
+    F.salMin=lo>salRangeMin?lo:'';
+    F.salMax=hi<salRangeMax?hi:'';
+    updateDrsFill();applyFilters();saveF();
+  }));
+}
+function updateDrsFill(){
+  const rMin=document.getElementById('drs-min'),rMax=document.getElementById('drs-max'),fill=document.getElementById('drs-fill');
+  const lMin=document.getElementById('drs-lbl-min'),lMax=document.getElementById('drs-lbl-max');
+  if(!rMin)return;
+  const lo=parseInt(rMin.value),hi=parseInt(rMax.value),range=salRangeMax-salRangeMin;
+  if(fill&&range>0){fill.style.left=((lo-salRangeMin)/range*100)+'%';fill.style.width=((hi-lo)/range*100)+'%';}
+  if(lMin)lMin.textContent=fBRL(lo);
+  if(lMax)lMax.textContent=fBRL(hi);
+}
+
+// ── FILTER LOGIC ──────────────────────────────────────────────────────────
+function applyFilters(){
+  FILT=ALL.filter(r=>{
+    // CNPJ filter: stored as "XX.XXX.XXX/XXXX-XX — NomeEmpresa"
+    if(F.cnpj.length){
+      const rc=g(r,CM.cnpj);
+      if(!F.cnpj.some(v=>v.startsWith(rc)))return false;
+    }
+    if(F.empCod.length  &&!F.empCod.includes(g(r,CM.empCod)))        return false;
+    if(F.empresa.length   &&!F.empresa.includes(g(r,CM.empresa)))  return false;
+    if(F.cr.length        &&!F.cr.includes(g(r,CM.crNome)))         return false;
+    if(F.funcGrupo.length &&!F.funcGrupo.includes(r._fg||''))       return false;
+    if(F.funcao.length    &&!F.funcao.includes(g(r,CM.funcao)))     return false;
+    if(F.vinculo.length   &&!F.vinculo.includes(g(r,CM.vinculo)))   return false;
+    if(F.situacao.length  &&!F.situacao.includes(g(r,CM.sit)))      return false;
+    if(F.sexo.length      &&!F.sexo.includes(g(r,CM.sexo)))         return false;
+    if(F.chefia.length    &&!F.chefia.includes(g(r,CM.chefia)))     return false;
+    if(F.instrucao.length &&!F.instrucao.includes(g(r,CM.instrucao)))return false;
+    if(F.uf.length        &&!F.uf.includes(g(r,CM.uf)))             return false;
+    if(F.cidade.length    &&!F.cidade.includes(g(r,CM.cidade)))     return false;
+    if(F.sind.length      &&!F.sind.includes(g(r,CM.sind)))         return false;
+    if(F.tempo){const[mn,mx]=F.tempo.split('-').map(Number);const t=parseTempo(g(r,CM.tempo));if(t<mn||t>mx)return false;}
+    if(F.salMin){const s=brl(g(r,CM.sal));if(s<+F.salMin)return false;}
+    if(F.salMax){const s=brl(g(r,CM.sal));if(s>+F.salMax)return false;}
+    if(F.incAdm&&g(r,CM.adm))return false;
+    if(F.incSal&&brl(g(r,CM.sal))>0)return false;
+    if(F.incExp&&g(r,CM.fimExp))return false;
+    return true;
+  });
+  gPage=1;
+  renderAll();
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────────────────
+function renderAll(){renderInfo();renderKPIs();renderCharts();renderOrg();renderAlert(gTab);renderGrid();}
+
+function renderInfo(){
+  const shown=FILT.length,total=ALL.length;
+  const ents=new Set(FILT.map(r=>g(r,CM.cnpj)).filter(Boolean)).size;
+  document.getElementById('dinfo').innerHTML=
+    `<strong>${fNum(shown)}</strong> colaboradores`+
+    (shown<total?` <span>de ${fNum(total)}</span>`:'')+
+    (ents>1?` <span>&middot; ${ents} entidades</span>`:'')+
+    `<span style="margin-left:auto;font-size:11px;color:#aaa">Anderson Souza &middot; Uso interno</span>`;
+}
+
+// ── KPIs ─────────────────────────────────────────────────────────────────
+function renderKPIs(){
+  const D=FILT,hc=D.length;
+  const clt=D.filter(r=>norm(g(r,CM.vinculo)).includes('clt')).length;
+  const est=D.filter(r=>norm(g(r,CM.vinculo)).includes('stagiari')).length;
+  const sals=D.map(r=>brl(g(r,CM.sal))).filter(s=>s>0);
+  const massa=sals.reduce((a,b)=>a+b,0),media=sals.length?massa/sals.length:0;
+  const fem=D.filter(r=>norm(g(r,CM.sexo))==='feminino').length;
+  const pctF=hc?Math.round(fem/hc*100):0;
+  const expV=D.filter(r=>{const dt=parseDate(g(r,CM.fimExp));const d=diffDays(dt);return d!==null&&d>=0&&d<=90;}).length;
+  const reaj=D.filter(r=>{const s=brl(g(r,CM.sal)),a=brl(g(r,CM.salAnt));return s>a&&a>0;}).length;
+  const apz=D.filter(r=>norm(g(r,CM.vinculo)).includes('aprendiz')||norm(g(r,CM.catProf)||'').includes('aprendiz'));
+  const apzMap={};apz.forEach(r=>{const c=g(r,CM.cnpj)||g(r,CM.empresa)||'N/I';apzMap[c]=(apzMap[c]||0)+1;});
+  let pcdVal='N/D';
+  if(CM.pcd)pcdVal=D.filter(r=>{const v=norm(g(r,CM.pcd));return v&&v!=='nao'&&v!=='0'&&v!=='nenhuma'&&v!=='';}).length;
+  const hrs=D.map(r=>brl(g(r,CM.salH))).filter(Boolean);
+  const mHora=hrs.length?hrs.reduce((a,b)=>a+b,0)/hrs.length:0;
+
+  document.getElementById('kpi').innerHTML=[
+    {l:'Headcount',      v:hc,          s:`${clt} CLT · ${est} Estagiario`,         cls:''},
+    {l:'Massa Salarial', v:fBRL(massa), s:`Media ${fBRL(media)}/mes`,               cls:'ac'},
+    {l:'Genero F / M',   v:`${pctF}%/${100-pctF}%`, s:`${fem}F · ${hc-fem}M`,    cls:''},
+    {l:'Exp. Vencendo',  v:expV,        s:'proximos 90 dias',                        cls:expV?'wn':'ok'},
+    {l:'Com Reajuste',   v:reaj,        s:'vs. salario anterior',                    cls:'ok'},
+    {l:'Menor Aprendiz', v:apz.length,  s:`${Object.keys(apzMap).length} CNPJ(s)`,  cls:apz.length?'wn':''},
+    {l:'PCD',            v:pcdVal,      s:CM.pcd||'col. nao encontrada',             cls:''},
+    {l:'Custo/Hora Med.',v:fBRL(mHora), s:'salario-hora medio',                      cls:''},
+  ].map(k=>`<div class="kc ${k.cls}"><div class="kl">${k.l}</div><div class="kv">${k.v}</div><div class="ks">${k.s}</div></div>`).join('');
+
+  const apzSec=document.getElementById('apz-section');
+  if(apz.length){
+    apzSec.style.display='block';
+    document.getElementById('apz-grid').innerHTML=Object.entries(apzMap)
+      .map(([c,n])=>`<div class="apz-chip"><strong>${n}</strong> aprendiz${n!==1?'es':''} &mdash; ${c}</div>`).join('');
+  }else{apzSec.style.display='none';}
+}
+
+// ── CHART HELPERS ─────────────────────────────────────────────────────────
+const destroyC=id=>{if(charts[id]){charts[id].destroy();delete charts[id];}};
+function countBy(key){
+  const m={};FILT.forEach(r=>{const v=(key==='funcGrupo'?(r._fg||'N/I'):g(r,CM[key]))||'N/I';m[v]=(m[v]||0)+1;});
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+function aggByUF(valFn){
+  const m={};
+  FILT.forEach(r=>{const u=g(r,CM.uf)||'N/I';if(!m[u])m[u]={sum:0,ct:0};m[u].sum+=valFn(r);m[u].ct++;});
+  return Object.entries(m).sort((a,b)=>b[1].sum-a[1].sum);
+}
+
+function renderCharts(){
+  renderUFHC();renderCR();renderVinc();
+  renderUFSal();renderUFTempo();renderFuncGrp();
+  renderEsc();renderFaixa();renderInstrucao();renderVar();
+  renderScatter();renderEtaria();renderFuncTop();
+}
+
+function mkBar(id,labels,data,colors,dlCfg,opts={}){
+  destroyC(id);
+  const bgColors=Array.isArray(colors)?colors:labels.map((_,i)=>PAL[i%PAL.length]);
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:bgColors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:18}},
+      plugins:{legend:{display:false},datalabels:dlCfg||DL()},
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{beginAtZero:true,grid:{color:'#f0f0f0'},...(opts.yTick?{ticks:{callback:opts.yTick,font:{size:10}}}:{ticks:{font:{size:10}}})}
+      },
+      ...opts.extra}
+  });
+}
+function mkBarH(id,labels,data,color,dlCfg){
+  destroyC(id);
+  const maxVal=Math.max(...data,1);
+  // altura dinâmica: mínimo 28px por barra para evitar barras finas
+  const minBarH=28;
+  const h=Math.max(160,labels.length*minBarH+20);
+  const canvas=document.getElementById(id);
+  // ajusta o wrapper pai para acomodar a altura calculada
+  const wrap=canvas.parentElement;
+  if(wrap){wrap.style.height=Math.min(h,320)+'px';wrap.style.overflowY='auto';}
+  canvas.height=h;
+  // Rótulo dentro da barra se barra grande o suficiente, fora se pequena
+  const dlPlugin={
+    formatter:(v)=>v>0?v:'',
+    font:{size:10},
+    align:(ctx)=>{const v=ctx.dataset.data[ctx.dataIndex];return v/maxVal>0.25?'left':'end';},
+    anchor:'end',
+    color:(ctx)=>{const v=ctx.dataset.data[ctx.dataIndex];return v/maxVal>0.25?'#fff':'#333';},
+    offset:4
+  };
+  charts[id]=new Chart(canvas,{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:color||'#0083CA',borderRadius:3,barThickness:'flex',maxBarThickness:22}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      layout:{padding:{right:32}},
+      plugins:{legend:{display:false},datalabels:dlPlugin},
+      scales:{
+        x:{beginAtZero:true,ticks:{font:{size:10}},grid:{color:'#f0f0f0'}},
+        y:{ticks:{font:{size:10}}}
+      }}
+  });
+}
+function mkDoughnut(id,labels,data){
+  destroyC(id);
+  const bgColors=labels.map((_,i)=>PAL[i%PAL.length]);
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:bgColors,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{font:{size:11}}},datalabels:DL_PIE}}
+  });
+}
+
+function renderUFHC(){
+  const d=countBy('uf');
+  const gm=groupRowsBy('uf');
+  setDrill('ch-uf-hc','Headcount por Estado (UF)',d.map(x=>x[0]),d.map(x=>gm[x[0]]||[]));
+  const colors=d.map((_,i)=>PAL[i%PAL.length]);
+  destroyC('uf-hc');
+  charts['uf-hc']=new Chart(document.getElementById('ch-uf-hc'),{
+    type:'bar',
+    data:{labels:d.map(x=>x[0]),datasets:[{data:d.map(x=>x[1]),backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:18}},
+      plugins:{legend:{display:false},datalabels:DL()},
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{beginAtZero:true,ticks:{font:{size:10}},grid:{color:'#f0f0f0'}}
+      }}
+  });
+}
+function renderCR(){
+  const useEmpCod=CM.empCod&&FILT.some(r=>g(r,CM.empCod));
+  const map={};
+  FILT.forEach(r=>{
+    let key,label;
+    if(useEmpCod){
+      const cod=g(r,CM.empCod)||'N/I';
+      const emp=(g(r,CM.empresa)||'').split(' ')[0]||cod;
+      key=cod;label=cod+' '+emp;
+    }else{
+      const cr=g(r,CM.crNome)||'N/I';
+      key=cr;label=cr.replace(/^\d+\s/,'').substring(0,26);
+    }
+    if(!map[key])map[key]={label,ct:0,rows:[]};
+    map[key].ct++;
+    map[key].rows.push(r);
+  });
+  const d=Object.values(map).sort((a,b)=>b.ct-a.ct);
+  const labels=d.map(x=>x.label.substring(0,28));
+  const data=d.map(x=>x.ct);
+  setDrill('ch-cr','Headcount por Empresa',labels,d.map(x=>x.rows||[]));
+  const maxVal=Math.max(...data,1);
+  const h=Math.max(160,d.length*28+20);
+  const wrap=document.getElementById('ch-cr-wrap');
+  wrap.style.height=Math.min(h,300)+'px';
+  const canvas=document.getElementById('ch-cr');
+  canvas.height=h;
+  destroyC('cr');
+  charts.cr=new Chart(canvas,{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:'#0083CA',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      layout:{padding:{right:36}},
+      plugins:{legend:{display:false},datalabels:{
+        formatter:v=>v>0?v:'',
+        font:{size:9},
+        align:(ctx)=>ctx.dataset.data[ctx.dataIndex]/maxVal>0.3?'left':'end',
+        anchor:'end',
+        color:(ctx)=>ctx.dataset.data[ctx.dataIndex]/maxVal>0.3?'#fff':'#333',
+        offset:4
+      }},
+      scales:{
+        x:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'#f0f0f0'}},
+        y:{ticks:{font:{size:9}}}
+      }}
+  });
+}
+function renderVinc(){
+  const d=countBy('vinculo');
+  const gm=groupRowsBy('vinculo');
+  if(!d.length){destroyC('vinc');return;}
+  const labels=d.map(x=>x[0]||'N/I');
+  const data=d.map(x=>x[1]);
+  setDrill('ch-vinc','Vinculo Empregaticio',labels,d.map(x=>gm[x[0]]||[]));
+  const bgColors=labels.map((_,i)=>PAL[i%PAL.length]);
+  destroyC('vinc');
+  charts.vinc=new Chart(document.getElementById('ch-vinc'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:bgColors,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}},datalabels:DL_PIE}}
+  });
+}function renderUFSal(){
+  const m={};
+  FILT.forEach(r=>{const u=g(r,CM.uf)||'N/I';if(!m[u])m[u]={sum:0,rows:[]};m[u].sum+=brl(g(r,CM.sal));m[u].rows.push(r);});
+  const d=Object.entries(m).map(([u,v])=>[u,v.sum,v.rows]).sort((a,b)=>b[1]-a[1]);
+  setDrill('ch-uf-sal','Massa Salarial por Estado',d.map(x=>x[0]),d.map(x=>x[2]));
+  const colors=d.map((_,i)=>PAL[i%PAL.length]);
+  destroyC('uf-sal');
+  charts['uf-sal']=new Chart(document.getElementById('ch-uf-sal'),{
+    type:'bar',
+    data:{labels:d.map(x=>x[0]),datasets:[{data:d.map(x=>x[1]),backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:18}},
+      plugins:{legend:{display:false},datalabels:DL_BRL},
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{beginAtZero:true,ticks:{font:{size:10},callback:v=>v>0?'R$'+fK(v):''},grid:{color:'#f0f0f0'}}
+      }}
+  });
+}
+function renderUFTempo(){
+  const m={};
+  FILT.forEach(r=>{const u=g(r,CM.uf)||'N/I';if(!m[u])m[u]={sum:0,ct:0,rows:[]};m[u].sum+=parseTempo(g(r,CM.tempo));m[u].ct++;m[u].rows.push(r);});
+  const d=Object.entries(m).map(([u,v])=>[u,v.ct?Math.round(v.sum/v.ct):0,v.rows]).sort((a,b)=>b[1]-a[1]);
+  setDrill('ch-uf-tempo','Tempo Medio de Servico por Estado',d.map(x=>x[0]),d.map(x=>x[2]));
+  const colors=d.map((_,i)=>PAL[i%PAL.length]);
+  destroyC('uf-tempo');
+  charts['uf-tempo']=new Chart(document.getElementById('ch-uf-tempo'),{
+    type:'bar',
+    data:{labels:d.map(x=>x[0]),datasets:[{data:d.map(x=>x[1]),backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:18}},
+      plugins:{legend:{display:false},datalabels:DL(v=>v+'m')},
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{beginAtZero:true,ticks:{font:{size:10},callback:v=>v+'m'},grid:{color:'#f0f0f0'}}
+      }}
+  });
+}
+function renderFuncGrp(){
+  const d=countBy('funcGrupo');
+  const gm=groupRowsBy('funcGrupo');
+  setDrill('ch-func-grp','Grupo de Funcao',d.map(x=>x[0]),d.map(x=>gm[x[0]]||[]));
+  mkBarH('ch-func-grp',d.map(x=>x[0]),d.map(x=>x[1]),'#005A64');
+}
+function renderEsc(){
+  const d=countBy('escala');
+  const gm=groupRowsBy('escala');
+  if(!d.length){destroyC('esc');return;}
+  const labels=d.map(x=>x[0]||'N/I');
+  const data=d.map(x=>x[1]);
+  setDrill('ch-esc','Escala de Trabalho',labels,d.map(x=>gm[x[0]]||[]));
+  const bgColors=labels.map((_,i)=>PAL[i%PAL.length]);
+  destroyC('esc');
+  charts.esc=new Chart(document.getElementById('ch-esc'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:bgColors,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}},datalabels:DL_PIE}}
+  });
+}function renderFaixa(){
+  const fx=[{l:'Ate 3k',n:0,x:3000},{l:'3-6k',n:3000,x:6000},{l:'6-10k',n:6000,x:10000},
+    {l:'10-15k',n:10000,x:15000},{l:'15-20k',n:15000,x:20000},{l:'20-30k',n:20000,x:30000},{l:'30k+',n:30000,x:Infinity}];
+  const groups=fx.map(f=>FILT.filter(r=>{const s=brl(g(r,CM.sal));return s>f.n&&s<=f.x;}));
+  const data=groups.map(gp=>gp.length);
+  setDrill('ch-faixa','Distribuicao por Faixa Salarial',fx.map(f=>f.l),groups);
+  const bgColors=fx.map((_,i)=>PAL[i%PAL.length]);
+  destroyC('faixa');
+  charts.faixa=new Chart(document.getElementById('ch-faixa'),{
+    type:'bar',
+    data:{labels:fx.map(f=>f.l),datasets:[{data,backgroundColor:bgColors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:18}},
+      plugins:{legend:{display:false},datalabels:DL()},
+      scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{beginAtZero:true,ticks:{font:{size:10}},grid:{color:'#f0f0f0'}}}}
+  });
+}
+function renderInstrucao(){
+  const d=countBy('instrucao');
+  const gm=groupRowsBy('instrucao');
+  const maxVal=Math.max(...d.map(x=>x[1]),1);
+  setDrill('ch-ins','Grau de Instrucao',d.map(x=>x[0]),d.map(x=>gm[x[0]]||[]));
+  const h=Math.max(160,d.length*24+20);
+  const wrap=document.getElementById('ch-ins').closest('.cw');
+  wrap.style.height=Math.min(h,205)+'px';
+  destroyC('ins');
+  charts.ins=new Chart(document.getElementById('ch-ins'),{
+    type:'bar',
+    data:{labels:d.map(x=>x[0]),datasets:[{data:d.map(x=>x[1]),backgroundColor:'#003C64',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      layout:{padding:{right:36}},
+      plugins:{legend:{display:false},datalabels:{
+        formatter:v=>v>0?v:'',
+        font:{size:9},
+        align:(ctx)=>ctx.dataset.data[ctx.dataIndex]/maxVal>0.3?'left':'end',
+        anchor:'end',
+        color:(ctx)=>ctx.dataset.data[ctx.dataIndex]/maxVal>0.3?'#fff':'#333',
+        offset:4
+      }},
+      scales:{
+        x:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'#f0f0f0'}},
+        y:{ticks:{font:{size:9}}}
+      }}
+  });
+}
+function renderVar(){
+  destroyC('var');
+  const wrap=document.getElementById('ch-var-wrap');
+  if(!wrap.querySelector('canvas')){wrap.innerHTML='<canvas id="ch-var"></canvas>';}
+  const rows=FILT.filter(r=>brl(g(r,CM.salAnt))>0 && brl(g(r,CM.sal))>0)
+    .map(r=>{const at=brl(g(r,CM.sal)),an=brl(g(r,CM.salAnt));
+      const pct=an?((at-an)/an*100):0;
+      return{row:r,nm:(g(r,CM.nome)||'').split(' ').slice(0,2).join(' '),full:g(r,CM.nome)||'',at,an,d:at-an,p:pct};})
+    .filter(r=>isFinite(r.p) && Math.abs(r.p)>0.009)
+    .sort((a,b)=>b.p-a.p)
+    .slice(0,40);
+  if(!rows.length){wrap.innerHTML='<div style="padding:20px;color:var(--mu);font-size:13px;text-align:center">Sem dados de salario anterior com variacao.</div>';return;}
+  const barW=28;
+  const minW=Math.max(rows.length*barW, (wrap.closest('.cc').offsetWidth||600)-26);
+  wrap.style.overflowX='auto';wrap.style.overflowY='hidden';wrap.style.height='280px';
+  const cv=document.getElementById('ch-var');
+  cv.style.minWidth=minW+'px';cv.style.display='block';
+  setDrill('ch-var','Variacao Salarial Atual vs. Anterior',rows.map(r=>r.full||r.nm),rows.map(r=>[r.row]),'Percentuais muito altos normalmente indicam mudança de jornada, promoção, correção cadastral ou salário anterior parcial. Use o drill para conferir Salário Atual x Anterior.');
+  charts.var=new Chart(cv,{type:'bar',
+    data:{labels:rows.map(r=>r.nm),datasets:[{data:rows.map(r=>+r.p.toFixed(1)),
+      backgroundColor:rows.map(r=>r.d>0?'#0083CA':r.d<0?'#003C64':'#6EB4DC'),borderRadius:3,barPercentage:.82,categoryPercentage:.86}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:18,right:10,bottom:4,left:4}},
+      plugins:{legend:{display:false},
+        datalabels:{anchor:'end',align:'top',offset:1,font:{size:9},color:'#444',clip:false,
+          formatter:(v,ctx)=>rows[ctx.dataIndex].p.toFixed(1)+'%'},
+        tooltip:{callbacks:{label:ctx=>{const r=rows[ctx.dataIndex];return[r.p.toFixed(1)+'%',`Dif.: ${fBRL(r.d)}`,`Ant: ${fBRL(r.an)}`,`Atual: ${fBRL(r.at)}`];}}}},
+      scales:{
+        x:{ticks:{font:{size:9},maxRotation:50,minRotation:35,autoSkip:false},grid:{display:false}},
+        y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f0f0f0'}}
+      }}});
+}
+function renderScatter(){
+  destroyC('sc');
+  const empMap={};
+  FILT.forEach(r=>{
+    const emp=g(r,CM.empresa)||g(r,CM.cnpj)||'N/I';
+    const key=emp.split(/[\s\/]/)[0].replace(/[^A-Za-z0-9]/g,'').toUpperCase()||'N/I';
+    if(!empMap[key])empMap[key]=[];
+    empMap[key].push(r);
+  });
+  const empKeys=Object.keys(empMap).sort();
+  const datasets=empKeys.map((key,i)=>({
+    label:key,
+    data:empMap[key].filter(r=>!selected.has(g(r,CM.mat)))
+      .map(r=>({x:parseTempo(g(r,CM.tempo)),y:brl(g(r,CM.sal)),nm:g(r,CM.nome),row:r})).filter(p=>p.y>0),
+    backgroundColor:PAL[i%PAL.length]+'AA',
+    borderColor:PAL[i%PAL.length],
+    pointRadius:4,pointHoverRadius:6,pointBorderWidth:0}));
+  const selData=FILT.filter(r=>selected.has(g(r,CM.mat)))
+    .map(r=>({x:parseTempo(g(r,CM.tempo)),y:brl(g(r,CM.sal)),nm:g(r,CM.nome),row:r})).filter(p=>p.y>0);
+  if(selData.length)datasets.push({label:'Selecionados',data:selData,
+    backgroundColor:'#DC3545CC',borderColor:'#DC3545',pointRadius:8,pointHoverRadius:10,pointStyle:'star'});
+  setDrill('ch-sc','Tempo de Servico x Salario',datasets.map(ds=>ds.data.map(p=>p.nm||'Selecionado')),datasets.map(ds=>ds.data.map(p=>[p.row])), 'Clique em qualquer ponto para abrir o colaborador correspondente.');
+  DRILL['ch-sc'].mode='matrix';
+  destroyC('sc');
+  charts.sc=new Chart(document.getElementById('ch-sc'),{type:'scatter',data:{datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{datalabels:DL_OFF,
+        legend:{position:'top',align:'start',labels:{font:{size:10},boxWidth:8,padding:8,usePointStyle:true}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.raw.nm||''}: ${ctx.raw.x}m — ${fBRL(ctx.raw.y)}`}}},
+      scales:{
+        x:{title:{display:true,text:'Tempo (meses)',font:{size:10}},beginAtZero:true,
+          grid:{color:'#f0f0f0'},ticks:{font:{size:10}}},
+        y:{title:{display:true,text:'Salario',font:{size:10}},
+          grid:{color:'#f0f0f0'},ticks:{font:{size:10},callback:v=>'R$'+new Intl.NumberFormat('pt-BR',{notation:'compact'}).format(v)}}
+      }}});
+}
+function renderEtaria(){
+  const fx=[{l:'Ate 25',n:0,x:25},{l:'26-35',n:26,x:35},{l:'36-45',n:36,x:45},{l:'46-55',n:46,x:55},{l:'56+',n:56,x:200}];
+  const groups=fx.map(f=>FILT.filter(r=>{const i=parseInt(g(r,CM.idade));return !isNaN(i)&&i>=f.n&&i<=f.x;}));
+  setDrill('ch-et','Faixa Etaria',fx.map(f=>f.l),groups);
+  mkBarH('ch-et',fx.map(f=>f.l),groups.map(gp=>gp.length),'#6EB4DC');
+}
+function renderFuncTop(){
+  const d=countBy('funcGrupo').slice(0,8);
+  const gm=groupRowsBy('funcGrupo');
+  setDrill('ch-func','Demografico - Grupo de Funcao',d.map(x=>x[0]),d.map(x=>gm[x[0]]||[]));
+  mkBarH('ch-func',d.map(x=>x[0]),d.map(x=>x[1]),'#003C64');
+}
+
+// ── ORG CHART ─────────────────────────────────────────────────────────────
+function renderOrg(){
+  const map={};
+  FILT.forEach(r=>{
+    const c=g(r,CM.chefia)||'Sem chefia';
+    if(!map[c])map[c]=[];
+    const nm=(g(r,CM.nome)||'').trim();
+    if(nm)map[c].push(nm);
+  });
+
+  // descartar grupos sem nomes; ordenar nomes A-Z; ordenar grupos por headcount desc
+  const entries=Object.entries(map)
+    .filter(([,nms])=>nms.length>0)
+    .map(([ch,nms])=>[ch,nms.sort((a,b)=>a.localeCompare(b,'pt-BR'))])
+    .sort((a,b)=>b[1].length-a[1].length);
+
+  const grid=document.getElementById('org-grid');
+
+  // criar/reaproveitar input de busca
+  let orgSearch=document.getElementById('org-search');
+  if(!orgSearch){
+    orgSearch=document.createElement('input');
+    orgSearch.id='org-search';
+    orgSearch.type='text';
+    orgSearch.placeholder='Buscar chefia ou colaborador...';
+    orgSearch.style.cssText="width:100%;max-width:340px;border:1px solid var(--bd);border-radius:4px;padding:6px 10px;font-size:12px;font-family:'Roboto',sans-serif;outline:none;margin-bottom:10px;display:block";
+    orgSearch.addEventListener('focus',()=>{orgSearch.style.borderColor='var(--p)';});
+    orgSearch.addEventListener('blur', ()=>{orgSearch.style.borderColor='var(--bd)';});
+    grid.parentElement.insertBefore(orgSearch,grid);
+  }
+
+  function buildCards(filterQ){
+    const kw=norm(filterQ||'');
+    const filtered=kw
+      ? entries.map(([ch,nms])=>{
+          const nmsFilt=nms.filter(n=>norm(n).includes(kw)||norm(ch).includes(kw));
+          return nmsFilt.length?[ch,nmsFilt]:null;
+        }).filter(Boolean)
+      : entries;
+
+    // limpar TUDO (cards + mensagens residuais de iteracoes anteriores)
+    grid.innerHTML='';
+
+    if(!filtered.length){
+      const el=document.createElement('div');
+      el.style.cssText='padding:16px;color:var(--mu);font-size:12px;grid-column:1/-1';
+      el.textContent=kw?'Nenhum resultado para "'+filterQ+'".':(FILT.length?'Sem dados de chefia.':'Sem colaboradores no filtro.');
+      grid.appendChild(el);
+      return;
+    }
+
+    filtered.forEach(([ch,nms])=>{
+      const card=document.createElement('div');
+      card.className='org-card';
+      card.innerHTML=
+        '<div class="org-hdr">'+
+          '<div><div class="org-nm">'+escH(ch)+'</div>'+
+          '<div class="org-ct">'+nms.length+' direto'+(nms.length!==1?'s':'')+'</div></div>'+
+          '<button class="org-tog" title="Expandir">+</button>'+
+        '</div>'+
+        '<div class="org-list">'+nms.map(n=>'&bull; '+escH(n)).join('<br>')+'</div>';
+      grid.appendChild(card);
+    });
+  }
+
+  // reconectar listener (substitui o anterior, seguro)
+  orgSearch.oninput=()=>buildCards(orgSearch.value);
+
+  buildCards(orgSearch.value);
+}
+
+// ── ALERTS ────────────────────────────────────────────────────────────────
+function renderAlert(tab){
+  gTab=tab;
+  document.querySelectorAll('.atab').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
+  let cols=[],rows=[];
+
+  if(tab==='exp'){
+    cols=[{k:'nome',l:'Nome'},{k:'mat',l:'Matricula'},{k:'funcao',l:'Funcao'},{k:'chefia',l:'Chefia'},{k:'fimExp',l:'Fim Experiencia'},{k:'dias',l:'Dias Restantes',num:true}];
+    rows=FILT.map(r=>{const dt=parseDate(g(r,CM.fimExp));const d=diffDays(dt);
+      return{nome:g(r,CM.nome),mat:g(r,CM.mat),funcao:g(r,CM.funcao),chefia:g(r,CM.chefia),fimExp:g(r,CM.fimExp),dias:d};})
+      .filter(r=>r.dias!==null&&r.dias<=90).sort((a,b)=>a.dias-b.dias);
+  }else if(tab==='avi'){
+    cols=[{k:'nome',l:'Nome'},{k:'mat',l:'Matricula'},{k:'funcao',l:'Funcao'},{k:'chefia',l:'Chefia'},{k:'fimAviso',l:'Fim Aviso'},{k:'dias',l:'Dias',num:true}];
+    rows=FILT.map(r=>{const dt=parseDate(g(r,CM.fimAviso));const d=diffDays(dt);
+      return{nome:g(r,CM.nome),mat:g(r,CM.mat),funcao:g(r,CM.funcao),chefia:g(r,CM.chefia),fimAviso:g(r,CM.fimAviso),dias:d};})
+      .filter(r=>r.dias!==null).sort((a,b)=>a.dias-b.dias);
+  }else if(tab==='aft'){
+    cols=[{k:'nome',l:'Nome'},{k:'mat',l:'Matricula'},{k:'funcao',l:'Funcao'},{k:'afSigla',l:'Sigla'},{k:'afData',l:'Cessao'},{k:'aftUltD',l:'Ult.Afast.'},{k:'aftUltR',l:'Retorno'},{k:'aftUltM',l:'Motivo'}];
+    rows=FILT.filter(r=>(g(r,CM.afSigla)&&norm(g(r,CM.afSigla))!=='ativo')||g(r,CM.afData))
+      .map(r=>({nome:g(r,CM.nome),mat:g(r,CM.mat),funcao:g(r,CM.funcao),
+        afSigla:g(r,CM.afSigla)||'-',afData:g(r,CM.afData)||'-',
+        aftUltD:g(r,CM.aftUltD)||'-',aftUltR:g(r,CM.aftUltR)||'-',aftUltM:g(r,CM.aftUltM)||'-'}));
+  }else if(tab==='sind'){
+    cols=[{k:'nome',l:'Nome'},{k:'mat',l:'Matricula'},{k:'funcao',l:'Funcao'},{k:'sind',l:'Sindicato'},{k:'assocS',l:'Assoc.'},{k:'contribS',l:'Desconta'}];
+    rows=FILT.filter(r=>g(r,CM.sind)).map(r=>({nome:g(r,CM.nome),mat:g(r,CM.mat),funcao:g(r,CM.funcao),
+      sind:g(r,CM.sind),assocS:g(r,CM.assocS)||'-',contribS:g(r,CM.contribS)||'-'}));
+  }
+
+  const st=alertSort[tab];
+  if(st.k)rows=[...rows].sort((a,b)=>{
+    const av=a[st.k],bv=b[st.k];
+    if(typeof av==='number'&&typeof bv==='number')return(av-bv)*st.d;
+    return String(av||'').localeCompare(String(bv||''),'pt-BR')*st.d;
+  });
+
+  if(!rows.length){document.getElementById('alert-body').innerHTML='<div style="padding:32px;text-align:center;color:var(--mu)">Nenhum registro.</div>';return;}
+
+  const thead=cols.map(c=>`<th class="${st.k===c.k?(st.d>0?'sa':'sd'):''}" data-tab="${tab}" data-k="${c.k}">${c.l}</th>`).join('');
+  const tbody=rows.map(r=>`<tr>${cols.map(c=>c.k==='dias'?`<td>${dBadge(r.dias)}</td>`:`<td>${r[c.k]||'-'}</td>`).join('')}</tr>`).join('');
+  document.getElementById('alert-body').innerHTML=`<table><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
+}
+function dBadge(d){
+  if(d===null)return'-';
+  if(d<0)return`<span class="bs b-er">Vencido ${Math.abs(d)}d</span>`;
+  if(d<=30)return`<span class="bs b-er">${d}d</span>`;
+  if(d<=60)return`<span class="bs b-wn">${d}d</span>`;
+  return`<span class="bs b-ok">${d}d</span>`;
+}
+
+// ── GRID ─────────────────────────────────────────────────────────────────
+const GCOLS=[
+  {k:'mat',l:'Matricula'},{k:'cpf',l:'CPF'},{k:'nome',l:'Nome'},{k:'funcao',l:'Funcao'},
+  {k:'funcGrupo',l:'Grupo'},{k:'crNome',l:'CR'},{k:'vinculo',l:'Vinculo'},
+  {k:'chefia',l:'Chefia'},{k:'sal',l:'Salario',brl:true},
+  {k:'salAnt',l:'Sal.Anterior',brl:true},{k:'escala',l:'Escala'},
+  {k:'adm',l:'Admissao'},{k:'tempo',l:'Tempo'},{k:'sit',l:'Situacao'},
+  {k:'sexo',l:'Sexo'},{k:'instrucao',l:'Instrucao'},{k:'idade',l:'Idade'},
+  {k:'cidade',l:'Cidade'},{k:'uf',l:'UF'},{k:'empresa',l:'Empresa'},{k:'cnpj',l:'CNPJ'},
+];
+function getVal(r,k){return k==='funcGrupo'?(r._fg||'-'):g(r,CM[k]);}
+
+function renderGrid(){
+  let D=[...FILT];
+  if(gQ){const kw=norm(gQ);D=D.filter(r=>norm(g(r,CM.nome)).includes(kw)||norm(g(r,CM.mat)).includes(kw)||norm(g(r,CM.funcao)).includes(kw)||norm(g(r,CM.chefia)).includes(kw)||norm(g(r,CM.crNome)).includes(kw)||norm(g(r,CM.cpf)||'').includes(kw));}
+  if(gSort)D.sort((a,b)=>{const col=GCOLS.find(c=>c.k===gSort);const av=getVal(a,gSort),bv=getVal(b,gSort);if(col&&col.brl)return(brl(av)-brl(bv))*gDir;if(!isNaN(+av)&&!isNaN(+bv))return(+av-+bv)*gDir;return av.localeCompare(bv,'pt-BR')*gDir;});
+  const total=D.length,pages=Math.ceil(total/PS)||1;
+  gPage=Math.min(gPage,pages);
+  const slice=D.slice((gPage-1)*PS,gPage*PS);
+
+  const thead=`<thead><tr><th class="chk-col"><input type="checkbox" id="chk-all"></th>
+    ${GCOLS.map(c=>`<th class="${gSort===c.k?(gDir>0?'sa':'sd'):''}" data-k="${c.k}">${c.l}</th>`).join('')}</tr></thead>`;
+  const tbody=slice.map(r=>{
+    const mat=g(r,CM.mat),isSel=selected.has(mat);
+    const sit=norm(g(r,CM.sit)),bc=sit==='ativo'?'b-ok':sit.includes('deslig')?'b-er':'b-wn';
+    return `<tr class="${isSel?'sel-row':''}" data-mat="${escH(mat)}">
+      <td class="chk-col"><input type="checkbox" class="row-chk" data-mat="${escH(mat)}" ${isSel?'checked':''}></td>
+      ${GCOLS.map(c=>{let v=getVal(r,c.k);if(c.brl)v=v?fBRL(brl(v)):'-';if(c.k==='sit')v=`<span class="bs ${bc}">${v||'-'}</span>`;return`<td>${v||'-'}</td>`;}).join('')}</tr>`;
+  }).join('')||`<tr><td colspan="${GCOLS.length+1}" style="text-align:center;padding:30px;color:var(--mu)">Sem resultados.</td></tr>`;
+
+  document.getElementById('dtw').innerHTML=`<table>${thead}<tbody>${tbody}</tbody></table>`;
+
+  document.querySelectorAll('#dtw thead th[data-k]').forEach(th=>th.addEventListener('click',()=>{
+    if(gSort===th.dataset.k)gDir*=-1;else{gSort=th.dataset.k;gDir=1;}gPage=1;renderGrid();
+  }));
+  document.getElementById('chk-all').addEventListener('change',e=>{
+    slice.forEach(r=>{const m=g(r,CM.mat);if(m)e.target.checked?selected.add(m):selected.delete(m);});
+    updateSelBar();renderScatter();renderGrid();
+  });
+  document.querySelectorAll('.row-chk').forEach(chk=>chk.addEventListener('change',e=>{
+    const m=e.target.dataset.mat;e.target.checked?selected.add(m):selected.delete(m);
+    e.target.closest('tr').classList.toggle('sel-row',e.target.checked);
+    updateSelBar();renderScatter();
+  }));
+
+  document.getElementById('pg').innerHTML=
+    `<button id="pg1" ${gPage===1?'disabled':''}>«</button><button id="pgp" ${gPage===1?'disabled':''}>‹</button>
+     <span>${gPage}/${pages} · ${fNum(total)} registros</span>
+     <button id="pgn" ${gPage>=pages?'disabled':''}>›</button><button id="pgl" ${gPage>=pages?'disabled':''}>»</button>`;
+  document.getElementById('pg1').onclick=()=>{gPage=1;renderGrid();};
+  document.getElementById('pgp').onclick=()=>{gPage--;renderGrid();};
+  document.getElementById('pgn').onclick=()=>{gPage++;renderGrid();};
+  document.getElementById('pgl').onclick=()=>{gPage=pages;renderGrid();};
+}
+
+// ── SELECTION BAR ─────────────────────────────────────────────────────────
+function updateSelBar(){
+  const n=selected.size,bar=document.getElementById('sel-bar');
+  bar.classList.toggle('on',n>0);
+  document.getElementById('sel-count').textContent=`${n} colaborador${n!==1?'es':''} selecionado${n!==1?'s':''}`;
+}
+function clearSelection(){selected.clear();updateSelBar();renderScatter();renderGrid();}
+
+// ── COMPARISON ────────────────────────────────────────────────────────────
+function openComparison(){
+  const initSel=FILT.filter(r=>selected.has(g(r,CM.mat)));
+  if(!initSel.length){alert('Selecione pelo menos 1 colaborador na tabela.');return;}
+  // Pool de selecionados para o modal (independente do selected global)
+  let cmpSel=new Set(initSel.map(r=>g(r,CM.mat)));
+  renderCmpModal(cmpSel);
+  document.getElementById('cmp-overlay').style.display='flex';
+}
+
+function renderCmpModal(cmpSel){
+  // Popular dropdown com todos os FILT (excluindo já selecionados)
+  const addSel=document.getElementById('cmp-add-sel');
+  addSel.innerHTML='<option value="">-- selecionar --</option>';
+  FILT.filter(r=>!cmpSel.has(g(r,CM.mat))).forEach(r=>{
+    const mat=g(r,CM.mat),nome=g(r,CM.nome);
+    if(!mat)return;
+    const opt=document.createElement('option');
+    opt.value=mat;
+    opt.textContent=`${mat} — ${nome}`;
+    addSel.appendChild(opt);
+  });
+
+  // Chips dos selecionados
+  const chips=document.getElementById('cmp-chips');
+  chips.innerHTML='';
+  FILT.filter(r=>cmpSel.has(g(r,CM.mat))).forEach(r=>{
+    const mat=g(r,CM.mat),nome=(g(r,CM.nome)||'').split(' ').slice(0,2).join(' ');
+    const chip=document.createElement('span');chip.className='cmp-chip';
+    chip.innerHTML=`${nome}<button title="Remover" data-mat="${escH(mat)}">&times;</button>`;
+    chip.querySelector('button').addEventListener('click',()=>{
+      cmpSel.delete(mat);renderCmpModal(cmpSel);
+    });
+    chips.appendChild(chip);
+  });
+
+  // Botao adicionar
+  const addBtn=document.getElementById('cmp-add-btn');
+  addBtn.onclick=()=>{
+    const v=addSel.value;if(!v)return;
+    cmpSel.add(v);renderCmpModal(cmpSel);
+  };
+
+  // Renderizar radar + tabela
+  const selRows=FILT.filter(r=>cmpSel.has(g(r,CM.mat)));
+  if(selRows.length<2){
+    document.getElementById('cmp-radar-wrap').innerHTML='<div style="padding:24px;color:var(--mu);font-size:12px;text-align:center">Selecione pelo menos 2 colaboradores para comparar.</div>';
+    document.getElementById('cmp-tbl').innerHTML='';
+    if(cmpChart){cmpChart.destroy();cmpChart=null;}
+    return;
+  }
+
+  const instrScore={'Ensino Médio Incompleto':10,'Ensino Médio Completo':20,'Educação Superior Incompleto':40,'Educação Superior':70,'Pós Graduação':100};
+  const nrm=(v,mn,mx)=>mx>mn?Math.round((v-mn)/(mx-mn)*100):50;
+  const allSals=FILT.map(r=>brl(g(r,CM.sal))).filter(s=>s>0);
+  const allTmps=FILT.map(r=>parseTempo(g(r,CM.tempo)));
+  const allId  =FILT.map(r=>parseInt(g(r,CM.idade))).filter(n=>!isNaN(n));
+  const allAum =FILT.filter(r=>brl(g(r,CM.salAnt))>0).map(r=>{const s=brl(g(r,CM.sal)),a=brl(g(r,CM.salAnt));return((s-a)/a*100);});
+  const [mnS,mxS]=[Math.min(...allSals),Math.max(...allSals)];
+  const [mnT,mxT]=[Math.min(...allTmps),Math.max(...allTmps)];
+  const [mnI,mxI]=allId.length?[Math.min(...allId),Math.max(...allId)]:[0,100];
+  const [mnA,mxA]=allAum.length?[Math.min(...allAum),Math.max(...allAum)]:[0,0];
+
+  const radarLabels=['Salario','Tempo de Casa','Aumento %','Idade','Instrucao'];
+  const datasets=selRows.map((r,i)=>({
+    label:(g(r,CM.nome)||'').split(' ').slice(0,2).join(' '),
+    data:[
+      nrm(brl(g(r,CM.sal)),mnS,mxS),
+      nrm(parseTempo(g(r,CM.tempo)),mnT,mxT),
+      nrm(brl(g(r,CM.salAnt))>0?((brl(g(r,CM.sal))-brl(g(r,CM.salAnt)))/brl(g(r,CM.salAnt))*100):0,mnA,mxA),
+      nrm(parseInt(g(r,CM.idade))||0,mnI,mxI),
+      instrScore[g(r,CM.instrucao)]||30,
+    ],
+    borderColor:PAL[i%PAL.length],backgroundColor:PAL[i%PAL.length]+'2A',
+    pointBackgroundColor:PAL[i%PAL.length],borderWidth:2,
+  }));
+
+  // Restaurar canvas se foi sobrescrito por mensagem de texto
+  const radarWrap=document.getElementById('cmp-radar-wrap');
+  if(!radarWrap.querySelector('canvas')){radarWrap.innerHTML='<canvas id="cmp-radar"></canvas>';}
+
+  if(cmpChart){cmpChart.destroy();cmpChart=null;}
+  cmpChart=new Chart(document.getElementById('cmp-radar'),{type:'radar',data:{labels:radarLabels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{datalabels:DL_OFF,legend:{labels:{font:{size:11}}}},
+      scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:25,font:{size:9}},pointLabels:{font:{size:10}}}}}});
+
+  const metrics=[
+    {l:'Nome',         fn:r=>g(r,CM.nome)},
+    {l:'Matricula',    fn:r=>g(r,CM.mat)},
+    {l:'Grupo',        fn:r=>r._fg||'-'},
+    {l:'Funcao',       fn:r=>g(r,CM.funcao)},
+    {l:'CR',           fn:r=>g(r,CM.crNome)},
+    {l:'Vinculo',      fn:r=>g(r,CM.vinculo)},
+    {l:'UF',           fn:r=>g(r,CM.uf)},
+    {l:'Cidade',       fn:r=>g(r,CM.cidade)},
+    {l:'Salario',      fn:r=>fBRL(brl(g(r,CM.sal)))},
+    {l:'Sal. Anterior',fn:r=>fBRL(brl(g(r,CM.salAnt)))},
+    {l:'Aumento %',    fn:r=>{const s=brl(g(r,CM.sal)),a=brl(g(r,CM.salAnt));return a>0?((s-a)/a*100).toFixed(1)+'%':'—';}},
+    {l:'Tempo (meses)',fn:r=>parseTempo(g(r,CM.tempo))+'m'},
+    {l:'Idade',        fn:r=>g(r,CM.idade)||'—'},
+    {l:'Instrucao',    fn:r=>g(r,CM.instrucao)},
+    {l:'Escala',       fn:r=>g(r,CM.escala)},
+    {l:'Admissao',     fn:r=>g(r,CM.adm)},
+    {l:'CNPJ',         fn:r=>g(r,CM.cnpj)},
+  ];
+  const th=`<tr><th>Dimensao</th>${selRows.map(r=>`<th>${(g(r,CM.nome)||'').split(' ').slice(0,2).join(' ')}</th>`).join('')}</tr>`;
+  const tb=metrics.map(m=>`<tr><td class="row-lbl">${m.l}</td>${selRows.map(r=>`<td>${m.fn(r)}</td>`).join('')}</tr>`).join('');
+  document.getElementById('cmp-tbl').innerHTML=`<thead>${th}</thead><tbody>${tb}</tbody>`;
+}
+
+// ── EXPAND CHART ──────────────────────────────────────────────────────────
+let expandChartInst=null;
+function expandChart(canvasId,title){
+  const srcCanvas=document.getElementById(canvasId);
+  if(!srcCanvas)return;
+  const srcChart=Object.values(charts).find(c=>c.canvas===srcCanvas)||(canvasId==='ch-var'?charts.var:null);
+  if(!srcChart)return;
+  document.getElementById('expand-title').textContent=title||'Grafico';
+  const wrap=document.getElementById('expand-wrap');
+  wrap.innerHTML='<canvas id="expand-canvas" style="width:100%;height:100%"></canvas>';
+  const newCanvas=document.getElementById('expand-canvas');
+  // Guardar o canvasId original para o DrillDown saber qual DRILL[] usar
+  newCanvas.dataset.srcId=canvasId;
+  // Clonar config do chart original
+  const cfg=JSON.parse(JSON.stringify({type:srcChart.config.type,data:srcChart.config.data,options:srcChart.config.options}));
+  cfg.options=cfg.options||{};
+  cfg.options.responsive=true;cfg.options.maintainAspectRatio=false;
+  if(expandChartInst){expandChartInst.destroy();expandChartInst=null;}
+  expandChartInst=new Chart(newCanvas,cfg);
+  document.getElementById('expand-overlay').style.display='flex';
+
+  // Conectar click do canvas expandido ao drill, usando o srcId e o expand-wrap como container
+  newCanvas.onclick=(e)=>{
+    if(!expandChartInst)return;
+    const pts=expandChartInst.getElementsAtEventForMode(e,'nearest',{intersect:true},true);
+    if(!pts.length)return;
+    const srcId=newCanvas.dataset.srcId;
+    if(!DRILL[srcId])return;
+    showDrill(srcId, pts[0].index, pts[0].datasetIndex, wrap);
+  };
+  newCanvas.onmousemove=(e)=>{
+    if(!expandChartInst)return;
+    const pts=expandChartInst.getElementsAtEventForMode(e,'nearest',{intersect:true},true);
+    newCanvas.style.cursor=pts.length&&DRILL[newCanvas.dataset.srcId]?'pointer':'default';
+  };
+}
+
+// ── RESIZE OBSERVER ───────────────────────────────────────────────────────
+(function setupResize(){
+  if(!window.ResizeObserver)return;
+  const ro=new ResizeObserver(()=>{
+    Object.values(charts).forEach(c=>{try{c.resize();}catch(e){}});
+    if(cmpChart)try{cmpChart.resize();}catch(e){}
+  });
+  const main=document.getElementById('main');
+  if(main)ro.observe(main);
+  // Observar mudanças na sidebar (colapso)
+  const sb=document.getElementById('sb');
+  if(sb)ro.observe(sb);
+})();
+
+// ── STORAGE ───────────────────────────────────────────────────────────────
+function saveSession(){
+  try{
+    localStorage.setItem(LS_D,JSON.stringify({data:ALL,headers:Object.keys(ALL[0]||{})}));
+    showToast('Sessao salva com sucesso.');
+  }catch(e){alert('Armazenamento insuficiente. Use "Exportar CSV" para backup.');}
+}
+function loadStoredSession(){
+  try{
+    const s=localStorage.getItem(LS_D);if(!s)return false;
+    const{data,headers}=JSON.parse(s);if(!data||!data.length)return false;
+    ALL=data;buildCM(headers);
+    const sals=ALL.map(r=>brl(g(r,CM.sal))).filter(s=>s>0);
+    salRangeMin=sals.length?Math.floor(Math.min(...sals)):0;
+    salRangeMax=sals.length?Math.ceil(Math.max(...sals)):50000;
+    return true;
+  }catch(e){return false;}
+}
+function resetSession(){
+  if(!confirm('Apagar dados da sessao e filtros?'))return;
+  localStorage.removeItem(LS_D);localStorage.removeItem(LS_F);
+  ALL=[];FILT=[];selected.clear();
+  document.getElementById('dash').classList.remove('on');
+  document.getElementById('drop-zone').style.display='';
+  document.getElementById('btn-save').style.display='none';
+  document.getElementById('btn-reset').style.display='none';
+  document.getElementById('restore-note').style.display='none';
+  updateSelBar();
+}
+function saveF(){try{localStorage.setItem(LS_F,JSON.stringify(F));}catch(e){}}
+function restoreF(){try{const s=JSON.parse(localStorage.getItem(LS_F));if(s)Object.assign(F,s);}catch(e){}}
+
+function showToast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.classList.add('show'),10);
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},2600);
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────
+function exportCSV(){
+  const head=GCOLS.map(c=>c.l).join(';');
+  const rows=FILT.map(r=>GCOLS.map(c=>`"${(getVal(r,c.k)||'').replace(/"/g,'""')}"`).join(';'));
+  const blob=new Blob(['﻿'+[head,...rows].join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`hrops_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+
+// ── EVENTS ────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  // check stored session
+  if(localStorage.getItem(LS_D))document.getElementById('restore-note').style.display='flex';
+
+  document.getElementById('btn-restore').addEventListener('click',()=>{
+    if(loadStoredSession()){restoreF();initDash();}
+    else{alert('Erro ao restaurar sessao.');localStorage.removeItem(LS_D);}
+  });
+
+  const fileInput=document.getElementById('file-input');
+  fileInput.addEventListener('click',()=>{fileInput.value='';});
+  fileInput.addEventListener('change',e=>{
+    const f=e.target.files&&e.target.files[0];
+    if(f)loadFile(f);
+    else showLoadDiagnostic('Nenhum arquivo foi selecionado.');
+  });
+
+  const dz=document.getElementById('drop-zone'),dt=document.getElementById('drop-target');
+  ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dt.classList.add('over');}));
+  ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dt.classList.remove('over');}));
+  dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f);});
+
+  document.getElementById('btn-save').addEventListener('click',saveSession);
+  document.getElementById('btn-reset').addEventListener('click',resetSession);
+
+  document.getElementById('btn-clr-all').addEventListener('click',()=>{
+    Object.keys(F).forEach(k=>{F[k]=Array.isArray(F[k])?[]:typeof F[k]==='boolean'?false:'';});
+    document.querySelectorAll('#fctrl select').forEach(s=>[...s.options].forEach(o=>o.selected=false));
+    document.querySelectorAll('#f-inc-adm,#f-inc-sal,#f-inc-exp').forEach(c=>c.checked=false);
+    const rMin=document.getElementById('drs-min'),rMax=document.getElementById('drs-max');
+    if(rMin){rMin.value=salRangeMin;rMax.value=salRangeMax;updateDrsFill();}
+    saveF();applyFilters();
+  });
+
+  document.getElementById('atabs').addEventListener('click',e=>{if(e.target.dataset.tab)renderAlert(e.target.dataset.tab);});
+  document.getElementById('alert-body').addEventListener('click',e=>{
+    const th=e.target.closest('th[data-tab][data-k]');if(!th)return;
+    const st=alertSort[th.dataset.tab];
+    if(st.k===th.dataset.k)st.d*=-1;else{st.k=th.dataset.k;st.d=1;}
+    renderAlert(th.dataset.tab);
+  });
+
+  document.getElementById('org-grid').addEventListener('click',e=>{
+    const tog=e.target.closest('.org-tog');if(!tog)return;
+    const card=tog.closest('.org-card'),list=card.querySelector('.org-list');
+    const open=list.style.display!=='none'&&list.style.display!=='';
+    list.style.display=open?'none':'block';
+    tog.textContent=open?'+':'−';
+  });
+
+  document.getElementById('expand-close').addEventListener('click',()=>{
+    document.getElementById('expand-overlay').style.display='none';
+    if(expandChartInst){expandChartInst.destroy();expandChartInst=null;}
+    document.getElementById('expand-wrap').innerHTML='';
+  });
+  document.getElementById('expand-overlay').addEventListener('click',e=>{
+    if(e.target.id==='expand-overlay'){
+      document.getElementById('expand-overlay').style.display='none';
+      if(expandChartInst){expandChartInst.destroy();expandChartInst=null;}
+      document.getElementById('expand-wrap').innerHTML='';
+    }
+  });
+
+  document.getElementById('gsrch').addEventListener('input',e=>{gQ=e.target.value;gPage=1;renderGrid();});
+  document.getElementById('btn-exp').addEventListener('click',exportCSV);
+  document.getElementById('btn-cmp').addEventListener('click',openComparison);
+  document.getElementById('btn-sel-clr').addEventListener('click',clearSelection);
+  document.getElementById('btn-desel-modal').addEventListener('click',()=>{
+    clearSelection();document.getElementById('cmp-overlay').style.display='none';
+  });
+  document.getElementById('cmp-close').addEventListener('click',()=>{document.getElementById('cmp-overlay').style.display='none';});
+  document.getElementById('cmp-overlay').addEventListener('click',e=>{
+    if(e.target.id==='cmp-overlay')document.getElementById('cmp-overlay').style.display='none';
+  });
+});
+</script>
+</body>
+</html>
