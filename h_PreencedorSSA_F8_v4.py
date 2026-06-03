@@ -13,8 +13,20 @@ from collections import defaultdict
 try:
     from pynput import keyboard as pk
     HAS_PYNPUT = True
-except Exception:
+    PYNPUT_IMPORT_ERROR = ""
+except Exception as e:
+    pk = None
     HAS_PYNPUT = False
+    PYNPUT_IMPORT_ERROR = str(e)
+
+try:
+    import keyboard as kb_global
+    HAS_KEYBOARD_PACKAGE = True
+    KEYBOARD_IMPORT_ERROR = ""
+except Exception as e:
+    kb_global = None
+    HAS_KEYBOARD_PACKAGE = False
+    KEYBOARD_IMPORT_ERROR = str(e)
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -69,8 +81,10 @@ class PreenchedorSSAF8Simples:
         self.log("Aplicação inicializada — v4.")
         if HAS_PYNPUT:
             self.log("pynput disponível para hotkey global.")
+        elif HAS_KEYBOARD_PACKAGE:
+            self.log("pynput não encontrado, mas pacote keyboard disponível para hotkey global.")
         else:
-            self.log("pynput não encontrado. F8 funcionará localmente na janela do app.")
+            self.log("pynput e keyboard não encontrados. F8 funcionará localmente na janela do app.")
 
     # =========================================================
     # BASE VISUAL
@@ -1044,37 +1058,92 @@ class PreenchedorSSAF8Simples:
         self.executar_proxima_linha_manual()
 
     def toggle_global(self):
-        if not HAS_PYNPUT:
-            messagebox.showerror("Hotkey global", "Instale o pacote 'pynput' para usar F8 global.")
-            return
+        """Ativa/desativa hotkey global.
+
+        Estratégia:
+        1. Tenta pynput, que é o modelo original do app.
+        2. Se o executável não carregar pynput corretamente, usa fallback com keyboard.
+        3. Se nenhum dos dois estiver disponível, mantém F8 local na janela.
+        """
         if not self.global_on:
             try:
                 self._unbind_local_f8()
-                mapping = {
-                    "<f8>": lambda: self.app.after(0, self.executar_proxima_linha_manual),
-                    "<f6>": lambda: self.app.after(0, self.on_pular_hotkey),
-                    "<f9>": lambda: self.app.after(0, self.on_voltar_hotkey),
-                }
-                self.hk_listener = pk.GlobalHotKeys(mapping)
-                self.hk_listener.start()
-                self.global_on = True
-                self.btn_hotkey.configure(text="Desativar hotkey global", fg_color="#6c757d", hover_color="#5c636a")
-                self.lbl_hotkey_mode.configure(text="Hotkey: Global")
-                self.log("Hotkey global ativada: F8 preenche, F6 pula, F9 volta.")
-                self.set_status("hotkey global ativada", self.COR_SUCESSO)
+
+                if HAS_PYNPUT and pk is not None:
+                    mapping = {
+                        "<f8>": lambda: self.app.after(0, self.executar_proxima_linha_manual),
+                        "<f6>": lambda: self.app.after(0, self.on_pular_hotkey),
+                        "<f9>": lambda: self.app.after(0, self.on_voltar_hotkey),
+                    }
+                    self.hk_listener = pk.GlobalHotKeys(mapping)
+                    self.hk_listener.start()
+                    self.global_on = True
+                    self.btn_hotkey.configure(
+                        text="Desativar hotkey global",
+                        fg_color="#6c757d",
+                        hover_color="#5c636a"
+                    )
+                    self.lbl_hotkey_mode.configure(text="Hotkey: Global pynput")
+                    self.log("Hotkey global ativada via pynput: F8 preenche, F6 pula, F9 volta.")
+                    self.set_status("hotkey global ativada via pynput", self.COR_SUCESSO)
+                    return
+
+                if HAS_KEYBOARD_PACKAGE and kb_global is not None:
+                    kb_global.add_hotkey("f8", lambda: self.app.after(0, self.executar_proxima_linha_manual))
+                    kb_global.add_hotkey("f6", lambda: self.app.after(0, self.on_pular_hotkey))
+                    kb_global.add_hotkey("f9", lambda: self.app.after(0, self.on_voltar_hotkey))
+                    self.global_on = True
+                    self.btn_hotkey.configure(
+                        text="Desativar hotkey global",
+                        fg_color="#6c757d",
+                        hover_color="#5c636a"
+                    )
+                    self.lbl_hotkey_mode.configure(text="Hotkey: Global keyboard")
+                    self.log("Hotkey global ativada via keyboard: F8 preenche, F6 pula, F9 volta.")
+                    self.set_status("hotkey global ativada via keyboard", self.COR_SUCESSO)
+                    return
+
+                detalhes = []
+                if PYNPUT_IMPORT_ERROR:
+                    detalhes.append(f"pynput: {PYNPUT_IMPORT_ERROR}")
+                if KEYBOARD_IMPORT_ERROR:
+                    detalhes.append(f"keyboard: {KEYBOARD_IMPORT_ERROR}")
+                detalhe_txt = "\n".join(detalhes) if detalhes else "Nenhum detalhe técnico disponível."
+                messagebox.showerror(
+                    "Hotkey global",
+                    "Não foi possível ativar F8 global. Instale 'pynput' ou 'keyboard'.\n\n"
+                    f"Detalhes:\n{detalhe_txt}"
+                )
+                self.app.bind("<F8>", self._on_f8_local)
+                self._local_f8_bound = True
+
             except Exception as e:
+                self.app.bind("<F8>", self._on_f8_local)
+                self._local_f8_bound = True
                 messagebox.showerror("Hotkey global", f"Falha ao ativar.\n\n{e}")
+
         else:
             try:
                 if self.hk_listener:
                     self.hk_listener.stop()
             except Exception:
                 pass
+
+            try:
+                if HAS_KEYBOARD_PACKAGE and kb_global is not None:
+                    kb_global.unhook_all_hotkeys()
+            except Exception:
+                pass
+
             self.hk_listener = None
             self.global_on = False
             self.app.bind("<F8>", self._on_f8_local)
             self._local_f8_bound = True
-            self.btn_hotkey.configure(text="Ativar hotkey global", fg_color=self.COR_HEADER, hover_color="#1B2C63")
+            self.btn_hotkey.configure(
+                text="Ativar hotkey global",
+                fg_color=self.COR_HEADER,
+                hover_color="#1B2C63"
+            )
             self.lbl_hotkey_mode.configure(text="Hotkey: Local")
             self.log("Hotkey global desativada.")
             self.set_status("hotkey global desativada", self.COR_INFO)
@@ -1551,6 +1620,13 @@ class PreenchedorSSAF8Simples:
                 self.hk_listener.stop()
         except Exception:
             pass
+
+        try:
+            if HAS_KEYBOARD_PACKAGE and kb_global is not None:
+                kb_global.unhook_all_hotkeys()
+        except Exception:
+            pass
+
         self.app.destroy()
 
     def run(self):
@@ -1560,3 +1636,16 @@ class PreenchedorSSAF8Simples:
 if __name__ == "__main__":
     app = PreenchedorSSAF8Simples()
     app.run()
+# =========================================================
+# BUILD
+# cx_Freeze 6.15.16  |  Python 3.10
+#
+# cd "C:\__RPA"
+# Remove-Item -Recurse -Force "C:\__RPA\dist_contador" -ErrorAction SilentlyContinue
+# & C:\Users\99andsouza\AppData\Local\Programs\Python\Python310\python.exe -m cx_Freeze `
+# --target-dir "C:\__RPA\dist_contador" `
+# --target-name "Contador.exe" `
+# --base-name Win32GUI `
+# --include-modules customtkinter,tkinter `
+# "C:\__RPA\zContador.py"
+# =========================================================
