@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playbook de Implantação ADP — M&A | Sonova RH/DP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#0083CA; --dk:#003C64; --md:#005A64; --lt:#6EB4DC;
+  --ac:#7D0041; --ac2:#8C321E; --tx:#333333; --mu:#646464;
+  --bd:#CCCCCC; --bg:#F4F6F9; --card:#FFFFFF;
+  --ok:#2E7D32; --warn:#E65100; --err:#C62828; --na:#9E9E9E;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 28px rgba(0,60,100,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Roboto',sans-serif;font-weight:300;color:var(--tx);
+  background:var(--bg);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Rufina',serif;font-weight:700;color:var(--dk);line-height:1.2}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:inherit;color:var(--tx)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#c2cdd6;border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:#a7b6c2}
+
+/* ===== HEADER ===== */
+header{
+  position:sticky;top:0;z-index:60;background:var(--p);color:#fff;
+  height:58px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  box-shadow:0 2px 10px rgba(0,60,100,.25);
+}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.wave{display:flex;align-items:flex-end;gap:2px;height:22px}
+.wave span{width:3px;background:#fff;border-radius:2px;opacity:.92;animation:w 1.6s ease-in-out infinite}
+.wave span:nth-child(1){height:7px;animation-delay:0s}
+.wave span:nth-child(2){height:14px;animation-delay:.15s}
+.wave span:nth-child(3){height:22px;animation-delay:.3s}
+.wave span:nth-child(4){height:12px;animation-delay:.45s}
+.wave span:nth-child(5){height:18px;animation-delay:.6s}
+.wave span:nth-child(6){height:8px;animation-delay:.75s}
+@keyframes w{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+.brand h1{color:#fff;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .sub{font-size:10.5px;font-weight:300;opacity:.85;letter-spacing:.4px;text-transform:uppercase}
+.spacer{flex:1}
+.hbtn{
+  background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.28);
+  padding:7px 12px;border-radius:7px;font-size:12.5px;font-weight:400;
+  display:inline-flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap;
+}
+.hbtn:hover{background:rgba(255,255,255,.26)}
+.hbtn svg{width:15px;height:15px;fill:currentColor}
+
+/* ===== AQUISIÇÃO BAR ===== */
+.aqbar{
+  background:var(--dk);color:#fff;display:flex;align-items:center;gap:14px;
+  padding:8px 18px;flex-wrap:wrap;
+}
+.aqbar label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;opacity:.75}
+.aqsel{
+  background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);
+  padding:6px 10px;border-radius:7px;font-size:13px;font-weight:400;min-width:200px;
+}
+.aqsel option{color:#333}
+.aqmeta{font-size:12px;opacity:.85;display:flex;gap:14px;flex-wrap:wrap}
+.aqmeta b{font-weight:500;color:var(--lt)}
+.prog-wrap{display:flex;align-items:center;gap:10px;flex:1;min-width:220px;justify-content:flex-end}
+.prog-track{flex:1;max-width:320px;height:9px;background:rgba(255,255,255,.18);border-radius:6px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--lt),#fff);border-radius:6px;width:0;transition:width .5s ease}
+.prog-pct{font-size:13px;font-weight:500;min-width:42px;text-align:right}
+.iconbtn-d{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);width:32px;height:32px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;transition:.15s}
+.iconbtn-d:hover{background:rgba(255,255,255,.26)}
+.iconbtn-d svg{width:16px;height:16px;fill:currentColor}
+
+/* ===== TOOLBAR ===== */
+.toolbar{
+  background:#fff;border-bottom:1px solid var(--bd);padding:9px 18px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:58px;z-index:50;
+}
+.modes{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:9px;border:1px solid var(--bd)}
+.mode{padding:7px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--mu);transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.mode svg{width:15px;height:15px;fill:currentColor}
+.mode.active{background:var(--p);color:#fff;box-shadow:var(--shadow)}
+.mode:not(.active):hover{background:#e8edf2;color:var(--dk)}
+.search{position:relative;flex:1;min-width:180px;max-width:340px}
+.search input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--bd);border-radius:8px;background:var(--bg)}
+.search input:focus{outline:none;border-color:var(--p);background:#fff}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;fill:var(--mu)}
+.filtsel{padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:#fff;font-size:12.5px;color:var(--tx);max-width:150px}
+.filtsel:focus{outline:none;border-color:var(--p)}
+.tb-btn{padding:8px 12px;border-radius:8px;font-size:12.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);background:#fff;color:var(--dk);transition:.15s}
+.tb-btn:hover{background:var(--bg);border-color:var(--p)}
+.tb-btn.solid{background:var(--p);color:#fff;border-color:var(--p)}
+.tb-btn.solid:hover{background:#006fa8}
+.tb-btn svg{width:15px;height:15px;fill:currentColor}
+
+/* ===== LAYOUT ===== */
+.layout{display:flex;align-items:flex-start;gap:0}
+.sidebar{
+  width:262px;flex-shrink:0;background:#fff;border-right:1px solid var(--bd);
+  padding:14px 10px;position:sticky;top:108px;height:calc(100vh - 108px);overflow-y:auto;
+}
+.side-title{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);padding:4px 10px 10px;font-weight:500}
+.phase-link{
+  display:block;padding:10px 12px;border-radius:9px;margin-bottom:5px;cursor:pointer;
+  border:1px solid transparent;transition:.15s;position:relative;
+}
+.phase-link:hover{background:var(--bg)}
+.phase-link.active{background:#eaf4fb;border-color:#bfe0f4}
+.pl-top{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.pl-num{width:24px;height:24px;border-radius:7px;background:var(--p);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Rufina',serif}
+.phase-link.active .pl-num{background:var(--dk)}
+.pl-name{font-size:12.5px;font-weight:500;color:var(--dk);line-height:1.25}
+.pl-bar{height:5px;background:#e8edf2;border-radius:4px;overflow:hidden}
+.pl-bar i{display:block;height:100%;background:var(--ok);border-radius:4px;transition:width .4s}
+.pl-stat{font-size:10.5px;color:var(--mu);margin-top:4px;display:flex;justify-content:space-between}
+
+.main{flex:1;min-width:0;padding:20px 22px 60px}
+
+/* ===== PHASE HEADER ===== */
+.phase-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #e8edf2}
+.ph-badge{width:54px;height:54px;border-radius:13px;background:linear-gradient(135deg,var(--p),var(--dk));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow)}
+.ph-badge .n{font-family:'Rufina',serif;font-size:22px;font-weight:700;line-height:1}
+.ph-badge .l{font-size:8px;text-transform:uppercase;letter-spacing:.5px;opacity:.85;margin-top:2px}
+.ph-info{flex:1;min-width:0}
+.ph-info h2{font-size:21px;margin-bottom:4px}
+.ph-info .desc{color:var(--mu);font-size:13px;max-width:780px}
+.ph-info .meta{display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--mu);flex-wrap:wrap}
+.ph-info .meta b{color:var(--dk);font-weight:500}
+
+/* ===== CARDS ===== */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.card{
+  background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--p);
+  border-radius:11px;padding:14px 15px;box-shadow:var(--shadow);transition:.18s;
+  display:flex;flex-direction:column;gap:9px;position:relative;
+}
+.card:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.card.done{opacity:.72;border-left-color:var(--ok)}
+.card.done .c-title{text-decoration:line-through;text-decoration-color:rgba(0,0,0,.25)}
+.card.blocked{border-left-color:var(--err)}
+.card.na{opacity:.55;border-left-color:var(--na)}
+.c-head{display:flex;align-items:flex-start;gap:8px}
+.c-title{font-size:13.5px;font-weight:500;color:var(--dk);line-height:1.35;flex:1;outline:none;border-radius:4px;padding:1px 3px;margin:-1px -3px}
+.c-title:focus{background:#eaf4fb;box-shadow:0 0 0 2px #bfe0f4}
+.c-detail{font-size:12px;color:var(--mu);line-height:1.45;outline:none;border-radius:4px;padding:2px 3px;margin:-2px -3px;white-space:pre-wrap}
+.c-detail:focus{background:#f7f9fb;box-shadow:0 0 0 2px #e0e8ef}
+.c-detail.empty:before{content:'+ adicionar detalhe';color:#b0bcc6;font-style:italic}
+.badges{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.badge{font-size:10px;font-weight:500;padding:3px 8px;border-radius:20px;color:#fff;letter-spacing:.2px;white-space:nowrap}
+.badge.outline{background:#fff;border:1.3px solid;}
+.crit-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block}
+.adp-path{
+  font-size:11px;background:#f2f7fb;border:1px solid #d8e8f3;border-radius:7px;
+  padding:6px 9px;color:var(--dk);display:flex;gap:6px;align-items:flex-start;line-height:1.4;
+}
+.adp-path svg{width:13px;height:13px;fill:var(--p);flex-shrink:0;margin-top:1px}
+.adp-path .trail{font-family:'Roboto Mono',monospace;font-weight:400;word-break:break-word}
+.lesson{
+  font-size:11px;background:#fdf3e7;border:1px solid #f5d9b3;border-radius:7px;
+  padding:6px 9px;color:#7a4a16;display:flex;gap:6px;align-items:flex-start;line-height:1.4;
+}
+.lesson svg{width:13px;height:13px;fill:var(--warn);flex-shrink:0;margin-top:1px}
+.c-foot{display:flex;align-items:center;gap:8px;margin-top:2px;flex-wrap:wrap}
+.statussel{font-size:11.5px;font-weight:500;padding:5px 9px;border-radius:7px;border:1.3px solid;background:#fff;cursor:pointer}
+.respchip{font-size:11px;color:var(--mu);display:inline-flex;align-items:center;gap:4px;background:var(--bg);padding:4px 8px;border-radius:7px;border:1px solid var(--bd)}
+.respchip svg{width:12px;height:12px;fill:var(--mu)}
+.respchip input{border:none;background:none;width:74px;outline:none;font-size:11px;color:var(--dk)}
+.c-actions{display:flex;gap:4px;margin-left:auto}
+.mini{width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--mu);transition:.15s;border:1px solid transparent}
+.mini:hover{background:var(--bg);color:var(--dk)}
+.mini.del:hover{background:#fdecea;color:var(--err);border-color:#f5c6c0}
+.mini svg{width:15px;height:15px;fill:currentColor}
+.note-line{display:none;font-size:11.5px;color:var(--tx);background:#fffef5;border:1px dashed #e0d9a8;border-radius:7px;padding:6px 9px;outline:none}
+.note-line.show{display:block}
+.note-line:focus{background:#fff;border-style:solid;border-color:var(--p)}
+.note-line.empty:before{content:'Nota desta aquisição...';color:#b8b08a;font-style:italic}
+
+.add-card{
+  border:2px dashed var(--bd);border-radius:11px;padding:18px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;color:var(--mu);cursor:pointer;transition:.18s;
+  min-height:120px;font-size:13px;font-weight:500;
+}
+.add-card:hover{border-color:var(--p);color:var(--p);background:#f5fafd}
+.add-card svg{width:26px;height:26px;fill:currentColor}
+
+/* ===== KANBAN ===== */
+.kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:14px;align-items:flex-start}
+.kcol{min-width:300px;max-width:320px;flex:1;background:#fff;border:1px solid var(--bd);border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 200px)}
+.kcol-head{padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px;border-radius:12px 12px 0 0;position:sticky;top:0;background:#fff;z-index:2}
+.kcol-head .dot{width:11px;height:11px;border-radius:50%}
+.kcol-head .ktitle{font-family:'Rufina',serif;font-weight:700;font-size:14px;color:var(--dk)}
+.kcol-head .kcount{margin-left:auto;font-size:12px;font-weight:500;color:var(--mu);background:var(--bg);padding:2px 9px;border-radius:12px}
+.kcol-body{padding:10px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:9px;min-height:60px}
+.kcol-body.drag-over{background:#eaf4fb}
+.kcard{background:#fff;border:1px solid var(--bd);border-left:3px solid var(--p);border-radius:9px;padding:10px 11px;box-shadow:var(--shadow);cursor:grab;transition:.15s}
+.kcard:hover{box-shadow:var(--shadow-lg)}
+.kcard.dragging{opacity:.4}
+.kcard .kc-phase{font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--p);font-weight:500;margin-bottom:4px}
+.kcard .kc-title{font-size:12.5px;font-weight:500;color:var(--dk);line-height:1.3}
+.kcard .kc-badges{display:flex;gap:4px;margin-top:7px;flex-wrap:wrap}
+
+/* ===== REPOS ===== */
+.repo-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.repo-tab{padding:9px 16px;border-radius:9px;font-size:13px;font-weight:500;color:var(--mu);border:1px solid var(--bd);background:#fff;transition:.15s;display:inline-flex;align-items:center;gap:7px}
+.repo-tab svg{width:15px;height:15px;fill:currentColor}
+.repo-tab.active{background:var(--dk);color:#fff;border-color:var(--dk)}
+.repo-tab:not(.active):hover{border-color:var(--p);color:var(--dk)}
+.dtable{width:100%;border-collapse:collapse;background:#fff;border-radius:11px;overflow:hidden;box-shadow:var(--shadow);font-size:12.5px}
+.dtable th{background:var(--p);color:#fff;text-align:left;padding:11px 13px;font-weight:500;font-size:12px;letter-spacing:.3px}
+.dtable td{padding:9px 13px;border-bottom:1px solid #eef2f5;vertical-align:top}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tr:hover td{background:#f7fafc}
+.dtable td[contenteditable]{outline:none}
+.dtable td[contenteditable]:focus{background:#eaf4fb;box-shadow:inset 0 0 0 2px #bfe0f4}
+.dtable .vcode{font-family:'Roboto Mono',monospace;font-weight:500;color:var(--ac);background:#fbeef4;padding:2px 7px;border-radius:5px;display:inline-block}
+.rowdel{color:var(--mu);width:30px;text-align:center}
+.rowdel button{width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#b0bcc6;transition:.15s}
+.rowdel button:hover{background:#fdecea;color:var(--err)}
+.rowdel svg{width:14px;height:14px;fill:currentColor}
+.addrow{margin-top:12px;padding:9px 16px;border:1px dashed var(--bd);border-radius:9px;color:var(--mu);font-weight:500;font-size:12.5px;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+.addrow:hover{border-color:var(--p);color:var(--p)}
+.addrow svg{width:15px;height:15px;fill:currentColor}
+
+.lessons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.lcard{background:#fff;border:1px solid var(--bd);border-top:4px solid var(--warn);border-radius:11px;padding:15px;box-shadow:var(--shadow);position:relative}
+.lcard h4{font-size:14px;color:var(--ac2);margin-bottom:9px;padding-right:24px;outline:none}
+.lcard h4:focus{background:#eaf4fb;border-radius:4px}
+.lcard .lrow{margin-bottom:9px}
+.lcard .llabel{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);font-weight:500;display:block;margin-bottom:3px}
+.lcard .ltext{font-size:12.5px;color:var(--tx);line-height:1.45;outline:none;border-radius:4px;padding:3px 5px;margin:-3px -5px}
+.lcard .ltext:focus{background:#f7f9fb;box-shadow:0 0 0 2px #e0e8ef}
+.lcard .ldel{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:6px;color:#b0bcc6;display:inline-flex;align-items:center;justify-content:center}
+.lcard .ldel:hover{background:#fdecea;color:var(--err)}
+.lcard .ldel svg{width:14px;height:14px;fill:currentColor}
+
+/* ===== MODAL ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,30,50,.55);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:15px;width:100%;max-width:460px;box-shadow:var(--shadow-lg);overflow:hidden;animation:pop .2s ease}
+@keyframes pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{background:var(--p);color:#fff;padding:15px 20px;display:flex;align-items:center;gap:10px}
+.modal-head h3{color:#fff;font-size:16px}
+.modal-head svg{width:19px;height:19px;fill:#fff}
+.modal-body{padding:20px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:12px;font-weight:500;color:var(--dk)}
+.fld input,.fld select,.fld textarea{padding:9px 11px;border:1px solid var(--bd);border-radius:8px;background:#fff}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--p)}
+.fld textarea{resize:vertical;min-height:60px}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--bd);display:flex;gap:10px;justify-content:flex-end}
+.mbtn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;transition:.15s}
+.mbtn.ghost{background:#fff;border:1px solid var(--bd);color:var(--mu)}
+.mbtn.ghost:hover{background:var(--bg)}
+.mbtn.primary{background:var(--p);color:#fff}
+.mbtn.primary:hover{background:#006fa8}
+.mbtn.danger{background:var(--err);color:#fff}
+.mbtn.danger:hover{background:#a81f17}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--dk);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:400;box-shadow:var(--shadow-lg);z-index:200;transition:transform .3s ease;display:flex;align-items:center;gap:9px;max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast svg{width:17px;height:17px;fill:var(--lt)}
+
+/* ===== FOOTER ===== */
+.foot{background:var(--p);color:#fff;text-align:center;padding:11px;font-size:11.5px;letter-spacing:.4px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.foot .pg{opacity:.8}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--mu)}
+.empty-state svg{width:48px;height:48px;fill:#c2cdd6;margin-bottom:14px}
+.empty-state h3{color:var(--mu);font-size:16px;margin-bottom:6px}
+
+.hide{display:none!important}
+
+/* RESPONSIVE */
+.menu-toggle{display:none}
+@media(max-width:900px){
+  .sidebar{position:fixed;left:0;top:0;height:100vh;z-index:90;width:280px;transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow-lg);padding-top:18px}
+  .sidebar.open{transform:translateX(0)}
+  .menu-toggle{display:inline-flex}
+  .brand h1{font-size:14.5px}
+  .brand .sub{display:none}
+  .main{padding:16px 14px 50px}
+  .cards{grid-template-columns:1fr}
+  .backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:85}
+  .backdrop.show{display:block}
+}
+@media(min-width:901px){.menu-toggle{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <button class="menu-toggle hbtn" id="menuToggle" title="Menu de fases">
+    <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+  </button>
+  <div class="brand">
+    <div class="wave"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div>
+      <h1>Playbook de Implantação ADP</h1>
+      <div class="sub">Novas Aquisições &middot; M&amp;A &middot; Sonova RH/DP</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <button class="hbtn" id="btnImport" title="Restaurar backup">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6m4 18H6V4h7v5h5v11M8 15l4-4 4 4h-3v3h-2v-3H8Z"/></svg>
+    <span>Restaurar</span>
+  </button>
+  <button class="hbtn" id="btnExport" title="Exportar backup (.json)">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6m4 18H6V4h7v5h5v11m-6-3-4-4h3V9h2v5h3l-4 4Z"/></svg>
+    <span>Backup</span>
+  </button>
+</header>
+
+<!-- ===== AQUISIÇÃO BAR ===== -->
+<div class="aqbar">
+  <label>Aquisição</label>
+  <select class="aqsel" id="aqSelect"></select>
+  <button class="iconbtn-d" id="btnNewAq" title="Nova aquisição">
+    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"/></svg>
+  </button>
+  <button class="iconbtn-d" id="btnEditAq" title="Editar aquisição">
+    <svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </button>
+  <div class="aqmeta" id="aqMeta"></div>
+  <div class="prog-wrap">
+    <span style="font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.6px">Progresso</span>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <span class="prog-pct" id="progPct">0%</span>
+  </div>
+</div>
+
+<!-- ===== TOOLBAR ===== -->
+<div class="toolbar">
+  <div class="modes">
+    <button class="mode active" data-mode="fases">
+      <svg viewBox="0 0 24 24"><path d="M3 5h18v2H3V5m0 6h18v2H3v-2m0 6h18v2H3v-2Z"/></svg>Fases
+    </button>
+    <button class="mode" data-mode="kanban">
+      <svg viewBox="0 0 24 24"><path d="M4 4h6v16H4V4m8 0h6v10h-6V4Z"/></svg>Kanban
+    </button>
+    <button class="mode" data-mode="repos">
+      <svg viewBox="0 0 24 24"><path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3Z"/></svg>Bases
+    </button>
+  </div>
+  <div class="search">
+    <svg viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+    <input type="text" id="searchInput" placeholder="Buscar ação, verba, caminho...">
+  </div>
+  <select class="filtsel" id="filtCat"><option value="">Todas categorias</option></select>
+  <select class="filtsel" id="filtStatus">
+    <option value="">Todos status</option>
+    <option value="pendente">Pendente</option>
+    <option value="andamento">Em andamento</option>
+    <option value="concluido">Concluído</option>
+    <option value="bloqueado">Bloqueado</option>
+    <option value="na">N/A</option>
+  </select>
+  <button class="tb-btn" id="btnCsv" title="Exportar CSV da aquisição ativa">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6m4 18H6V4h7v5h5v11M8 12h2v2H8v-2m0 3h8v2H8v-2m6-3h2v2h-2v-2Z"/></svg>CSV
+  </button>
+  <button class="tb-btn" id="btnPrint" title="Imprimir / PDF">
+    <svg viewBox="0 0 24 24"><path d="M18 3H6v4h12V3m1 5H5a3 3 0 0 0-3 3v6h4v4h12v-4h4v-6a3 3 0 0 0-3-3m-3 11H8v-5h8v5m3-7a1 1 0 0 1-1-1 1 1 0 0 1 1-1 1 1 0 0 1 1 1 1 1 0 0 1-1 1Z"/></svg>Imprimir
+  </button>
+  <button class="tb-btn solid" id="btnReset" title="Restaurar playbook padrão">
+    <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a6 6 0 0 1 6 6 6 6 0 0 1-6 6 6 6 0 0 1-6-6H4a8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8Z"/></svg>Padrão
+  </button>
+</div>
+
+<!-- ===== LAYOUT ===== -->
+<div class="backdrop" id="backdrop"></div>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-title">Fases da implantação</div>
+    <div id="phaseList"></div>
+  </aside>
+  <main class="main">
+    <div id="viewFases"></div>
+    <div id="viewKanban" class="hide"></div>
+    <div id="viewRepos" class="hide"></div>
+  </main>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<div class="foot">
+  <span>Uso interno | Sonova RH/DP</span>
+  <span class="pg">&middot; Playbook ADP M&amp;A &middot; <span id="totAcoes">0</span> ações mapeadas</span>
+</div>
+
+<!-- ===== MODAL GENÉRICO ===== -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17Z"/></svg>
+  <span id="toastMsg"></span>
+</div>
+
+<input type="file" id="fileInput" accept=".json" style="display:none">
+
+</body>
+
+<script>
+/* ============================================================
+   PLAYBOOK DE IMPLANTAÇÃO ADP — M&A | Sonova RH/DP
+   Dados destilados do acervo operacional (Gerenciador HR PMO)
+   ============================================================ */
+
+const SCHEMA = 2;
+const LS_MASTER = 'adp_pb_master_v2';
+const LS_AQ     = 'adp_pb_aq_v2';
+const LS_REPO   = 'adp_pb_repo_v2';
+const LS_UI     = 'adp_pb_ui_v2';
+
+/* ---- Dicionários visuais (paleta Sonova OFC) ---- */
+const CATS = {
+  doc:    {nome:'Documentação',      cor:'#003C64'},
+  forn:   {nome:'Fornecedores',      cor:'#8C321E'},
+  acesso: {nome:'Acessos',           cor:'#005A64'},
+  param:  {nome:'Parametrização',    cor:'#0083CA'},
+  dados:  {nome:'Dados',             cor:'#2E7DA1'},
+  folha:  {nome:'Folha',             cor:'#1565A0'},
+  benef:  {nome:'Benefícios',        cor:'#00796B'},
+  encargo:{nome:'Encargos/eSocial',  cor:'#7D0041'},
+  resc:   {nome:'Rescisões',         cor:'#A0421E'},
+  comp:   {nome:'Compliance',        cor:'#5A2D5A'},
+};
+const CRIT = {
+  critica:{nome:'Crítica', cor:'#C62828'},
+  alta:   {nome:'Alta',    cor:'#E65100'},
+  media:  {nome:'Média',   cor:'#0083CA'},
+  baixa:  {nome:'Baixa',   cor:'#646464'},
+};
+const STATUS = {
+  pendente: {nome:'Pendente',     cor:'#646464'},
+  andamento:{nome:'Em andamento', cor:'#0083CA'},
+  concluido:{nome:'Concluído',    cor:'#2E7D32'},
+  bloqueado:{nome:'Bloqueado',    cor:'#C62828'},
+  na:       {nome:'N/A',          cor:'#9E9E9E'},
+};
+const STATUS_ORDER = ['pendente','andamento','bloqueado','concluido','na'];
+
+/* ---- PLAYBOOK MESTRE (template padrão) ---- */
+const DEFAULT_PLAYBOOK = [
+{ id:'f01', num:1, nome:'Due Diligence & Documentação', label:'Docs',
+  desc:'Levantamento e recebimento de toda a documentação trabalhista, contábil e cadastral da empresa adquirida antes de qualquer parametrização.',
+  acoes:[
+    {titulo:'Cartões CNPJ / CRF / CND-INSS / Certidão de Débitos Trabalhistas', detalhe:'Solicitar de todos os CNPJs do grupo adquirido.', cat:'doc', crit:'critica', resp:'Anderson', adp:'', licao:''},
+    {titulo:'Políticas de RH da adquirida', detalhe:'Admissão, demissão, férias, benefícios, PPR, afastamentos, transferências e promoções.', cat:'doc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Convenções Coletivas (CCT) por estado', detalhe:'Ex.: sindicatos de BA e SP. Define pisos, benefícios, data-base e percentuais.', cat:'doc', crit:'critica', resp:'', adp:'', licao:'Mapear TODOS os sindicatos por base. CCT errada gera passivo e reajuste fora da data-base.'},
+    {titulo:'Guias de contribuição sindical (empregados e patronal)', detalhe:'Recolhimento do último ano, empregados e patronal.', cat:'doc', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Relatórios SOC e HHT (saúde ocupacional)', detalhe:'Relatórios específicos de saúde e segurança ocupacional.', cat:'doc', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Relação de menores aprendizes', detalhe:'Cota de aprendizagem fiscalizada.', cat:'doc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Relação de PCD (cota)', detalhe:'Funcionários portadores de necessidades especiais.', cat:'doc', crit:'alta', resp:'', adp:'', licao:'Cota de PCD e aprendiz é fiscalizada — mapear antes do go-live.'},
+    {titulo:'Relação de membros da CIPA e dirigentes sindicais', detalhe:'Dois últimos anos com data de posse.', cat:'doc', crit:'alta', resp:'', adp:'', licao:'Estabilidade: não desligar CIPA/dirigente/gestante sem checar.'},
+    {titulo:'Ofícios de pensão alimentícia + dados de crédito', detalhe:'CPF, banco, agência e conta corrente dos beneficiários.', cat:'doc', crit:'critica', resp:'', adp:'', licao:'Pensão judicial não pode ter interrupção de pagamento na transição.'},
+    {titulo:'Dados bancários dos colaboradores', detalhe:'Banco, agência e conta corrente de toda a base.', cat:'doc', crit:'critica', resp:'', adp:'', licao:''},
+    {titulo:'Conectividade Social / Certificado ICP', detalhe:'Validar prazo de validade do certificado digital.', cat:'doc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'DIRF entregue (ano corrente e anterior)', detalhe:'Comprovante de entrega.', cat:'doc', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'RAIS entregue', detalhe:'Comprovante de entrega do ano-base.', cat:'doc', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'FAP atual e do ano seguinte (DataPrev)', detalhe:'Consultar fap.dataprev.gov.br.', cat:'doc', crit:'alta', resp:'', adp:'', licao:'Conferir CNAE x FAP — divergência gera contestação.'},
+    {titulo:'Layout de arquivo de crédito bancário / CNAB 240', detalhe:'Para Férias, Rescisão, Quinzenal, Mensal e PLR.', cat:'doc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Layout de VR/VA e VT (operadoras)', detalhe:'Envio e recarga corretos pela ADP.', cat:'doc', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Relatório de provisões de Férias e 13º', detalhe:'Para conciliação contábil na virada.', cat:'doc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Centros de Custo x Departamentos + Plano de Contas', detalhe:'Relação de CC e plano de contas contábil; contas contabilizadas.', cat:'doc', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Relatório completo de verbas da ficha financeira', detalhe:'Código, descrição, tipo (provento/desconto/base) e incidências (INSS, FGTS, IRRF, RAIS, DIRF, Sal-Família). Em xls ou txt.', cat:'doc', crit:'critica', resp:'', adp:'', licao:'É o coração do De-Para de verbas. Sem ele a parametrização trava.'},
+    {titulo:'FGTS 12 meses + SEFIP/GFIP do último mês', detalhe:'GRF, RE, protocolo e declaração de valores à Previdência.', cat:'doc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'IRRF / DCTFWeb (último mês e 13º)', detalhe:'Avisar time ADP Contábil.', cat:'doc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Folhas analítica e sintética (mensal e 13º)', detalhe:'Do último ano para conferência.', cat:'doc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Históricos completos do colaborador', detalhe:'Ficha financeira, férias, afastamento, transferência, salário e função.', cat:'doc', crit:'critica', resp:'', adp:'', licao:'Histórico incompleto compromete cálculo de férias, 13º e rescisão.'},
+    {titulo:'Modelos de contrato de trabalho (todos os tipos)', detalhe:'Revisar cláusulas de home office e jornada.', cat:'doc', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Kit admissão / fichas de registro', detalhe:'Fichas de registro dos colaboradores.', cat:'doc', crit:'media', resp:'', adp:'', licao:''},
+  ]},
+{ id:'f02', num:2, nome:'Contratos & Fornecedores', label:'Forn.',
+  desc:'Contratação da operação ADP, definição de banco pagador e setup dos fornecedores de ponto, crachá, benefícios e correspondência.',
+  acoes:[
+    {titulo:'Contrato de implantação ADP assinado', detalhe:'Formalizar contrato e escopo da implantação.', cat:'forn', crit:'critica', resp:'Rosane', adp:'', licao:''},
+    {titulo:'Solicitar pastas / base do grupo à ADP', detalhe:'Receber estrutura inicial das empresas.', cat:'forn', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Reunião de kickoff da implantação', detalhe:'Alinhamento inicial com o grupo adquirido e ADP.', cat:'forn', crit:'alta', resp:'Rosane e Anderson', adp:'', licao:''},
+    {titulo:'Definição de conta corrente pagadora', detalhe:'Abertura/alinhamento de conta (ex.: Santander) com o financeiro.', cat:'forn', crit:'alta', resp:'Rosane', adp:'', licao:'Alinhar banco e data de corte com financeiro antes da 1ª folha.'},
+    {titulo:'Fornecedor de ponto eletrônico / porta de produção', detalhe:'Ex.: Real Tecnologia Ponto. Migração de relógio.', cat:'forn', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Fornecedor de crachá (emissão/reemissão)', detalhe:'Ex.: AlphaCard. Fazer follow-up por telefone.', cat:'forn', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Fornecedor de correspondência / Sedex', detalhe:'Ex.: xPostal.', cat:'forn', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'Operadoras VR/VA/VT — cadastrar interlocutor', detalhe:'Alelo / Caju. Cadastrar interlocutor e prestação de contas.', cat:'forn', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Migração de fornecedores de farmácia', detalhe:'Avaliar e migrar fornecedores de farmácia/convênio.', cat:'forn', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Renovação/negociação de contratos herdados', detalhe:'Ex.: Sonova Cuida (Telus). Negociar reajuste (IPCA).', cat:'forn', crit:'media', resp:'', adp:'', licao:''},
+  ]},
+{ id:'f03', num:3, nome:'Acessos & Ferramentas Digitais', label:'Acessos',
+  desc:'Cadastro e liberação de acesso em todos os sistemas e ferramentas digitais usados na operação de DP.',
+  acoes:[
+    {titulo:'Portal ADP — cadastro de usuário e estrutura', detalhe:'Acesso principal de folha.', cat:'acesso', crit:'critica', resp:'', adp:'', licao:''},
+    {titulo:'Geração e distribuição de senha ADP', detalhe:'Solicitação via chamado de serviço.', cat:'acesso', crit:'alta', resp:'', adp:'', licao:'Senha ADP expira a cada 60 dias — programar lembrete de renovação.'},
+    {titulo:'Ícone do Gestor (autoatendimento)', detalhe:'Habilitar acesso de gestores.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'DocuSign (assinatura eletrônica)', detalhe:'Para termos de PLR/Bônus, contratos e adendos.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'TI — criação de e-mail corporativo', detalhe:'E-mails dos colaboradores migrados.', cat:'acesso', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Procurações e poderes', detalhe:'Procurações para eSocial, bancos e órgãos.', cat:'acesso', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Acesso eSocial / Conectividade Social', detalhe:'Certificado e procuração eletrônica.', cat:'acesso', crit:'critica', resp:'', adp:'', licao:''},
+    {titulo:'Sistema de farmácia / consignado', detalhe:'Acesso a portais de consignação e farmácia.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Mdacesso / controle de acesso físico', detalhe:'Liberação de catracas e portaria.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'PPP / SESMT', detalhe:'Solicitar acesso ao SESMT para PPP.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Plano de saúde e odonto (inclusão/corte)', detalhe:'Operacionalizar inclusões e cortes.', cat:'acesso', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Refeitório (Sapore) — saldo e quantidade', detalhe:'Acesso a saldo e quantidade.', cat:'acesso', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'CIPA / Brigada / Portaria', detalhe:'Cadastros de segurança e acesso.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Acesso a formulários (Forms)', detalhe:'Forms de admissão, benefícios e solicitações.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Seguro de vida (inclusão/corte)', detalhe:'Ex.: MetLife. Base para faturamento.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Service Place (chamados de novas filiais)', detalhe:'Corrigir acesso para casos de novas filiais.', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Sonova Cuida — acesso lista', detalhe:'Incluir colaboradores na lista de acesso.', cat:'acesso', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'PAT — recuperação/bloqueio VR/VA', detalhe:'Regras do PAT impactam tributação do VR/VA.', cat:'acesso', crit:'alta', resp:'', adp:'', licao:'Bloqueio/recuperação de VR/VA por PAT afeta a tributação.'},
+    {titulo:'Carta de confidencialidade / código de conduta', detalhe:'Incluir no fluxo de admissão (inclusive home office SP).', cat:'acesso', crit:'media', resp:'', adp:'', licao:''},
+  ]},
+{ id:'f04', num:4, nome:'Parametrização ADP', label:'Param.',
+  desc:'Configuração técnica no sistema ADP: De-Para de verbas, estrutura organizacional, datas de pagamento, CBO, CNAE/FAP e benefícios.',
+  acoes:[
+    {titulo:'De-Para de verbas (Classificação x Códigos)', detalhe:'Mapear verbas da adquirida para os códigos da Sonova.', cat:'param', crit:'critica', resp:'', adp:'Folha > Cadastros e Parametrizações > Códigos de Folha > Manut. Classificação x Códigos', licao:'Erro de verba reflete no eSocial. Ex.: 5581 quando o correto era 9205; corrigir 4780 via chamado.'},
+    {titulo:'Estrutura organizacional / Organograma de agrupamento', detalhe:'Montar estrutura de análise por agrupamento.', cat:'param', crit:'alta', resp:'', adp:'Folha > Cadastros e Parametrizações > Estrutura Organizacional > Estruturas de Análise > Organogramas de Agrupamento', licao:''},
+    {titulo:'Feriados e datas de pagamento', detalhe:'Parâmetros para data de pagamento da folha.', cat:'param', crit:'alta', resp:'', adp:'Folha > Cadastros e Parametrizações > Feriados e Datas de Pagamento > Datas de Pagamentos > Parâmetros para Data Pagamento', licao:'Flag de pagamento: se não marcada, a data não é gerada no cruzamento.'},
+    {titulo:'Definição de relatórios de texto livre', detalhe:'Criar relatórios customizados.', cat:'param', crit:'media', resp:'', adp:'Folha > Cadastros e Parametrizações > Definição de Relatórios > Definição de Relatórios de Texto Livre', licao:''},
+    {titulo:'Cadastro de CBO por função', detalhe:'Conferir CBO correto por função.', cat:'param', crit:'alta', resp:'', adp:'', licao:'CBO incorreto afeta eSocial e RAIS. Ex.: corrigir CBO de Assistente Comercial.'},
+    {titulo:'Correção de CNAE x FAP por estabelecimento', detalhe:'Conferir CNAE de cada filial.', cat:'param', crit:'alta', resp:'', adp:'', licao:'CNAE errado gera FAP indevido (ex.: 1,00 quando deveria ser 0,500) — contestar.'},
+    {titulo:'Associação ao Plano de Previdência Privada', detalhe:'Verba 3812, fator 0,0500 — incluir parte empresa 0,05.', cat:'param', crit:'media', resp:'', adp:'Folha > Administração de Pessoal > Benefícios > Previdência Privada > Associação ao Plano de Previdência', licao:''},
+    {titulo:'Habilitar Layout de Refeição para Kit de Benefícios', detalhe:'Habilitar geração do kit de benefícios da implantação.', cat:'param', crit:'alta', resp:'Anderson e Rosane', adp:'', licao:''},
+    {titulo:'Estrutura de comissão / percentuais por função', detalhe:'Ex.: Fonoaudiólogo 3% de comissão; campo apelido e novo contrato.', cat:'param', crit:'alta', resp:'', adp:'', licao:'Equiparação e harmonização de percentual de comissão por CNPJ/função.'},
+    {titulo:'Códigos de folha — classificação', detalhe:'Manutenção de classificação x códigos de folha.', cat:'param', crit:'media', resp:'', adp:'Folha > Cadastros e Parametrizações > Códigos de Folha > Códigos de Folha', licao:''},
+  ]},
+{ id:'f05', num:5, nome:'Migração & Cruzamento de Dados', label:'Dados',
+  desc:'Recebimento dos backups, importação para a ADP e cruzamento/bate-cadastral entre o sistema de origem e o destino.',
+  acoes:[
+    {titulo:'Receber backup das empresas', detalhe:'Ex.: Faceclass. Base completa para importação.', cat:'dados', crit:'critica', resp:'', adp:'', licao:''},
+    {titulo:'Bate cadastral da base + cruzamento', detalhe:'Comparar base de origem x ADP antes de calcular.', cat:'dados', crit:'alta', resp:'Anderson', adp:'', licao:'Cruzar base origem x ADP antes de qualquer cálculo evita retrabalho de folha.'},
+    {titulo:'Atualizar GHE e dados cadastrais', detalhe:'Grupo Homogêneo de Exposição e dados de cadastro.', cat:'dados', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Cruzamento sistema de origem x ADP', detalhe:'Ex.: Sonnet HC versus ADP (headcount).', cat:'dados', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Correção de históricos migrados', detalhe:'Corrigir histórico de férias, salário e função pós-migração.', cat:'dados', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Importação de informações adicionais', detalhe:'Registro de emprego e dados contratuais.', cat:'dados', crit:'media', resp:'', adp:'Folha > Administração de Pessoal > Manutenção Dados Contratuais > Dados do Empregado > Proc. Imp. Inf. Adic. Registro de Emprego', licao:''},
+    {titulo:'Correção de CNPJ de filiais (estabelecimento)', detalhe:'Conferir CNPJ de cada filial no cadastro.', cat:'dados', crit:'alta', resp:'', adp:'', licao:'Filial com CNPJ errado gera FGTS/INSS no estabelecimento errado.'},
+    {titulo:'Fluxo de inclusão de filial e novo CNPJ', detalhe:'Documentar o procedimento de inclusão de filial/CNPJ.', cat:'dados', crit:'alta', resp:'', adp:'', licao:''},
+  ]},
+{ id:'f06', num:6, nome:'Folha & Lançamentos', label:'Folha',
+  desc:'Lançamento de todas as verbas de proventos e descontos: comissões, benefícios, descontos e CCT.',
+  acoes:[
+    {titulo:'Comissões por canal', detalhe:'Verbas 0620 e 4002 (WholeSales, AC).', cat:'folha', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Premiação / Bônus trimestral', detalhe:'Verbas 0700 (premiação) e 4005 (bônus trimestral); 3200 custo empresa.', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Adiantamento de premiação/comissão', detalhe:'Verbas 3190, 3191 e 3194.', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Consignado', detalhe:'Verba 0240. Lançar junto com FGTS/eConsignado.', cat:'folha', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Copay (mensalidade saúde dependente)', detalhe:'Verbas 2621 / 3768. Enviar copay via chamado na folha.', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Creche / filho excepcional', detalhe:'Verba 0912.', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Odonto', detalhe:'Lançamento e conferência de cancelamentos.', cat:'benef', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'GymPass', detalhe:'Verba 3090. Baixa na demissão pelo site.', cat:'benef', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'PetLove', detalhe:'Verba 3163. Baixa e atualização.', cat:'benef', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'Univers Drogaria', detalhe:'Verba 3059. Baixa e atualização.', cat:'benef', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'Estágio (VR zero)', detalhe:'Verba 5610. Validar benefícios do estagiário.', cat:'folha', crit:'media', resp:'', adp:'', licao:'Estagiário não recebe certos benefícios — validar VR.'},
+    {titulo:'VR/VA', detalhe:'Verba 5610. Validar casos específicos.', cat:'benef', crit:'alta', resp:'', adp:'', licao:'Meio período e casos específicos não recebem VR — atenção a não pagar indevido.'},
+    {titulo:'VT — compra e devolução', detalhe:'Verba 5905. Comprar VT e tratar cancelamentos/devoluções.', cat:'benef', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Estacionamento', detalhe:'Verba 3546.', cat:'benef', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'Previdência privada', detalhe:'Verba 3812.', cat:'benef', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Ponto (fechamento)', detalhe:'Lançar e fechar ponto eletrônico.', cat:'folha', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Faltas / assiduidade', detalhe:'Lançar faltas e prêmio assiduidade.', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Vale combustível / abono carro', detalhe:'Verbas 3027 (fretado), 3100 (abono carro), 3705/3767 (combustível).', cat:'folha', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'Ajuda de custo / transferência', detalhe:'Verbas 3016 (ajuda custo) e 3060 (ajuda transferência).', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Descontos diversos', detalhe:'Verbas 3506 (multa), 3518/3560 (desconto autorizado), Sem Parar, avarias.', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Desconto sindical', detalhe:'Verba 5762 (desconto sindical SP).', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Reembolsos', detalhe:'Verba 2300 (idiomas/educacional), vacina.', cat:'folha', crit:'baixa', resp:'', adp:'', licao:''},
+    {titulo:'Aplicação de CCT e aumento (base)', detalhe:'Aplicar reajuste da CCT na base. Reverter casos indevidos.', cat:'folha', crit:'alta', resp:'', adp:'', licao:'Aplicar reajuste na data-base correta; reverter aplicações indevidas.'},
+    {titulo:'Igualdade salarial (equiparação)', detalhe:'Lançamentos de equiparação e correções.', cat:'folha', crit:'alta', resp:'', adp:'', licao:''},
+  ]},
+{ id:'f07', num:7, nome:'Encargos & eSocial', label:'eSocial',
+  desc:'Apuração de FGTS, INSS, IRRF e eConsignado, validações de encargos e transmissão dos eventos ao eSocial.',
+  acoes:[
+    {titulo:'Gerar FGTS por empresa/CNPJ', detalhe:'Apurar FGTS de cada CNPJ do cluster.', cat:'encargo', crit:'critica', resp:'Anderson', adp:'', licao:''},
+    {titulo:'Gerar INSS por empresa/CNPJ', detalhe:'Apurar INSS de cada CNPJ.', cat:'encargo', crit:'critica', resp:'Anderson', adp:'', licao:''},
+    {titulo:'Gerar IRRF por empresa/CNPJ', detalhe:'Apurar IRRF por número de estabelecimento.', cat:'encargo', crit:'critica', resp:'Anderson', adp:'', licao:''},
+    {titulo:'eConsignado junto com o FGTS', detalhe:'Baixar valores de eConsignado e lançar na folha do mês.', cat:'encargo', crit:'alta', resp:'Anderson', adp:'', licao:''},
+    {titulo:'Consultar FAP', detalhe:'fap.dataprev.gov.br/consultar-fap', cat:'encargo', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Conferência de encargos de folha', detalhe:'Conferir cálculo de pagamentos.', cat:'encargo', crit:'alta', resp:'', adp:'Folha > Rotinas e Pagamentos > Cálculos > Cálculo de Pagamentos > Conferência de Encargos de Folha', licao:''},
+    {titulo:'Validar INSS — Totalizador eSocial', detalhe:'Totalizador eSocial de encargos.', cat:'encargo', crit:'alta', resp:'Anderson', adp:'Folha > eSocial > Relatórios > Totalizador eSocial de Encargos', licao:''},
+    {titulo:'Validar encargos por empregado', detalhe:'Conferência INSS/IRRF/FGTS por empregado.', cat:'encargo', crit:'alta', resp:'', adp:'Folha > eSocial > Relatórios > Conferência eSocial INSS/IRRF/FGTS – Por Empregado', licao:''},
+    {titulo:'eSocial trabalhista (S-2500/S-2501)', detalhe:'Processos trabalhistas, quando aplicável.', cat:'encargo', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Envio S-2200 / S-2300 (substitui CAGED)', detalhe:'Eventos de admissão e TSVE do último mês.', cat:'encargo', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Correção e reenvio de verbas no eSocial', detalhe:'Validar incidências antes do reenvio.', cat:'encargo', crit:'alta', resp:'', adp:'', licao:'Validar incidências antes do envio para não retransmitir.'},
+    {titulo:'DCTFWeb (mensal e 13º)', detalhe:'Geração e transmissão.', cat:'encargo', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'DARF IRRF + envio ao eSocial', detalhe:'Códigos 0561 / 0588 / 3562.', cat:'encargo', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Recolhimento de DIF INSS (eCAC)', detalhe:'Diferenças de INSS via eCAC.', cat:'encargo', crit:'media', resp:'Anderson', adp:'', licao:''},
+  ]},
+{ id:'f08', num:8, nome:'Fechamento & Pagamento', label:'Pagto',
+  desc:'Geração de quinzenais, fechamento por empresa, envio para pagamento, compra de benefícios e cálculos de férias e 13º.',
+  acoes:[
+    {titulo:'Gerar quinzenal por empresa', detalhe:'Adiantamento quinzenal de cada CNPJ.', cat:'folha', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Fechamento geral por empresa/CNPJ', detalhe:'Fechar folha de cada empresa do cluster.', cat:'folha', crit:'critica', resp:'Anderson', adp:'', licao:''},
+    {titulo:'Enviar folhas para pagamento', detalhe:'Gerar arquivo bancário e enviar ao financeiro.', cat:'folha', crit:'critica', resp:'Anderson', adp:'', licao:'Respeitar data-limite de adiantamento da incorporação.'},
+    {titulo:'Comprar VR e VT', detalhe:'Pedido de compra das operadoras.', cat:'benef', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Calcular e pagar férias gerais', detalhe:'Programação e pagamento de férias.', cat:'folha', crit:'alta', resp:'', adp:'Folha > Administração de Pessoal > Férias > Férias > Férias Programadas', licao:''},
+    {titulo:'Adiantamento de 13º salário', detalhe:'Folha de adiantamento de 13º.', cat:'folha', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Relatório de despesas (Expense Report Payroll)', detalhe:'Geração analítica do expense report.', cat:'folha', crit:'media', resp:'', adp:'Geração de Arquivo - Expense Report Payroll Analítico', licao:''},
+    {titulo:'Prestação de contas de benefícios', detalhe:'Alelo / Caju — enviar NF para lançamento contábil.', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Faturamento previdência e seguro', detalhe:'BrasilPrev (PGBL/VGBL) e MetLife (seguro de vida).', cat:'folha', crit:'media', resp:'', adp:'', licao:''},
+  ]},
+{ id:'f09', num:9, nome:'Rescisões & Complementares', label:'Resc.',
+  desc:'Processamento de rescisões, complementares de comissão, homologações e tratamento de eConsignado na saída.',
+  acoes:[
+    {titulo:'Rescisões e rescisões complementares', detalhe:'Casos do período e complementares.', cat:'resc', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'TRCT complementar de comissões (mensal)', detalhe:'Gerar TRCT complementar das comissões.', cat:'resc', crit:'alta', resp:'Rosane', adp:'', licao:''},
+    {titulo:'Correção de rescisão com eConsignado', detalhe:'Fazer devolução via TRCT complementar.', cat:'resc', crit:'alta', resp:'Rosane', adp:'', licao:'eConsignado na rescisão exige devolução/acerto via TRCT complementar.'},
+    {titulo:'Homologações', detalhe:'Envio de homologação quando aplicável.', cat:'resc', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Ajuste de DSR na demissão de sexta-feira', detalhe:'Regra de pagamento de DSR.', cat:'resc', crit:'media', resp:'Anderson', adp:'', licao:'Demissão na sexta paga DSR da semana — ajustar regra.'},
+    {titulo:'Solicitar requisição da rescisão completa (PDFs)', detalhe:'Pedir à ADP a requisição completa com PDFs.', cat:'resc', crit:'media', resp:'', adp:'', licao:''},
+  ]},
+{ id:'f10', num:10, nome:'Pós Go-Live & Melhoria Contínua', label:'Pós',
+  desc:'Estabilização, comunicação de benefícios, compliance (NR-1, igualdade salarial), defesa trabalhista e automações.',
+  acoes:[
+    {titulo:'Comunicação de benefícios com linha do tempo', detalhe:'Comunicar mudanças de benefícios da implantação.', cat:'comp', crit:'alta', resp:'', adp:'', licao:'Comunicar mudança de benefício com antecedência reduz ruído com a base.'},
+    {titulo:'Onboarding DP / guia do colaborador', detalhe:'Conteúdo de onboarding e guia do colaborador.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Carta sindical / oposição na admissão', detalhe:'Validar entrega das cartas sindicais nas admissões.', cat:'comp', crit:'alta', resp:'', adp:'', licao:'Falha recorrente do time: incluir carta sindical no manual e no fluxo de admissão.'},
+    {titulo:'Formulário de solicitação de benefícios', detalhe:'Criar formulário e comunicar via Info RH.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Atualização de BI de Turnover', detalhe:'Atualizar painel de turnover.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Análise de provisões', detalhe:'Avaliar aumento de provisão pós-implantação.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Publicação de igualdade salarial', detalhe:'Publicar relatório no portal (MTE).', cat:'comp', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Plano de ação NR-1 (GRO/PGR)', detalhe:'Casos por e-mail; fazer comunicado.', cat:'comp', crit:'alta', resp:'', adp:'', licao:''},
+    {titulo:'Plano de ação ponto e admissão digital', detalhe:'Ações de candidato e ponto eletrônico.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Descrições de cargo assinadas', detalhe:'Elaborar e colher assinatura nas descrições.', cat:'comp', crit:'alta', resp:'', adp:'', licao:'Defesa em reclamatória de desvio de função exige descrição de cargo assinada.'},
+    {titulo:'Mapeamento de atividades (benefícios)', detalhe:'Ex.: iFood/benefícios. Mapear atividades.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Compilado de processos trabalhistas', detalhe:'Casos gerais para acompanhamento.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Curva de payout anual com Compensation', detalhe:'Alinhar curva de payout com time de Compensation.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+    {titulo:'Auditoria de folha via IA', detalhe:'Rodar auditoria estatística de outliers na folha.', cat:'comp', crit:'media', resp:'', adp:'', licao:''},
+  ]},
+];
+
+/* ---- BASES (repositórios padrão) ---- */
+const DEFAULT_REPOS = {
+  fornecedores:[
+    {nome:'ADP', servico:'Folha / Sistema de DP', contato:'Interlocutor da implantação', tel:'', email:'', obs:'Contrato de implantação assinado'},
+    {nome:'Real Tecnologia Ponto', servico:'Ponto eletrônico / porta de produção', contato:'Carlos Alberto', tel:'+55 27 99273-7178', email:'', obs:'Migração de relógio de ponto'},
+    {nome:'AlphaCard', servico:'Crachá (emissão/reemissão)', contato:'Jadry', tel:'', email:'', obs:'Follow-up por telefone'},
+    {nome:'xPostal', servico:'Correspondência / Sedex', contato:'', tel:'', email:'atendimento@xpostal.com.br', obs:''},
+    {nome:'Alelo / Caju', servico:'VR / VA / VT', contato:'Interlocutor cadastrado', tel:'', email:'', obs:'Prestação de contas mensal'},
+    {nome:'BrasilPrev', servico:'Previdência privada (PGBL/VGBL)', contato:'', tel:'', email:'', obs:'Faturamento mensal'},
+    {nome:'MetLife', servico:'Seguro de vida', contato:'', tel:'', email:'', obs:'Base mensal para faturamento'},
+    {nome:'Telus Health (Sonova Cuida)', servico:'Saúde / apoio ao colaborador', contato:'Álex Rodrigues / Daniela Rodrigues', tel:'', email:'alex.rodrigues@telushealth.com', obs:'Renovação — negociar reajuste IPCA'},
+  ],
+  verbas:[
+    {cod:'0240', desc:'Consignado', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'0620', desc:'Comissão', tipo:'Provento', inc:'INSS/FGTS/IRRF', obs:'Por canal (WS/AC)'},
+    {cod:'0700', desc:'Premiação', tipo:'Provento', inc:'INSS/FGTS/IRRF', obs:'Pago via Greens'},
+    {cod:'0912', desc:'Creche', tipo:'Provento', inc:'—', obs:'Auxílio creche'},
+    {cod:'2300', desc:'Reembolso Idiomas / Educacional', tipo:'Provento', inc:'—', obs:''},
+    {cod:'2621', desc:'Copay', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'3015', desc:'Comissão (VB)', tipo:'Provento', inc:'INSS/FGTS/IRRF', obs:''},
+    {cod:'3016', desc:'Ajuda de Custo (empresa)', tipo:'Provento', inc:'—', obs:''},
+    {cod:'3027', desc:'Fretado', tipo:'Provento', inc:'—', obs:'Pago como fretado'},
+    {cod:'3059', desc:'Univers Drogaria', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'3060', desc:'Ajuda Transferência', tipo:'Provento', inc:'—', obs:''},
+    {cod:'3090', desc:'GymPass', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'3100', desc:'Abono Carro', tipo:'Provento', inc:'—', obs:''},
+    {cod:'3163', desc:'PetLove', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'3190', desc:'Adiant. Parcial Premiação', tipo:'Provento', inc:'—', obs:''},
+    {cod:'3191', desc:'Adiant. Parcial Comissão', tipo:'Provento', inc:'—', obs:''},
+    {cod:'3194', desc:'Adiant. Parcial', tipo:'Provento', inc:'—', obs:''},
+    {cod:'3200', desc:'Premiação (custo empresa)', tipo:'Provento', inc:'INSS/FGTS/IRRF', obs:''},
+    {cod:'3506', desc:'Multa', tipo:'Desconto', inc:'—', obs:'Sem Parar'},
+    {cod:'3518', desc:'Desconto Autorizado', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'3546', desc:'Estacionamento', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'3560', desc:'Desconto Autorizado', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'3705', desc:'Combustível', tipo:'Provento', inc:'—', obs:''},
+    {cod:'3767', desc:'Combustível (dependente)', tipo:'Provento', inc:'—', obs:''},
+    {cod:'3768', desc:'Mensalidade Saúde Dependente (Copay)', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'3812', desc:'Previdência Privada', tipo:'Provento/Desconto', inc:'—', obs:'Fator 0,0500 — parte empresa 0,05'},
+    {cod:'4002', desc:'Comissão', tipo:'Provento', inc:'INSS/FGTS/IRRF', obs:''},
+    {cod:'4005', desc:'Bônus Trimestral', tipo:'Provento', inc:'INSS/FGTS/IRRF', obs:''},
+    {cod:'4498', desc:'Garantia Comissão e Rem. Variável', tipo:'Provento', inc:'INSS/FGTS/IRRF', obs:''},
+    {cod:'5610', desc:'Vale Refeição / Alimentação', tipo:'Desconto', inc:'—', obs:'Estágio = VR zero'},
+    {cod:'5762', desc:'Desconto Sindical SP', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'5905', desc:'Vale Transporte', tipo:'Desconto', inc:'—', obs:''},
+    {cod:'9205', desc:'Verba eSocial (atenção classificação)', tipo:'—', inc:'—', obs:'Caso 5581 → 9205'},
+  ],
+  caminhos:[
+    {acao:'De-Para de verbas', trail:'Folha > Cadastros e Parametrizações > Códigos de Folha > Manut. Classificação x Códigos'},
+    {acao:'Códigos de folha', trail:'Folha > Cadastros e Parametrizações > Códigos de Folha > Códigos de Folha'},
+    {acao:'Organograma de agrupamento', trail:'Folha > Cadastros e Parametrizações > Estrutura Organizacional > Estruturas de Análise > Organogramas de Agrupamento'},
+    {acao:'Datas de pagamento', trail:'Folha > Cadastros e Parametrizações > Feriados e Datas de Pagamento > Datas de Pagamentos > Parâmetros para Data Pagamento'},
+    {acao:'Relatórios de texto livre', trail:'Folha > Cadastros e Parametrizações > Definição de Relatórios > Definição de Relatórios de Texto Livre'},
+    {acao:'Associação Previdência Privada', trail:'Folha > Administração de Pessoal > Benefícios > Previdência Privada > Associação ao Plano de Previdência'},
+    {acao:'Férias programadas', trail:'Folha > Administração de Pessoal > Férias > Férias > Férias Programadas'},
+    {acao:'Importação registro de emprego', trail:'Folha > Administração de Pessoal > Manutenção Dados Contratuais > Dados do Empregado > Proc. Imp. Inf. Adic. Registro de Emprego'},
+    {acao:'Conferência de encargos', trail:'Folha > Rotinas e Pagamentos > Cálculos > Cálculo de Pagamentos > Conferência de Encargos de Folha'},
+    {acao:'Totalizador eSocial de Encargos', trail:'Folha > eSocial > Relatórios > Totalizador eSocial de Encargos'},
+    {acao:'Conferência eSocial por empregado', trail:'Folha > eSocial > Relatórios > Conferência eSocial INSS/IRRF/FGTS – Por Empregado'},
+    {acao:'Expense Report Payroll', trail:'Folha > Relatórios > Geração de Arquivo - Expense Report Payroll Analítico'},
+  ],
+  licoes:[
+    {titulo:'Carta sindical na admissão', erro:'Entrega da carta sindical na admissão não foi cumprida pelo time de forma recorrente.', fix:'Incluir o procedimento no manual e no fluxo de admissão, com checagem obrigatória.'},
+    {titulo:'Verba errada no eSocial', erro:'Verba 5581 lançada quando o correto era 9205; verba 4780 também precisou de correção.', fix:'Sempre validar a classificação x códigos antes de transmitir; corrigir via chamado e reabrir a folha do mês.'},
+    {titulo:'CNAE x FAP divergente', erro:'CNAE incorreto gerou FAP indevido (ex.: 1,00 quando deveria ser 0,500).', fix:'Conferir CNAE de cada estabelecimento e contestar o FAP na DataPrev quando houver divergência.'},
+    {titulo:'Flag de data de pagamento', erro:'Quando a flag de pagamento não está marcada, a data não é gerada no cruzamento.', fix:'Conferir parâmetros de data de pagamento por empresa antes do fechamento.'},
+    {titulo:'Layout do arquivo bancário', erro:'Posição 158 a 163 do arquivo bancário, a partir do registro 107, gerou erro.', fix:'Abrir chamado para correção do layout junto à ADP/banco.'},
+    {titulo:'eConsignado na rescisão', erro:'Rescisão com eConsignado exige acerto e pode gerar devolução.', fix:'Tratar via TRCT complementar e conferir o saldo de consignado antes de homologar.'},
+    {titulo:'DSR na demissão de sexta', erro:'Demissão efetivada na sexta-feira impacta o pagamento do DSR.', fix:'Ajustar a regra para pagar o DSR da semana na rescisão de sexta.'},
+    {titulo:'Estabilidades', erro:'Risco de desligar colaborador com estabilidade (CIPA, gestante, dirigente sindical).', fix:'Checar relação de estáveis antes de qualquer desligamento.'},
+    {titulo:'CNPJ de filial errado', erro:'Filial cadastrada com CNPJ incorreto gera FGTS/INSS no estabelecimento errado.', fix:'Conferir e corrigir o CNPJ de cada filial no cadastro antes da apuração.'},
+    {titulo:'Senha ADP expira em 60 dias', erro:'Acesso ao portal ADP é bloqueado quando a senha expira.', fix:'Programar renovação a cada 60 dias e manter chamado de referência.'},
+    {titulo:'Estagiário e meio período', erro:'Lançamento indevido de VR para estagiário ou colaborador de meio período.', fix:'Validar a regra de benefício por tipo de contrato e jornada.'},
+    {titulo:'Descrição de cargo assinada', erro:'Reclamatória de desvio de função sem descrição de cargo assinada enfraquece a defesa.', fix:'Manter descrições de cargo atualizadas e assinadas, com urgência nos casos em audiência.'},
+    {titulo:'Data-limite de adiantamento', erro:'Incorporação altera a data-limite de adiantamento das adquiridas.', fix:'Alinhar a data-limite com o financeiro antes do primeiro fechamento.'},
+  ]
+};
+
+/* CNPJs do cluster (referência rápida em nova aquisição) */
+const CLUSTER_CNPJS = [
+  'Sonova 92.792.530/0001-38','AB 13.059.106/0001-02','AR 09.100.583/0001-05',
+  'Uniaudio 12.019.353/0001-12','Conect 12.831.919/0001-06','AudioClin 17.912.157/0001-96'
+];
+</script>
+
+<script>
+/* ============================================================
+   APP LOGIC — Playbook de Implantação ADP (M&A) | Sonova RH/DP
+   Estado em localStorage; sem dependências externas.
+   ============================================================ */
+
+/* ---------- Ícones (SVG inline reutilizáveis) ---------- */
+const IC = {
+  trash:'<svg viewBox="0 0 24 24"><path d="M9 3v1H4v2h16V4h-5V3H9M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7H5m4 3h2v8H9v-8m4 0h2v8h-2v-8Z"/></svg>',
+  note:'<svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"/></svg>',
+  adp:'<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2Z"/></svg>',
+  warn:'<svg viewBox="0 0 24 24"><path d="M13 14h-2V9h2m0 9h-2v-2h2M1 21h22L12 2 1 21Z"/></svg>',
+  user:'<svg viewBox="0 0 24 24"><path d="M12 4a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4Z"/></svg>',
+  forn:'<svg viewBox="0 0 24 24"><path d="M3 3h18v4H3V3m0 6h18v12H3V9m9 2H7v4h5v-4Z"/></svg>',
+  verba:'<svg viewBox="0 0 24 24"><path d="M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2m7 3a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3Z"/></svg>',
+  route:'<svg viewBox="0 0 24 24"><path d="M11 10H5L3 8l2-2h6V3l1-1 1 1v3h6l2 2-2 2h-6v4h4l2 2-2 2h-4v3l-1 1-1-1v-3H7l-2-2 2-2h4v-4Z"/></svg>',
+  book:'<svg viewBox="0 0 24 24"><path d="M18 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2M6 4h5v8l-2.5-1.5L6 12V4Z"/></svg>',
+  aq:'<svg viewBox="0 0 24 24"><path d="M12 2 2 7v2h20V7L12 2M4 11v8H2v2h20v-2h-2v-8h-2v8h-3v-8h-2v8h-2v-8H7v8H4v-8H4Z"/></svg>',
+};
+
+/* ---------- Utilitários ---------- */
+const $  = id => document.getElementById(id);
+const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone = o => (typeof structuredClone==='function') ? structuredClone(o) : JSON.parse(JSON.stringify(o));
+const uid = () => (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const todayISO = () => new Date().toISOString().slice(0,10);
+function fmtData(iso){ if(!iso) return '—'; const p=String(iso).split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : iso; }
+
+let toastTimer=null;
+function toast(msg){
+  $('toastMsg').textContent=msg;
+  const t=$('toast'); t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* ---------- IDs determinísticos do playbook mestre ---------- */
+function seedIds(master){
+  master.forEach(fase=>{
+    if(!fase.id) fase.id='f'+uid().slice(0,6);
+    (fase.acoes||[]).forEach((a,i)=>{ if(!a.id) a.id = fase.id+'_a'+i; });
+  });
+  return master;
+}
+
+/* ---------- Estado / persistência ---------- */
+let MASTER, REPOS, AQS, UI;
+
+function load(key){
+  try{ const raw=localStorage.getItem(key); return raw?JSON.parse(raw):null; }
+  catch(e){ return null; }
+}
+function persist(key,val){
+  try{ localStorage.setItem(key,JSON.stringify(val)); }
+  catch(e){ toast('Falha ao salvar (armazenamento cheio?)'); }
+}
+const saveMaster = ()=>persist(LS_MASTER,MASTER);
+const saveRepos  = ()=>persist(LS_REPO,REPOS);
+const saveAqs    = ()=>persist(LS_AQ,AQS);
+const saveUi     = ()=>persist(LS_UI,UI);
+
+function bootState(){
+  MASTER = load(LS_MASTER);
+  if(!Array.isArray(MASTER) || !MASTER.length){ MASTER = seedIds(clone(DEFAULT_PLAYBOOK)); saveMaster(); }
+  else seedIds(MASTER);
+
+  REPOS = load(LS_REPO);
+  if(!REPOS || typeof REPOS!=='object'){ REPOS = clone(DEFAULT_REPOS); saveRepos(); }
+  ['fornecedores','verbas','caminhos','licoes'].forEach(k=>{ if(!Array.isArray(REPOS[k])) REPOS[k]=clone(DEFAULT_REPOS[k]||[]); });
+
+  AQS = load(LS_AQ);
+  if(!Array.isArray(AQS) || !AQS.length){
+    AQS = [{ id:uid(), nome:'Aquisição 1', cnpj:'', inicio:todayISO(), status:{} }];
+    saveAqs();
+  }
+  AQS.forEach(a=>{ if(!a.status) a.status={}; });
+
+  UI = load(LS_UI) || {};
+  if(!UI.mode) UI.mode='fases';
+  if(!UI.repoTab) UI.repoTab='fornecedores';
+  if(!UI.aqId || !AQS.some(a=>a.id===UI.aqId)) UI.aqId=AQS[0].id;
+  if(!UI.activePhase || !MASTER.some(f=>f.id===UI.activePhase)) UI.activePhase=MASTER[0].id;
+  saveUi();
+}
+
+/* ---------- Helpers de domínio ---------- */
+const activeAq = ()=>AQS.find(a=>a.id===UI.aqId) || AQS[0];
+function stOf(actionId){
+  const aq=activeAq(); const rec=aq.status[actionId];
+  return rec || {st:'pendente',nota:''};
+}
+function setSt(actionId,st){
+  const aq=activeAq();
+  const rec=aq.status[actionId] || {st:'pendente',nota:''};
+  rec.st=st; aq.status[actionId]=rec; saveAqs();
+}
+function setNota(actionId,nota){
+  const aq=activeAq();
+  const rec=aq.status[actionId] || {st:'pendente',nota:''};
+  rec.nota=nota; aq.status[actionId]=rec; saveAqs();
+}
+const faseById = id => MASTER.find(f=>f.id===id);
+function findAction(actionId){
+  for(const f of MASTER){ const a=(f.acoes||[]).find(x=>x.id===actionId); if(a) return {fase:f,acao:a}; }
+  return null;
+}
+function phaseProgress(fase){
+  const acts=fase.acoes||[];
+  const aq=activeAq();
+  let done=0, denom=0;
+  acts.forEach(a=>{ const s=(aq.status[a.id]||{}).st||'pendente'; if(s==='na')return; denom++; if(s==='concluido')done++; });
+  return {done, denom, pct: denom? Math.round(done/denom*100):0, total:acts.length};
+}
+function overallProgress(){
+  let done=0, denom=0, total=0;
+  const aq=activeAq();
+  MASTER.forEach(f=>(f.acoes||[]).forEach(a=>{
+    total++;
+    const s=(aq.status[a.id]||{}).st||'pendente';
+    if(s==='na')return; denom++; if(s==='concluido')done++;
+  }));
+  return {done, denom, total, pct: denom? Math.round(done/denom*100):0};
+}
+
+/* ---------- Filtros ---------- */
+function filters(){
+  return {
+    q: ($('searchInput').value||'').trim().toLowerCase(),
+    cat: $('filtCat').value||'',
+    status: $('filtStatus').value||''
+  };
+}
+function matchAction(fase,a){
+  const f=filters();
+  if(f.cat && a.cat!==f.cat) return false;
+  if(f.status){ const s=stOf(a.id).st; if(s!==f.status) return false; }
+  if(f.q){
+    const hay=[a.titulo,a.detalhe,a.adp,a.licao,a.resp,fase.nome].join(' ').toLowerCase();
+    if(!hay.includes(f.q)) return false;
+  }
+  return true;
+}
+
+/* ============================================================
+   RENDER — Seletor de aquisição + progresso + rodapé
+   ============================================================ */
+function renderAqSelector(){
+  const sel=$('aqSelect');
+  sel.innerHTML = AQS.map(a=>`<option value="${esc(a.id)}"${a.id===UI.aqId?' selected':''}>${esc(a.nome)}</option>`).join('');
+  const aq=activeAq();
+  const op=overallProgress();
+  const parts=[];
+  if(aq.cnpj) parts.push(`CNPJ ${esc(aq.cnpj)}`);
+  parts.push(`Início ${fmtData(aq.inicio)}`);
+  parts.push(`${op.done}/${op.denom} concluídas`);
+  $('aqMeta').innerHTML = parts.join(' &nbsp;·&nbsp; ');
+}
+function renderProgress(){
+  const op=overallProgress();
+  $('progFill').style.width=op.pct+'%';
+  $('progPct').textContent=op.pct+'%';
+}
+function renderFooter(){
+  let total=0; MASTER.forEach(f=>total+=(f.acoes||[]).length);
+  $('totAcoes').textContent=total;
+}
+
+/* ---------- Sidebar (lista de fases) ---------- */
+function renderSidebar(){
+  const wrap=$('phaseList');
+  wrap.innerHTML = MASTER.map(f=>{
+    const p=phaseProgress(f);
+    const active = (UI.mode==='fases' && f.id===UI.activePhase && !filters().q);
+    return `<div class="phase-link${active?' active':''}" data-fase="${esc(f.id)}">
+      <div class="pl-top"><span class="pl-num">${f.num??''}</span><span class="pl-name">${esc(f.nome)}</span></div>
+      <div class="pl-bar"><i style="width:${p.pct}%"></i></div>
+      <div class="pl-stat"><span>${p.done} de ${p.denom||p.total}</span><span>${p.pct}%</span></div>
+    </div>`;
+  }).join('') +
+  `<div class="phase-link" id="addPhaseBtn" style="text-align:center;color:var(--mu);border:1px dashed var(--bd);margin-top:8px">
+     <span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500">${IC.plus} Nova fase</span>
+   </div>`;
+
+  wrap.querySelectorAll('.phase-link[data-fase]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      UI.activePhase=el.dataset.fase; UI.mode='fases'; saveUi();
+      $('searchInput').value='';
+      setMode('fases');
+      closeSidebarMobile();
+    });
+  });
+  $('addPhaseBtn').addEventListener('click',openAddPhase);
+}
+
+/* ============================================================
+   RENDER — Visão FASES (cards)
+   ============================================================ */
+function cardHTML(fase,a){
+  const cat=CATS[a.cat]||{nome:a.cat||'—',cor:'#646464'};
+  const crit=CRIT[a.crit]||{nome:a.crit||'—',cor:'#646464'};
+  const rec=stOf(a.id);
+  const st=rec.st||'pendente';
+  const stMeta=STATUS[st]||STATUS.pendente;
+  const cls = st==='concluido'?'done':st==='bloqueado'?'blocked':st==='na'?'na':'';
+  const opts=STATUS_ORDER.map(k=>`<option value="${k}"${k===st?' selected':''}>${esc(STATUS[k].nome)}</option>`).join('');
+  const hasNota=!!(rec.nota&&rec.nota.trim());
+
+  return `<div class="card ${cls}" data-id="${esc(a.id)}" data-fase="${esc(fase.id)}">
+    <div class="c-head">
+      <div class="c-title" contenteditable spellcheck="false" data-f="titulo">${esc(a.titulo)}</div>
+      <div class="c-actions">
+        <span class="mini note-toggle" title="Nota desta aquisição">${IC.note}</span>
+        <span class="mini del" title="Excluir ação">${IC.trash}</span>
+      </div>
+    </div>
+    <div class="c-detail${a.detalhe?'':' empty'}" contenteditable spellcheck="false" data-f="detalhe">${esc(a.detalhe||'')}</div>
+    <div class="badges">
+      <span class="badge" style="background:${cat.cor}">${esc(cat.nome)}</span>
+      <span class="badge outline" style="color:${crit.cor};border-color:${crit.cor}">${esc(crit.nome)}</span>
+    </div>
+    ${a.adp?`<div class="adp-path">${IC.adp}<span class="trail" contenteditable spellcheck="false" data-f="adp">${esc(a.adp)}</span></div>`:''}
+    ${a.licao?`<div class="lesson">${IC.warn}<span contenteditable spellcheck="false" data-f="licao" style="outline:none">${esc(a.licao)}</span></div>`:''}
+    <div class="c-foot">
+      <select class="statussel" style="color:${stMeta.cor};border-color:${stMeta.cor}">${opts}</select>
+      <span class="respchip">${IC.user}<input type="text" value="${esc(a.resp||'')}" placeholder="Responsável" data-f="resp"></span>
+    </div>
+    <div class="note-line${hasNota?' show':''}${hasNota?'':' empty'}" contenteditable spellcheck="false" data-f="nota">${esc(rec.nota||'')}</div>
+  </div>`;
+}
+
+function phaseBlockHTML(fase,showAdd){
+  const p=phaseProgress(fase);
+  const visibles=(fase.acoes||[]).filter(a=>matchAction(fase,a));
+  const cards=visibles.map(a=>cardHTML(fase,a)).join('');
+  const addCard = showAdd ? `<div class="add-card" data-add="${esc(fase.id)}">${IC.plus}<span>Adicionar ação</span></div>` : '';
+  return `<section data-phase-block="${esc(fase.id)}">
+    <div class="phase-head">
+      <div class="ph-badge"><span class="n">${fase.num??''}</span><span class="l">${esc(fase.label||'')}</span></div>
+      <div class="ph-info">
+        <h2>${esc(fase.nome)}</h2>
+        <div class="desc">${esc(fase.desc||'')}</div>
+        <div class="meta">
+          <span><b>${(fase.acoes||[]).length}</b> ações</span>
+          <span><b>${p.done}</b> concluídas</span>
+          <span><b>${p.pct}%</b> da fase</span>
+        </div>
+      </div>
+    </div>
+    <div class="cards">${cards}${addCard}</div>
+  </section>`;
+}
+
+function renderFases(){
+  const view=$('viewFases');
+  const q=filters().q;
+  let html='';
+
+  if(q){
+    // Busca: percorre todas as fases, exibindo só as que têm correspondência
+    const blocks=MASTER.filter(f=>(f.acoes||[]).some(a=>matchAction(f,a)))
+                       .map(f=>phaseBlockHTML(f,false)).join('');
+    html = blocks || emptyState('Nenhuma ação encontrada para o filtro atual.');
+  }else{
+    const fase=faseById(UI.activePhase)||MASTER[0];
+    html = phaseBlockHTML(fase,true);
+  }
+  view.innerHTML=html;
+  bindCardEvents(view);
+}
+
+function emptyState(msg){
+  return `<div class="empty-state">${IC.book}<h3>Sem resultados</h3><p>${esc(msg)}</p></div>`;
+}
+
+/* ---------- Eventos dos cards ---------- */
+function bindCardEvents(scope){
+  // edição de campos do mestre (titulo/detalhe/adp/licao/resp)
+  scope.querySelectorAll('[data-f]').forEach(el=>{
+    const field=el.dataset.f;
+    const card=el.closest('.card'); if(!card) return;
+    const id=card.dataset.id;
+
+    if(field==='resp'){
+      el.addEventListener('change',()=>{ const r=findAction(id); if(r){ r.acao.resp=el.value.trim(); saveMaster(); } });
+      el.addEventListener('blur',()=>{ const r=findAction(id); if(r){ r.acao.resp=el.value.trim(); saveMaster(); } });
+      return;
+    }
+    if(field==='nota'){
+      el.addEventListener('blur',()=>{
+        const txt=el.innerText.replace(/\u00a0/g,' ').trim();
+        setNota(id,txt);
+        el.classList.toggle('empty',!txt);
+      });
+      return;
+    }
+    // campos do mestre (contenteditable)
+    el.addEventListener('blur',()=>{
+      let txt=el.innerText.replace(/\u00a0/g,' ');
+      txt = (field==='detalhe'||field==='licao') ? txt.replace(/\n{3,}/g,'\n\n').trim() : txt.replace(/\n/g,' ').trim();
+      const r=findAction(id); if(!r) return;
+      r.acao[field]=txt;
+      saveMaster();
+      if(field==='detalhe') el.classList.toggle('empty',!txt);
+    });
+  });
+
+  // status
+  scope.querySelectorAll('.statussel').forEach(sel=>{
+    sel.addEventListener('change',()=>{
+      const card=sel.closest('.card'); const id=card.dataset.id;
+      setSt(id,sel.value);
+      const meta=STATUS[sel.value]||STATUS.pendente;
+      sel.style.color=meta.cor; sel.style.borderColor=meta.cor;
+      card.classList.remove('done','blocked','na');
+      if(sel.value==='concluido')card.classList.add('done');
+      else if(sel.value==='bloqueado')card.classList.add('blocked');
+      else if(sel.value==='na')card.classList.add('na');
+      renderSidebar(); renderProgress(); renderAqSelector();
+    });
+  });
+
+  // toggle nota
+  scope.querySelectorAll('.note-toggle').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const card=b.closest('.card');
+      const note=card.querySelector('.note-line');
+      note.classList.toggle('show');
+      if(note.classList.contains('show')){ note.focus(); }
+    });
+  });
+
+  // excluir ação
+  scope.querySelectorAll('.mini.del').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const card=b.closest('.card'); const id=card.dataset.id;
+      const r=findAction(id); if(!r) return;
+      confirmModal('Excluir ação','Remover esta ação do playbook? Ela sairá de todas as aquisições.',()=>{
+        const arr=r.fase.acoes; const ix=arr.findIndex(x=>x.id===id);
+        if(ix>=0)arr.splice(ix,1);
+        AQS.forEach(a=>{ delete a.status[id]; });
+        saveMaster(); saveAqs();
+        renderActiveView(); renderSidebar(); renderProgress(); renderAqSelector(); renderFooter();
+        toast('Ação removida');
+      });
+    });
+  });
+
+  // adicionar ação
+  scope.querySelectorAll('.add-card').forEach(b=>{
+    b.addEventListener('click',()=>openAddAction(b.dataset.add));
+  });
+}
+
+/* ============================================================
+   RENDER — Visão KANBAN
+   ============================================================ */
+function renderKanban(){
+  const view=$('viewKanban');
+  const f=filters();
+  // coleta ações que passam por busca + categoria
+  const items=[];
+  MASTER.forEach(fase=>(fase.acoes||[]).forEach(a=>{
+    if(f.cat && a.cat!==f.cat) return;
+    if(f.q){
+      const hay=[a.titulo,a.detalhe,a.adp,a.licao,a.resp,fase.nome].join(' ').toLowerCase();
+      if(!hay.includes(f.q)) return;
+    }
+    items.push({fase,a,st:stOf(a.id).st||'pendente'});
+  }));
+
+  const cols=STATUS_ORDER.map(stKey=>{
+    const meta=STATUS[stKey];
+    const cards=items.filter(it=>it.st===stKey).map(it=>{
+      const cat=CATS[it.a.cat]||{nome:it.a.cat||'—',cor:'#646464'};
+      const crit=CRIT[it.a.crit]||{nome:it.a.crit||'',cor:'#646464'};
+      return `<div class="kcard" draggable="true" data-id="${esc(it.a.id)}">
+        <div class="kc-phase">Fase ${it.fase.num} · ${esc(it.fase.label||'')}</div>
+        <div class="kc-title">${esc(it.a.titulo)}</div>
+        <div class="kc-badges">
+          <span class="badge" style="background:${cat.cor}">${esc(cat.nome)}</span>
+          <span class="badge outline" style="color:${crit.cor};border-color:${crit.cor}">${esc(crit.nome)}</span>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="kcol" data-status="${stKey}">
+      <div class="kcol-head"><span class="dot" style="background:${meta.cor}"></span><span class="ktitle">${esc(meta.nome)}</span><span class="kcount">${items.filter(it=>it.st===stKey).length}</span></div>
+      <div class="kcol-body" data-status="${stKey}">${cards}</div>
+    </div>`;
+  }).join('');
+
+  view.innerHTML=`<div class="kanban">${cols}</div>`;
+  bindKanban(view);
+}
+
+function bindKanban(scope){
+  let dragId=null;
+  scope.querySelectorAll('.kcard').forEach(card=>{
+    card.addEventListener('dragstart',e=>{ dragId=card.dataset.id; card.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    card.addEventListener('dragend',()=>{ dragId=null; card.classList.remove('dragging'); scope.querySelectorAll('.kcol-body').forEach(b=>b.classList.remove('drag-over')); });
+  });
+  scope.querySelectorAll('.kcol-body').forEach(body=>{
+    body.addEventListener('dragover',e=>{ e.preventDefault(); body.classList.add('drag-over'); });
+    body.addEventListener('dragleave',()=>body.classList.remove('drag-over'));
+    body.addEventListener('drop',e=>{
+      e.preventDefault(); body.classList.remove('drag-over');
+      if(!dragId) return;
+      const newSt=body.dataset.status;
+      setSt(dragId,newSt);
+      renderKanban(); renderSidebar(); renderProgress(); renderAqSelector();
+    });
+  });
+}
+
+/* ============================================================
+   RENDER — Visão BASES (repositórios editáveis)
+   ============================================================ */
+const REPO_TABS=[
+  {key:'fornecedores',nome:'Fornecedores',ic:IC.forn},
+  {key:'verbas',nome:'Verbas ADP',ic:IC.verba},
+  {key:'caminhos',nome:'Caminhos ADP',ic:IC.route},
+  {key:'licoes',nome:'Lições aprendidas',ic:IC.book},
+];
+
+function renderRepos(){
+  const view=$('viewRepos');
+  const tabs=REPO_TABS.map(t=>`<button class="repo-tab${t.key===UI.repoTab?' active':''}" data-tab="${t.key}">${t.ic}${esc(t.nome)}</button>`).join('');
+  view.innerHTML=`<div class="repo-tabs">${tabs}</div><div id="repoBody"></div>`;
+  view.querySelectorAll('.repo-tab').forEach(b=>b.addEventListener('click',()=>{ UI.repoTab=b.dataset.tab; saveUi(); renderRepos(); }));
+  renderRepoBody();
+}
+
+function rowFilter(rowObj){
+  const q=filters().q; if(!q) return true;
+  return Object.values(rowObj).join(' ').toLowerCase().includes(q);
+}
+
+function renderRepoBody(){
+  const body=$('repoBody'); const tab=UI.repoTab;
+  if(tab==='licoes'){ renderLessons(body); return; }
+
+  let cols, rowsHTML;
+  if(tab==='fornecedores'){
+    cols=['Fornecedor','Serviço','Contato','Telefone','E-mail','Observações'];
+    const fkeys=['nome','servico','contato','tel','email','obs'];
+    rowsHTML=REPOS.fornecedores.map((r,i)=>rowFilter(r)?`<tr data-i="${i}">${
+      fkeys.map(k=>`<td contenteditable spellcheck="false" data-k="${k}">${esc(r[k]||'')}</td>`).join('')
+    }<td class="rowdel"><button title="Excluir">${IC.trash}</button></td></tr>`:'').join('');
+  }else if(tab==='verbas'){
+    cols=['Código','Descrição','Tipo','Incidências','Observações'];
+    const vkeys=['cod','desc','tipo','inc','obs'];
+    rowsHTML=REPOS.verbas.map((r,i)=>rowFilter(r)?`<tr data-i="${i}">${
+      vkeys.map(k=> k==='cod'
+        ? `<td><span class="vcode" contenteditable spellcheck="false" data-k="cod">${esc(r.cod||'')}</span></td>`
+        : `<td contenteditable spellcheck="false" data-k="${k}">${esc(r[k]||'')}</td>`).join('')
+    }<td class="rowdel"><button title="Excluir">${IC.trash}</button></td></tr>`:'').join('');
+  }else{ // caminhos
+    cols=['Ação','Trilha de menus ADP'];
+    rowsHTML=REPOS.caminhos.map((r,i)=>rowFilter(r)?`<tr data-i="${i}">
+      <td contenteditable spellcheck="false" data-k="acao" style="font-weight:500;color:var(--dk);min-width:150px">${esc(r.acao||'')}</td>
+      <td contenteditable spellcheck="false" data-k="trail" style="font-family:'Roboto Mono',monospace;font-size:11.5px">${esc(r.trail||'')}</td>
+      <td class="rowdel"><button title="Excluir">${IC.trash}</button></td></tr>`:'').join('');
+  }
+
+  body.innerHTML=`<table class="dtable"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}<th style="width:30px"></th></tr></thead>
+    <tbody>${rowsHTML}</tbody></table>
+    <button class="addrow" data-add="${tab}">${IC.plus} Adicionar linha</button>`;
+
+  // edição de células
+  body.querySelectorAll('td [data-k],td[data-k]').forEach(cell=>{
+    cell.addEventListener('blur',()=>{
+      const tr=cell.closest('tr'); const i=+tr.dataset.i; const k=cell.dataset.k;
+      const txt=cell.innerText.replace(/\u00a0/g,' ').replace(/\n/g,' ').trim();
+      if(REPOS[tab][i]){ REPOS[tab][i][k]=txt; saveRepos(); }
+    });
+  });
+  // excluir linha
+  body.querySelectorAll('.rowdel button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const tr=b.closest('tr'); const i=+tr.dataset.i;
+      REPOS[tab].splice(i,1); saveRepos(); renderRepoBody(); toast('Linha removida');
+    });
+  });
+  // adicionar linha
+  body.querySelector('.addrow').addEventListener('click',()=>{
+    const blanks={
+      fornecedores:{nome:'',servico:'',contato:'',tel:'',email:'',obs:''},
+      verbas:{cod:'',desc:'',tipo:'',inc:'—',obs:''},
+      caminhos:{acao:'',trail:''}
+    };
+    REPOS[tab].push(clone(blanks[tab])); saveRepos(); renderRepoBody();
+  });
+}
+
+function renderLessons(body){
+  const cards=REPOS.licoes.map((l,i)=>rowFilter(l)?`<div class="lcard" data-i="${i}">
+    <button class="ldel" title="Excluir">${IC.trash}</button>
+    <h4 contenteditable spellcheck="false" data-k="titulo">${esc(l.titulo||'')}</h4>
+    <div class="lrow"><span class="llabel">Erro / risco observado</span>
+      <div class="ltext" contenteditable spellcheck="false" data-k="erro">${esc(l.erro||'')}</div></div>
+    <div class="lrow"><span class="llabel">Como evitar / corrigir</span>
+      <div class="ltext" contenteditable spellcheck="false" data-k="fix">${esc(l.fix||'')}</div></div>
+  </div>`:'').join('');
+  body.innerHTML=`<div class="lessons-grid">${cards}</div>
+    <button class="addrow" data-add="licoes" style="margin-top:16px">${IC.plus} Adicionar lição</button>`;
+
+  body.querySelectorAll('.lcard [data-k]').forEach(cell=>{
+    cell.addEventListener('blur',()=>{
+      const card=cell.closest('.lcard'); const i=+card.dataset.i; const k=cell.dataset.k;
+      const txt=cell.innerText.replace(/\u00a0/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+      if(REPOS.licoes[i]){ REPOS.licoes[i][k]=txt; saveRepos(); }
+    });
+  });
+  body.querySelectorAll('.ldel').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const i=+b.closest('.lcard').dataset.i;
+      REPOS.licoes.splice(i,1); saveRepos(); renderRepoBody(); toast('Lição removida');
+    });
+  });
+  body.querySelector('.addrow').addEventListener('click',()=>{
+    REPOS.licoes.push({titulo:'Nova lição',erro:'',fix:''}); saveRepos(); renderRepoBody();
+  });
+}
+
+/* ============================================================
+   Modos / view switching
+   ============================================================ */
+function renderActiveView(){
+  if(UI.mode==='fases')  renderFases();
+  if(UI.mode==='kanban') renderKanban();
+  if(UI.mode==='repos')  renderRepos();
+}
+function setMode(mode){
+  UI.mode=mode; saveUi();
+  document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  $('viewFases').classList.toggle('hide',mode!=='fases');
+  $('viewKanban').classList.toggle('hide',mode!=='kanban');
+  $('viewRepos').classList.toggle('hide',mode!=='repos');
+  renderActiveView();
+  renderSidebar();
+}
+
+function renderAll(){
+  renderAqSelector();
+  renderSidebar();
+  renderProgress();
+  renderFooter();
+  setMode(UI.mode);
+}
+
+/* ============================================================
+   MODAIS
+   ============================================================ */
+function openModal(html){ $('modal').innerHTML=html; $('overlay').classList.add('show'); }
+function closeModal(){ $('overlay').classList.remove('show'); $('modal').innerHTML=''; }
+
+function confirmModal(title,msg,onYes,danger){
+  openModal(`<div class="modal-head">${IC.warn}<h3>${esc(title)}</h3></div>
+    <div class="modal-body"><p style="font-size:13.5px;color:var(--tx);line-height:1.5">${esc(msg)}</p></div>
+    <div class="modal-foot">
+      <button class="mbtn ghost" data-x>Cancelar</button>
+      <button class="mbtn ${danger?'danger':'primary'}" data-yes>Confirmar</button>
+    </div>`);
+  $('modal').querySelector('[data-x]').onclick=closeModal;
+  $('modal').querySelector('[data-yes]').onclick=()=>{ closeModal(); onYes&&onYes(); };
+}
+
+function openAddAction(faseId){
+  const fase=faseById(faseId); if(!fase) return;
+  const catOpts=Object.keys(CATS).map(k=>`<option value="${k}"${k===fase.acoes?.[0]?.cat?'':''}>${esc(CATS[k].nome)}</option>`).join('');
+  const critOpts=Object.keys(CRIT).map(k=>`<option value="${k}"${k==='media'?' selected':''}>${esc(CRIT[k].nome)}</option>`).join('');
+  openModal(`<div class="modal-head">${IC.plus}<h3>Nova ação — Fase ${fase.num}</h3></div>
+    <div class="modal-body">
+      <div class="fld"><label>Título da ação *</label><input id="na_tit" type="text" placeholder="Ex.: Validar CBO por função"></div>
+      <div class="fld"><label>Detalhe</label><textarea id="na_det" placeholder="Descrição / instrução"></textarea></div>
+      <div class="fld"><label>Categoria</label><select id="na_cat">${catOpts}</select></div>
+      <div class="fld"><label>Criticidade</label><select id="na_crit">${critOpts}</select></div>
+      <div class="fld"><label>Responsável (sugerido)</label><input id="na_resp" type="text" placeholder="Opcional"></div>
+      <div class="fld"><label>Caminho ADP</label><input id="na_adp" type="text" placeholder="Folha > ... (opcional)"></div>
+      <div class="fld"><label>Lição / atenção</label><textarea id="na_lic" placeholder="Armadilha conhecida (opcional)"></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="mbtn ghost" data-x>Cancelar</button><button class="mbtn primary" data-ok>Adicionar</button></div>`);
+  $('modal').querySelector('[data-x]').onclick=closeModal;
+  $('modal').querySelector('[data-ok]').onclick=()=>{
+    const tit=$('na_tit').value.trim(); if(!tit){ $('na_tit').focus(); return; }
+    fase.acoes.push({ id:uid(), titulo:tit, detalhe:$('na_det').value.trim(), cat:$('na_cat').value,
+      crit:$('na_crit').value, resp:$('na_resp').value.trim(), adp:$('na_adp').value.trim(), licao:$('na_lic').value.trim() });
+    saveMaster(); closeModal();
+    renderActiveView(); renderSidebar(); renderProgress(); renderFooter(); renderAqSelector();
+    toast('Ação adicionada');
+  };
+  setTimeout(()=>$('na_tit').focus(),60);
+}
+
+function openAddPhase(){
+  openModal(`<div class="modal-head">${IC.plus}<h3>Nova fase</h3></div>
+    <div class="modal-body">
+      <div class="fld"><label>Nome da fase *</label><input id="np_nome" type="text" placeholder="Ex.: Integração de Sistemas"></div>
+      <div class="fld"><label>Rótulo curto (badge)</label><input id="np_label" type="text" placeholder="Ex.: Integra" maxlength="14"></div>
+      <div class="fld"><label>Descrição</label><textarea id="np_desc" placeholder="O que esta fase cobre"></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="mbtn ghost" data-x>Cancelar</button><button class="mbtn primary" data-ok>Criar fase</button></div>`);
+  $('modal').querySelector('[data-x]').onclick=closeModal;
+  $('modal').querySelector('[data-ok]').onclick=()=>{
+    const nome=$('np_nome').value.trim(); if(!nome){ $('np_nome').focus(); return; }
+    const num=Math.max(0,...MASTER.map(f=>f.num||0))+1;
+    const fase={ id:'f'+uid().slice(0,6), num, nome, label:$('np_label').value.trim()||('F'+num),
+      desc:$('np_desc').value.trim(), acoes:[] };
+    MASTER.push(fase); saveMaster();
+    UI.activePhase=fase.id; UI.mode='fases'; saveUi();
+    closeModal(); setMode('fases');
+    toast('Fase criada');
+  };
+  setTimeout(()=>$('np_nome').focus(),60);
+}
+
+function cnpjDatalist(){
+  return `<datalist id="cnpjList">${CLUSTER_CNPJS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`;
+}
+function openAqModal(editing){
+  const aq = editing ? activeAq() : null;
+  openModal(`<div class="modal-head">${IC.aq}<h3>${editing?'Editar aquisição':'Nova aquisição'}</h3></div>
+    <div class="modal-body">
+      <div class="fld"><label>Nome da aquisição *</label><input id="aq_nome" type="text" placeholder="Ex.: Aquisição XYZ Audição" value="${aq?esc(aq.nome):''}"></div>
+      <div class="fld"><label>CNPJ (referência)</label><input id="aq_cnpj" type="text" list="cnpjList" placeholder="00.000.000/0001-00" value="${aq?esc(aq.cnpj||''):''}">${cnpjDatalist()}</div>
+      <div class="fld"><label>Início da implantação</label><input id="aq_inicio" type="date" value="${aq?esc(aq.inicio||todayISO()):todayISO()}"></div>
+    </div>
+    <div class="modal-foot">
+      ${editing&&AQS.length>1?`<button class="mbtn danger" data-del style="margin-right:auto">Excluir</button>`:''}
+      <button class="mbtn ghost" data-x>Cancelar</button>
+      <button class="mbtn primary" data-ok>${editing?'Salvar':'Criar'}</button>
+    </div>`);
+  $('modal').querySelector('[data-x]').onclick=closeModal;
+  const del=$('modal').querySelector('[data-del]');
+  if(del) del.onclick=()=>{
+    confirmModal('Excluir aquisição',`Remover "${aq.nome}" e todo o seu progresso? O playbook (template) permanece.`,()=>{
+      const ix=AQS.findIndex(a=>a.id===aq.id); if(ix>=0)AQS.splice(ix,1);
+      UI.aqId=AQS[0].id; saveAqs(); saveUi();
+      renderAll(); toast('Aquisição removida');
+    },true);
+  };
+  $('modal').querySelector('[data-ok]').onclick=()=>{
+    const nome=$('aq_nome').value.trim(); if(!nome){ $('aq_nome').focus(); return; }
+    const cnpj=$('aq_cnpj').value.trim(); const inicio=$('aq_inicio').value||todayISO();
+    if(editing){ aq.nome=nome; aq.cnpj=cnpj; aq.inicio=inicio; }
+    else{ const novo={id:uid(),nome,cnpj,inicio,status:{}}; AQS.push(novo); UI.aqId=novo.id; }
+    saveAqs(); saveUi(); closeModal(); renderAll();
+    toast(editing?'Aquisição atualizada':'Aquisição criada');
+  };
+  setTimeout(()=>$('aq_nome').focus(),60);
+}
+
+/* ============================================================
+   BACKUP / EXPORT / IMPORT / CSV / PRINT / RESET
+   ============================================================ */
+function download(filename,content,mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
+function exportJSON(){
+  const payload={ app:'playbook_adp_ma', schema:SCHEMA, exportedAt:new Date().toISOString(),
+    master:MASTER, repos:REPOS, aquisicoes:AQS, ui:UI };
+  download(`playbook_adp_backup_${todayISO()}.json`, JSON.stringify(payload,null,2), 'application/json');
+  toast('Backup exportado');
+}
+
+function importJSON(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      const m=data.master, rp=data.repos, aq=data.aquisicoes||data.aqs;
+      if(!Array.isArray(m)||!rp){ toast('Arquivo inválido'); return; }
+      confirmModal('Restaurar backup','Isto substitui o playbook, as bases e as aquisições atuais. Continuar?',()=>{
+        MASTER=seedIds(m);
+        REPOS=rp; ['fornecedores','verbas','caminhos','licoes'].forEach(k=>{ if(!Array.isArray(REPOS[k]))REPOS[k]=[]; });
+        AQS=Array.isArray(aq)&&aq.length?aq:[{id:uid(),nome:'Aquisição 1',cnpj:'',inicio:todayISO(),status:{}}];
+        AQS.forEach(a=>{ if(!a.status)a.status={}; });
+        UI=data.ui&&typeof data.ui==='object'?data.ui:{mode:'fases',repoTab:'fornecedores'};
+        if(!AQS.some(a=>a.id===UI.aqId))UI.aqId=AQS[0].id;
+        if(!MASTER.some(f=>f.id===UI.activePhase))UI.activePhase=MASTER[0].id;
+        saveMaster();saveRepos();saveAqs();saveUi();
+        renderAll(); toast('Backup restaurado');
+      });
+    }catch(e){ toast('Erro ao ler o arquivo'); }
+  };
+  r.readAsText(file);
+}
+
+function exportCSV(){
+  const aq=activeAq();
+  const sep=';';
+  const head=['Fase Nº','Fase','Categoria','Criticidade','Ação','Detalhe','Caminho ADP','Lição','Responsável','Status','Nota desta aquisição'];
+  const q=v=>`"${String(v==null?'':v).replace(/"/g,'""').replace(/\r?\n/g,' ')}"`;
+  const lines=[head.map(q).join(sep)];
+  MASTER.forEach(f=>(f.acoes||[]).forEach(a=>{
+    const rec=stOf(a.id);
+    lines.push([
+      f.num, f.nome, (CATS[a.cat]||{}).nome||a.cat, (CRIT[a.crit]||{}).nome||a.crit,
+      a.titulo, a.detalhe, a.adp, a.licao, a.resp, (STATUS[rec.st]||{}).nome||rec.st, rec.nota
+    ].map(q).join(sep));
+  }));
+  const csv='\uFEFF'+lines.join('\r\n');
+  const safe=(aq.nome||'aquisicao').replace(/[^\w\-]+/g,'_');
+  download(`playbook_adp_${safe}_${todayISO()}.csv`, csv, 'text/csv;charset=utf-8;');
+  toast('CSV exportado');
+}
+
+function resetPlaybook(){
+  confirmModal('Restaurar playbook padrão','Volta o conteúdo do playbook e das bases ao modelo original. O progresso das aquisições é mantido. Continuar?',()=>{
+    MASTER=seedIds(clone(DEFAULT_PLAYBOOK)); REPOS=clone(DEFAULT_REPOS);
+    saveMaster(); saveRepos();
+    if(!MASTER.some(f=>f.id===UI.activePhase))UI.activePhase=MASTER[0].id; saveUi();
+    renderAll(); toast('Playbook restaurado ao padrão');
+  });
+}
+
+/* ============================================================
+   MOBILE — sidebar
+   ============================================================ */
+function openSidebarMobile(){ $('sidebar').classList.add('open'); $('backdrop').classList.add('show'); }
+function closeSidebarMobile(){ $('sidebar').classList.remove('open'); $('backdrop').classList.remove('show'); }
+
+/* ============================================================
+   LISTENERS GLOBAIS + INIT
+   ============================================================ */
+function wire(){
+  // modos
+  document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{ if(b.dataset.mode==='fases'){} setMode(b.dataset.mode); }));
+  // filtros / busca
+  let searchT=null;
+  $('searchInput').addEventListener('input',()=>{ clearTimeout(searchT); searchT=setTimeout(()=>{ renderActiveView(); renderSidebar(); },180); });
+  $('filtCat').addEventListener('change',()=>{ renderActiveView(); });
+  $('filtStatus').addEventListener('change',()=>{ renderActiveView(); });
+
+  // aquisição
+  $('aqSelect').addEventListener('change',e=>{ UI.aqId=e.target.value; saveUi(); renderAll(); });
+  $('btnNewAq').addEventListener('click',()=>openAqModal(false));
+  $('btnEditAq').addEventListener('click',()=>openAqModal(true));
+
+  // backup
+  $('btnExport').addEventListener('click',exportJSON);
+  $('btnImport').addEventListener('click',()=>$('fileInput').click());
+  $('fileInput').addEventListener('change',e=>{ if(e.target.files[0]){ importJSON(e.target.files[0]); e.target.value=''; } });
+  $('btnCsv').addEventListener('click',exportCSV);
+  $('btnPrint').addEventListener('click',()=>window.print());
+  $('btnReset').addEventListener('click',resetPlaybook);
+
+  // mobile
+  $('menuToggle').addEventListener('click',()=>{ $('sidebar').classList.contains('open')?closeSidebarMobile():openSidebarMobile(); });
+  $('backdrop').addEventListener('click',closeSidebarMobile);
+
+  // modal: fechar ao clicar fora / ESC
+  $('overlay').addEventListener('mousedown',e=>{ if(e.target===$('overlay')) closeModal(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+  // popular filtro de categorias
+  const fc=$('filtCat');
+  Object.keys(CATS).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=CATS[k].nome; fc.appendChild(o); });
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  bootState();
+  wire();
+  renderAll();
+});
+
+</script>
+
+</html>
