@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sonova | Mapa de Auditoria Trabalhista</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --azul:#0083CA; --azul-esc:#003C64; --petroleo:#005A64; --azul-claro:#6EB4DC;
+  --vinho:#7D0041; --terra:#8C321E; --borda:#CCCCCC; --ice:#F5FAFD; --gray:#EEF3F6;
+  --ink:#1C2B38; --muted:#5E7180; --bg:#F4F7F9; --branco:#fff;
+  --ok:#1E7A53; --aviso:#8C321E; --risco:#7D0041;
+  --shadow:0 14px 34px rgba(0,46,72,.10); --radius:14px; --radius-sm:10px; --day-w:30px; --row-h:42px;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;font-family:"Roboto",Arial,sans-serif;font-weight:300;background:var(--bg);color:var(--ink)}
+h1,h2,h3,.font-head{font-family:"Rufina",Georgia,serif}
+button,input,select,textarea{font:inherit}
+button,.button{border:1px solid var(--borda);background:#fff;color:var(--ink);border-radius:var(--radius-sm);padding:9px 12px;cursor:pointer;transition:.15s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-weight:400}
+button:hover,.button:hover{border-color:var(--azul);transform:translateY(-1px)}
+input,select,textarea{width:100%;border:1px solid var(--borda);background:#fff;border-radius:var(--radius-sm);padding:9px 10px;color:var(--ink)}
+textarea{resize:vertical}
+label{display:grid;gap:5px;color:var(--muted);font-size:12px;font-weight:500}
+[contenteditable="true"]{outline:none;border-radius:6px;padding:2px 4px;margin:-2px -4px}
+[contenteditable="true"]:focus{box-shadow:0 0 0 3px rgba(0,131,202,.18);background:#fff}
+select:focus,input:focus,textarea:focus,button:focus{border-color:var(--azul);box-shadow:0 0 0 3px rgba(0,131,202,.16);outline:none}
+
+.app-shell{display:grid;grid-template-columns:288px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;overflow:auto;background:var(--azul);color:#fff;padding:20px;border-right:1px solid rgba(255,255,255,.12)}
+.brand{display:flex;gap:13px;align-items:center;margin-bottom:20px}
+.brand-mark{width:46px;height:46px;border-radius:13px;background:#fff;color:var(--azul);font-family:"Rufina",serif;font-weight:700;font-size:24px;display:grid;place-items:center;box-shadow:0 8px 20px rgba(0,0,0,.16)}
+.brand strong{display:block;font-family:"Rufina",serif;font-size:19px}
+.brand span{display:block;font-size:11px;color:#e3f2fb;margin-top:2px;letter-spacing:.04em}
+.nav{display:grid;gap:7px}
+.nav-btn{width:100%;justify-content:flex-start;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#f0f8fd;font-weight:400}
+.nav-btn.active,.nav-btn:hover{background:#fff;color:var(--azul-esc);border-color:#fff;font-weight:500}
+.nav-btn small{margin-left:auto;background:rgba(255,255,255,.18);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700}
+.nav-btn.active small{background:var(--azul);color:#fff}
+.side-card{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);border-radius:14px;padding:13px;margin-top:16px}
+.side-card .kicker{color:#cfe9f7}
+.side-card p{font-size:12.5px;line-height:1.45;color:#e3f2fb;margin:6px 0 0}
+.compact-actions{display:grid;gap:8px}
+.compact-actions button,.compact-actions .button{width:100%;background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.18);font-size:13px}
+.file-label input{display:none}
+.danger-lite{color:#ffd9e6!important;border-color:rgba(255,150,180,.4)!important}
+
+.main{min-width:0;padding:20px;display:flex;flex-direction:column;min-height:100vh}
+.hero{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;background:var(--azul);color:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;margin-bottom:14px}
+.eyebrow,.kicker{text-transform:uppercase;letter-spacing:.13em;font-weight:700;font-size:11px}
+.hero .eyebrow{color:#cfe9f7}
+.hero h1{margin:6px 0;font-size:28px;letter-spacing:-.01em;color:#fff}
+.hero p{margin:0;color:#e3f2fb;max-width:840px;line-height:1.45;font-size:13.5px}
+.summary-pill{white-space:nowrap;background:#fff;color:var(--azul-esc);border-radius:999px;padding:9px 15px;font-weight:700;font-size:13px}
+.panel{background:#fff;border:1px solid var(--borda);box-shadow:var(--shadow);border-radius:var(--radius);padding:15px;margin-bottom:14px}
+.panel.slim{padding:12px}
+.panel-title h2{color:var(--azul-esc);margin:0 0 2px;font-size:18px}
+.panel-title p{margin:0 0 8px;color:var(--muted);font-size:12.5px}
+.view{display:none}
+.view.active{display:block}
+.primary{background:var(--azul-esc);border-color:var(--azul-esc);color:#fff}
+.danger{background:#fdeef3;border-color:#e8c4d4;color:var(--vinho)}
+.icon-btn{border-radius:50%;width:36px;height:36px;padding:0}
+.pill,.status-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--borda);background:var(--gray);border-radius:999px;padding:5px 9px;font-size:12px;font-weight:500}
+
+.search-panel{display:grid;grid-template-columns:minmax(240px,.9fr) minmax(340px,1.9fr);gap:14px;align-items:center;border-left:5px solid var(--azul)}
+.search-title{display:flex;align-items:center;gap:12px;min-width:0}
+.search-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--azul);color:#fff;font-size:22px;font-weight:700;flex:0 0 auto}
+.search-title strong{display:block;color:var(--azul-esc);font-size:14px;font-weight:700}
+.search-title span{display:block;color:var(--muted);font-size:12px;line-height:1.35;margin-top:2px}
+.global-search{height:44px;border-radius:12px;padding:10px 16px;font-size:15px;font-weight:400}
+
+.filters{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr)) 88px;gap:10px;align-items:end}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.chip{border:1px solid var(--borda);background:#fff;border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;font-weight:500;color:var(--muted)}
+.chip:hover{border-color:var(--azul)}
+.chip.active{background:var(--azul);border-color:var(--azul);color:#fff}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--borda);border-top:4px solid var(--azul);border-radius:13px;padding:14px;box-shadow:var(--shadow);min-height:94px}
+.kpi span{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.kpi strong{display:block;font-family:"Rufina",serif;font-size:30px;letter-spacing:-.02em;margin-top:6px;color:var(--azul-esc)}
+.kpi small{color:var(--muted);font-size:12px}
+.kpi.k-ok{border-top-color:var(--ok)} .kpi.k-ok strong{color:var(--ok)}
+.kpi.k-bad{border-top-color:var(--risco)} .kpi.k-bad strong{color:var(--risco)}
+.kpi.k-warn{border-top-color:var(--terra)} .kpi.k-warn strong{color:var(--terra)}
+
+.bi-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+.bi-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.bar-list{display:grid;gap:9px}
+.bar-row{display:grid;grid-template-columns:minmax(150px,1.2fr) minmax(120px,2fr) 46px;gap:10px;align-items:center}
+.bar-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-bg{height:13px;background:var(--gray);border-radius:999px;overflow:hidden;display:flex}
+.bar-fill{height:100%;background:var(--azul)}
+.bar-fill.seg-ok{background:var(--ok)} .bar-fill.seg-bad{background:var(--risco)} .bar-fill.seg-part{background:var(--terra)} .bar-fill.seg-na{background:var(--azul-claro)} .bar-fill.seg-pend{background:var(--borda)}
+.bar-num{text-align:right;font-size:12px;color:var(--muted);font-weight:500}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+.heat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.heat-card{border:1px solid var(--borda);border-left:7px solid var(--azul);border-radius:12px;padding:11px;background:#fff;cursor:pointer;transition:.15s}
+.heat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.heat-card strong{font-size:13px;display:block}
+.heat-card small{display:block;color:var(--muted);margin-top:5px;font-size:12px}
+.heat-bar{height:7px;border-radius:999px;background:var(--gray);overflow:hidden;margin-top:8px;display:flex}
+.heat-card[data-risk="alto"]{border-left-color:var(--risco)}
+.heat-card[data-risk="medio"]{border-left-color:var(--terra)}
+.heat-card[data-risk="baixo"]{border-left-color:var(--ok)}
+
+.heat-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.heat-actions button{padding:6px 9px;font-size:11.5px;border-radius:999px}
+.heat-actions .mini-ghost{background:#f7fbfd}
+.panel-title-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.panel-title-row .right-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.toolbar .left,.toolbar .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.toolbar label{min-width:150px}
+
+.table-wrap{overflow:auto;border:1px solid var(--borda);border-radius:var(--radius);box-shadow:var(--shadow);background:#fff;max-width:100%}
+table{width:100%;border-collapse:separate;border-spacing:0;background:#fff}
+th,td{border-bottom:1px solid var(--borda);padding:9px 11px;text-align:left;vertical-align:top;font-size:13px;line-height:1.4;overflow-wrap:break-word}
+th{position:sticky;top:0;background:var(--azul);color:#fff;z-index:2;font-weight:500;white-space:nowrap;font-size:12px}
+tr:hover td{background:var(--ice)}
+.cap-row td{background:var(--azul-esc);color:#fff;font-family:"Rufina",serif;font-weight:700;font-size:13.5px;position:sticky;top:31px;z-index:1}
+.cap-row td:hover{background:var(--azul-esc)}
+.resp-sel{min-width:130px}
+td .mini{font-size:11px;color:var(--muted);display:block;margin-top:3px}
+.tag-area{display:inline-block;background:var(--gray);border:1px solid var(--borda);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--azul-esc);font-weight:500}
+.moderniza{font-size:12px;color:var(--petroleo);background:#eef6f7;border-left:3px solid var(--petroleo);border-radius:0 6px 6px 0;padding:4px 8px;display:block}
+tr[data-resp="Não conforme"]{box-shadow:inset 4px 0 0 var(--risco)}
+tr[data-resp="Parcial"]{box-shadow:inset 4px 0 0 var(--terra)}
+tr[data-resp="Conforme"]{box-shadow:inset 4px 0 0 var(--ok)}
+tr[data-resp="N/A"]{opacity:.62}
+.risco-Alta,.risco-Crítica{color:var(--risco);font-weight:700}
+.risco-Média{color:var(--terra);font-weight:500}
+.risco-Baixa{color:var(--muted)}
+
+.gantt-wrap{background:#fff;border:1px solid var(--borda);border-radius:var(--radius);box-shadow:var(--shadow);overflow:auto}
+.gantt{min-width:1080px}
+.gantt-row{display:grid;grid-template-columns:330px minmax(680px,1fr);border-bottom:1px solid var(--borda);min-height:var(--row-h)}
+.gantt-row.header{position:sticky;top:0;background:#fff;z-index:5;font-size:12px;font-weight:700;color:var(--azul-esc)}
+.gantt-left{display:grid;grid-template-columns:30px 1fr 86px 78px;gap:6px;align-items:center;padding:6px 8px;border-right:1px solid var(--borda)}
+.gantt-left.group{grid-template-columns:1fr;background:var(--gray);font-weight:700;color:var(--azul-esc)}
+.gantt-grid{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:var(--day-w);min-height:var(--row-h);background:repeating-linear-gradient(90deg,#fff 0,#fff calc(var(--day-w) - 1px),#e9f0f3 calc(var(--day-w) - 1px),#e9f0f3 var(--day-w))}
+.gantt-day{font-size:10px;text-align:center;padding:6px 2px;color:var(--muted);border-right:1px solid var(--borda);min-width:var(--day-w)}
+.gantt-cell.drop-hover{background:rgba(0,131,202,.16)}
+.gantt-bar{position:absolute;top:7px;height:28px;border-radius:999px;background:var(--azul);color:#fff;display:flex;align-items:center;gap:5px;box-shadow:0 7px 16px rgba(0,75,110,.2);padding:0 9px;overflow:hidden}
+.gantt-bar[data-risk="Alta"],.gantt-bar[data-risk="Crítica"]{background:var(--vinho)}
+.gantt-bar .drag-handle{cursor:grab;font-weight:700;background:rgba(255,255,255,.24);border-radius:999px;padding:1px 6px}
+.gantt-bar .bar-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:40px;font-size:12px}
+.gantt-bar .bar-title:focus{background:#fff;color:var(--ink)}
+.mini-input{font-size:12px;padding:6px 7px;border-radius:8px}
+.gantt-title-inline{font-size:12px;line-height:1.2;font-weight:500;color:var(--ink)}
+.gantt-meta{font-size:11px;color:var(--muted)}
+
+.matrix-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.control-card{background:#fff;border:1px solid var(--borda);border-top:4px solid var(--azul);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
+.control-card h3{margin:0 0 8px;color:var(--azul-esc);font-size:15px}
+.control-card[data-risk="Alta"],.control-card[data-risk="Crítica"]{border-top-color:var(--risco)}
+.field-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-top:8px}
+
+.footer-bar{margin-top:auto;background:var(--azul);color:#fff;border-radius:var(--radius);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px}
+.footer-bar strong{font-family:"Rufina",serif}
+.footer-bar span{color:#e3f2fb}
+
+dialog{border:0;border-radius:18px;padding:0;box-shadow:0 30px 80px rgba(0,0,0,.34);max-width:920px;width:calc(100% - 28px)}
+dialog::backdrop{background:rgba(0,28,45,.4)}
+.modal{padding:18px}
+.modal header{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+.modal h2{margin:4px 0 0;color:var(--azul-esc)}
+.form-grid{display:grid;gap:10px;margin-top:10px}
+.form-grid.two{grid-template-columns:1fr 1fr}
+.form-grid.three{grid-template-columns:repeat(3,1fr)}
+.modal footer{display:flex;gap:8px;align-items:center;margin-top:14px}
+.modal footer .spacer{flex:1}
+
+#toast{position:fixed;right:20px;bottom:20px;max-width:420px;background:var(--azul-esc);color:#fff;padding:12px 14px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s;font-size:13px;z-index:99}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* evidência: nota, área de colar print e miniaturas */
+.ev-cell{display:grid;gap:6px}
+.ev-note{display:block;min-height:18px;font-size:12.5px;border:1px dashed transparent;border-radius:6px}
+.ev-note:empty:before,.mini[contenteditable]:empty:before{content:attr(placeholder);color:var(--muted)}
+.ev-paste{font-size:11.5px;color:var(--petroleo);background:#eef6f7;border:1px dashed var(--azul-claro);border-radius:8px;padding:6px 8px;cursor:text;text-align:center;user-select:none}
+.ev-paste:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px rgba(0,131,202,.16);background:#fff}
+.ev-paste.big{padding:14px;font-size:13px}
+.ev-thumbs{display:flex;flex-wrap:wrap;gap:6px}
+ .thumb{position:relative;display:inline-block}
+.thumb img{width:46px;height:46px;object-fit:cover;border:1px solid var(--borda);border-radius:8px;cursor:zoom-in;display:block;background:#fff}
+.thumb-x{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:1px solid var(--borda);background:#fff;color:var(--vinho);font-weight:700;padding:0;line-height:1;display:grid;place-items:center;cursor:pointer}
+.thumb-dl{position:absolute;bottom:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:1px solid var(--borda);background:#fff;color:var(--azul-esc);font-weight:700;padding:0;line-height:1;display:grid;place-items:center;cursor:pointer;font-size:12px}
+.thumb-ok{position:absolute;left:-5px;bottom:-5px;background:var(--ok);color:#fff;border-radius:999px;font-size:9px;padding:1px 4px;border:1px solid #fff}
+.cap-add{margin-left:10px;background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3);padding:3px 9px;font-size:11px;border-radius:999px}
+.cap-add:hover{background:#fff;color:var(--azul-esc)}
+.folder-status{display:block;margin-top:7px;color:#e3f2fb;font-size:11.5px;line-height:1.35}
+#lightbox{position:fixed;inset:0;background:rgba(0,28,45,.88);display:none;align-items:stretch;justify-content:center;z-index:120;padding:18px;flex-direction:column;gap:10px}
+#lightbox.show{display:flex}
+.lb-toolbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;color:#fff}
+.lb-toolbar button{background:#fff;color:var(--azul-esc);border-color:#fff;padding:8px 11px;font-weight:700}
+.lb-title{max-width:520px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#e3f2fb;margin-right:8px}
+.lb-stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(0,0,0,.18);cursor:grab}
+.lb-stage:active{cursor:grabbing}
+#lightbox img{max-width:94vw;max-height:82vh;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.5);background:#fff;transform-origin:center center;transition:transform .06s linear;user-select:none;pointer-events:none}
+.lb-help{text-align:center;color:#cfe9f7;font-size:11.5px}
+
+@media(max-width:1180px){
+  .app-shell{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto}
+  .hero{display:block}.summary-pill{display:inline-block;margin-top:12px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .bi-grid,.bi-grid-3{grid-template-columns:1fr}
+  .filters{grid-template-columns:1fr 1fr}
+  .search-panel{grid-template-columns:1fr}
+  .form-grid.two,.form-grid.three{grid-template-columns:1fr}
+}
+@media print{
+  .sidebar,.filters,.chips,.search-panel,.toolbar,.summary-pill,button,.button{display:none!important}
+  .app-shell{display:block}.main{padding:0}
+  .panel,.gantt-wrap,.table-wrap{box-shadow:none}
+  .view{display:block!important}.view:not(.active){display:none!important}
+  .hero,.footer-bar{background:var(--azul)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  th,.cap-row td{background:var(--azul)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div>
+        <strong>Sonova</strong>
+        <span>Mapa de Auditoria Trabalhista</span>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Navegação">
+      <button class="nav-btn active" data-view="painel">Painel BI</button>
+      <button class="nav-btn" data-view="checklist">Checklist <small id="navCount">0</small></button>
+      <button class="nav-btn" data-view="ponte">Clássico × Sonova</button>
+      <button class="nav-btn" data-view="plano">Plano / Gantt <small id="navPlano">0</small></button>
+      <button class="nav-btn" data-view="risco">Risco × Controle</button>
+      <button class="nav-btn" data-view="tabela">Tabela geral</button>
+    </nav>
+    <section class="side-card">
+      <span class="kicker">Como usar</span>
+      <p>Responda cada procedimento (Conforme / Não conforme / Parcial / N/A), aponte responsável e evidência. Tudo edita direto na tela e fica salvo no navegador. Itens de alto risco e não conformes viram plano de ação automático.</p>
+    </section>
+    <section class="side-card compact-actions">
+      <button id="btnExportJson">Exportar JSON (backup)</button>
+      <label class="button file-label">Importar JSON<input type="file" id="fileInput" accept=".json,application/json"></label>
+      <button id="btnExportCsv">Exportar CSV</button>
+      <button id="btnChooseEvidenceFolder">Escolher pasta dos prints</button>
+      <button id="btnExportOriginals">Exportar originais para pasta</button>
+      <span id="folderStatus" class="folder-status">Originais: salvos no navegador até escolher/exportar uma pasta.</span>
+      <button id="btnPrint">Imprimir / PDF</button>
+      <button id="btnReset" class="danger-lite">Restaurar modelo</button>
+    </section>
+  </aside>
+
+  <main class="main">
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Auditoria Trabalhista · Grupo Sonova Brasil</div>
+        <h1 id="viewTitle">Painel BI</h1>
+        <p id="viewSubtitle">Checklist de auditoria trabalhista do Portal de Auditoria, traduzido para a operação real de DP/Folha da Sonova (ADP, eSocial, FGTS Digital, DCTFWeb, CCT por CNPJ).</p>
+      </div>
+      <div class="summary-pill" id="summaryPill">Carregando…</div>
+    </header>
+
+    <section class="search-panel panel slim" aria-label="Busca">
+      <div class="search-title">
+        <span class="search-icon">⌕</span>
+        <div>
+          <strong>Busca geral</strong>
+          <span>Procure por procedimento, área, risco, evidência, responsável, eSocial, FGTS, CCT, rescisão…</span>
+        </div>
+      </div>
+      <input id="q" class="global-search" type="search" placeholder="Ex.: salário-família, ponto, FGTS Digital, rescisão, terceirização…">
+    </section>
+
+    <section class="filters panel slim">
+      <label>Capítulo<select id="fCap"></select></label>
+      <label>Área Sonova<select id="fArea"></select></label>
+      <label>Resposta<select id="fResp"></select></label>
+      <label>Risco<select id="fRisco"></select></label>
+      <label>Responsável<select id="fResponsavel"></select></label>
+      <button id="btnClear">Limpar</button>
+    </section>
+
+    <section id="painel" class="view active"></section>
+    <section id="checklist" class="view"></section>
+    <section id="ponte" class="view"></section>
+    <section id="plano" class="view"></section>
+    <section id="risco" class="view"></section>
+    <section id="tabela" class="view"></section>
+
+    <footer class="footer-bar">
+      <div><strong>Mapa de Auditoria Trabalhista</strong> · Grupo Sonova Brasil</div>
+      <span id="footMeta">Anderson Souza · Coordenação de RH</span>
+    </footer>
+  </main>
+</div>
+
+<dialog id="itemDialog">
+  <form id="itemForm" class="modal" method="dialog">
+    <header>
+      <div>
+        <span class="kicker">Item de auditoria</span>
+        <h2 id="modalTitle">Editar item</h2>
+      </div>
+      <button type="button" id="btnClose" class="icon-btn">×</button>
+    </header>
+    <input id="itemId" type="hidden">
+    <div class="form-grid two">
+      <label>Código<input id="iCodigo" placeholder="1.1.a"></label>
+      <label>Capítulo<input id="iCap" disabled></label>
+    </div>
+    <label>Procedimento de auditoria<textarea id="iProc" rows="2"></textarea></label>
+    <label>Tradução para a Sonova (clássico → moderno)<textarea id="iModerniza" rows="2"></textarea></label>
+    <div class="form-grid three">
+      <label>Área Sonova<input id="iArea"></label>
+      <label>Responsável<input id="iResponsavel"></label>
+      <label>Risco<select id="iRisco"></select></label>
+      <label>Resposta<select id="iResp"></select></label>
+      <label>Início<input id="iInicio" type="date"></label>
+      <label>Prazo<input id="iFim" type="date"></label>
+    </div>
+    <label>Evidência (link, relatório, protocolo)<input id="iEvidencia"></label>
+    <label>Prints de tela (cole com Ctrl+V)
+      <div class="ev-paste big" id="iPaste" tabindex="0" data-paste-id="">📎 Clique aqui e cole o print (Ctrl+V)</div>
+    </label>
+    <div id="iThumbs" class="ev-thumbs"></div>
+    <label>Observação<textarea id="iObs" rows="2"></textarea></label>
+    <footer>
+      <button type="button" id="btnDelete" class="danger">Excluir</button>
+      <button type="button" id="btnDup">Duplicar card</button>
+      <span class="spacer"></span>
+      <button type="button" id="btnCancel">Cancelar</button>
+      <button type="submit" class="primary">Salvar item</button>
+    </footer>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* ============================================================
+   Mapa de Auditoria Trabalhista - Sonova
+   Base: Roteiro/Check List de Auditoria Trabalhista (Portal de Auditoria)
+   Tradução: procedimento clássico -> operação real de DP/Folha Sonova
+   ============================================================ */
+
+const CAPITULOS = [
+  {n:1,  nome:"Documentação / Dossiê"},
+  {n:2,  nome:"Cartão de Ponto e Jornada"},
+  {n:3,  nome:"Folha de Pagamento"},
+  {n:4,  nome:"INSS e FGTS"},
+  {n:5,  nome:"Segurança e Medicina do Trabalho"},
+  {n:6,  nome:"Autônomos, RPA e PJ"},
+  {n:7,  nome:"Rescisão de Contrato"},
+  {n:8,  nome:"Reclamatórias Trabalhistas"},
+  {n:9,  nome:"Férias"},
+  {n:10, nome:"Décimo Terceiro Salário"},
+  {n:11, nome:"Outros (PAT, CAGED/RAIS, Sindical)"},
+  {n:12, nome:"Terceirização"},
+  {n:13, nome:"Auditoria de Benefícios"}
+];
+
+const RESP_AREA = {
+  "Cadastro & Contratos":"Eduarda",
+  "Jornada & Ponto":"Jair",
+  "Folha & Rubricas":"Jair",
+  "Encargos INSS/IRRF/FGTS":"Jair",
+  "eSocial & Obrigações":"Jair",
+  "SST":"Jameson",
+  "Terceiros, RPA & PJ":"Anderson",
+  "Rescisão":"Eduarda",
+  "Reclamatórias":"Anderson",
+  "Férias":"Eduarda",
+  "13º salário":"Jair",
+  "CCT & Sindical":"Anderson",
+  "Benefícios & PAT":"Sabrina",
+  "Governança & BI":"Anderson"
+};
+
+/* Cada item: [codigo, procedimento, area, modernizacao(clássico->Sonova), risco]
+   risco: Baixa | Média | Alta | Crítica */
+const ITENS_RAW = {
+1:[
+ ["1.1.a","Contrato de trabalho celebrado por escrito, assinado por empresa e empregado e devidamente preenchido","Cadastro & Contratos","Hoje o vínculo nasce no ADP/eSocial (S-2200) e a CTPS é digital. Auditar o e-contrato/admissão digital assinado (DocuSign) por CNPJ, não mais a via física.","Alta"],
+ ["1.1.d","Consta cláusula de horário de trabalho","Cadastro & Contratos","Validar se a jornada contratada bate com o cadastro de horário no ponto eletrônico e com a escala efetiva.","Média"],
+ ["1.1.e","Cláusula autorizando descontos (farmácia, seguros, mercado, associações) confrontada com a folha","Cadastro & Contratos","Cruzar autorização de desconto x rubricas de desconto da folha ADP (consignado, copay, Alelo, farmácia).","Alta"],
+ ["1.1.f","Alteração de horário feita por aditivo contratual","Cadastro & Contratos","Aditivo eletrônico arquivado + evento S-2206 (alteração contratual) transmitido no eSocial.","Média"],
+ ["1.1.h","Prazos legais de contrato de experiência e prorrogação respeitados","Cadastro & Contratos","Conferir no ADP datas de experiência (máx. 90 dias, 1 prorrogação) e alerta de vencimento para evitar efetivação automática indevida.","Alta"],
+ ["1.2.a","Acordo de compensação de horas / supressão do sábado","Jornada & Ponto","Acordo individual ou via CCT; conferir banco de horas e regra de compensação parametrizada no ponto.","Média"],
+ ["1.3.a","Fichas de salário-família preenchidas e assinadas; termo de responsabilidade","Cadastro & Contratos","Salário-família segue ativo: validar termo + comprovantes; hoje a cota integra a folha e o eSocial. Quem opera: admissão.","Média"],
+ ["1.3.c","Cartão de vacinação anual (filhos até 6 anos) e frequência escolar semestral (7+)","Cadastro & Contratos","Controle de vencimento dos comprovantes para suspender a cota quando faltar evidência (risco de pagamento indevido).","Média"],
+ ["1.4.a","Exame admissional apresentado antes do início","SST","ASO admissional no SOC/Essense + evento S-2220 no eSocial; bloquear admissão sem ASO válido.","Alta"],
+ ["1.4.b","Exames periódicos (semestral/anual/bianual) em dia","SST","PCMSO no SOC com agenda de periódicos por CNPJ; painel de vencidos.","Média"],
+ ["1.6.a","Comprovante de entrega/devolução da CTPS na admissão","Cadastro & Contratos","CTPS Digital: não há entrega física. Auditar protocolo/print do registro eletrônico no Gov.br e no ADP.","Baixa"],
+ ["1.7.a","Declaração de dependentes para IR preenchida e assinada + documentação comprobatória","Cadastro & Contratos","Conferir declaração x dependentes deduzidos na folha ADP e no S-1200; guardar comprovante.","Média"],
+ ["1.8.a","Opção de uso/não uso do vale-transporte por declaração","Benefícios & PAT","Declaração de VT no onboarding; declaração anual de trajeto atualizada (linhas/valores) para sustentar o desconto de 6%.","Média"],
+ ["1.9.a","Ficha de registro com dados obrigatórios (nome, PIS, RG/CPF, admissão, horário, endereço, filiação)","Cadastro & Contratos","Registro eletrônico no ADP + eventos eSocial; auditar completude e qualidade do cadastro mestre.","Média"],
+ ["1.9.b","Registro atualizado: salário, férias gozadas, contribuição sindical, alteração de jornada, CAT, interrupções","Cadastro & Contratos","Trilha de eventos no ADP/eSocial substitui as anotações manuais na ficha; conferir consistência histórica.","Média"],
+ ["1.10.g","Pagamento de salário até o 5º dia útil (data no recibo)","Folha & Rubricas","Calendário de fechamento por CNPJ + arquivo CNAB; auditar data de crédito x 5º útil para evitar mora.","Alta"],
+ ["1.10.h","Inexistência de salário pago 'por fora'","Folha & Rubricas","Conciliar pagamentos bancários x folha ADP; valores fora da folha são risco fiscal/trabalhista crítico.","Crítica"],
+ ["1.10.l","Comprovante de entrega de EPI","SST","Ficha de EPI no SOC/Essense; relevante p/ insalubridade, periculosidade e defesa em reclamatória.","Média"]
+],
+2:[
+ ["2.1","Funcionários não excedem 10h diárias","Jornada & Ponto","Relatório de exceções do ponto eletrônico (AFD) com alerta de jornada > 10h por CNPJ.","Alta"],
+ ["2.2","Intervalo mínimo de 11h entre jornadas","Jornada & Ponto","Regra interjornada validada no apurador de ponto; reflexo em folha quando violada.","Média"],
+ ["2.3","Trabalho em dias de descanso semanal","Jornada & Ponto","Tratamento de DSR trabalhado x folga compensatória; reflexo de DSR sobre extras e comissões.","Média"],
+ ["2.4","Intervalo de 15 min em jornada de 6h e sua marcação","Jornada & Ponto","Parametrização de intervalo por escala; conferir marcação efetiva.","Baixa"],
+ ["2.6","Autorização para horas extras","Jornada & Ponto","Política de aprovação de HE pelo gestor; auditar HE sem autorização x acordo de prorrogação.","Média"],
+ ["2.13","Intervalo mínimo de 1h para refeição/repouso","Jornada & Ponto","Conferir intervalo intrajornada na escala; indenização do intervalo suprimido reflete em folha.","Média"],
+ ["2.14","Ponto sem rasuras / 2.15 ponto assinado","Jornada & Ponto","Ponto eletrônico fecha digitalmente; auditar fechamento e ciência do colaborador (espelho de ponto).","Baixa"],
+ ["2.16","Marcação repetitiva (britânica)","Jornada & Ponto","Detectar marcações idênticas/automáticas como indício de fraude no AFD.","Alta"],
+ ["2.18","Turno ininterrupto de revezamento (6h)","Jornada & Ponto","Identificar regimes 6h/turno e validar adicional/limite quando aplicável.","Média"],
+ ["2.19","Compensação de atrasos/faltas com horas extras","Jornada & Ponto","Regra de banco de horas e compensação parametrizada; evitar compensação irregular.","Média"],
+ ["2.20","Banco de horas e 2.21 homologação","Jornada & Ponto","Acordo de banco (individual/CCT) válido; saldo e prazo de compensação monitorados.","Média"],
+ ["2.27","Horas extras do cartão fecham com a folha","Jornada & Ponto","Conciliação ponto → folha ADP (HE 50%/100%, adicional noturno, DSR) sem divergência.","Alta"]
+],
+3:[
+ ["3.1.a","Apontamento (dias, faltas, HE) confere com a folha","Folha & Rubricas","Bater o apurado do ponto (AFD) contra a folha ADP por matrícula; divergência vira não conformidade.","Alta"],
+ ["3.1.b","Origem das comissões solicitada e validada","Folha & Rubricas","Memória de cálculo de comissão/VCC: base, percentual, aprovação e payout (governança Greens).","Alta"],
+ ["3.2.a","HE 50% / 3.2.b HE 100% (domingos e feriados)","Folha & Rubricas","Conferir adicionais e fechamento com o ponto; reflexos em DSR e médias.","Média"],
+ ["3.2.f","DSR sobre horas extras / 3.2.g DSR sobre comissões","Folha & Rubricas","Validar incidência de DSR sobre variáveis (Súmula 27 TST) na parametrização das rubricas ADP.","Alta"],
+ ["3.2.l","Insalubridade / 3.2.m periculosidade / 3.2.n adicional noturno","Folha & Rubricas","Adicionais x laudo (LTCAT/PGR) e base correta; refletem em FGTS, INSS, férias e 13º.","Alta"],
+ ["3.2.o","Pensão alimentícia","Folha & Rubricas","Desconto conforme ofício judicial; base e percentual; repasse no prazo.","Alta"],
+ ["3.3.a","Desconto do VT limitado a 6% do salário-base","Benefícios & PAT","Validar teto de 6% x custo efetivo; proporcionalidade por admissão/demissão; devolução de não usados.","Média"],
+ ["3.4.a","IRRF pelo regime de caixa","Folha & Rubricas","Conferir competência x caixa do IRRF; somar base de férias (salário + 1/3 + abono) corretamente.","Alta"],
+ ["3.4.j","Total de IRRF da folha confere com os DARF recolhidos","Encargos INSS/IRRF/FGTS","Conciliar IRRF folha ADP x DCTFWeb x DARF; recolhimento regular.","Alta"],
+ ["3.5.a","INSS conforme tabela atualizada, sobre todas as verbas salariais","Encargos INSS/IRRF/FGTS","Tabela vigente parametrizada; auditar incidências por rubrica; casos de múltiplos vínculos (teto).","Alta"],
+ ["3.6.a","Salário-família: faixa, direito e pagamento corretos","Folha & Rubricas","Faixa de renda vigente; cota proporcional na admissão/demissão; suspensão por falta de comprovante.","Média"],
+ ["3.8.a","Contribuição sindical conforme regra e desconto autorizado","CCT & Sindical","Pós-reforma, desconto só com autorização expressa; conferir oposição e recolhimento por categoria.","Média"],
+ ["3.9","Equiparação salarial","Folha & Rubricas","Mapear paradigmas (mesma função/produtividade) e risco de diferença salarial; cruzar com bandas.","Alta"],
+ ["3.10","Reajustes salariais conforme CCT / data-base","CCT & Sindical","Aplicar piso e reajuste da CCT por CNPJ/sindicato na data-base; auditar retroativos.","Alta"],
+ ["3.11","Salário abaixo do piso da convenção","CCT & Sindical","Comparar salário base x piso da CCT vigente por filial; salário < piso é não conformidade.","Crítica"]
+],
+4:[
+ ["4.1.a","Resumo da folha: verbas com incidência de INSS","Encargos INSS/IRRF/FGTS","Quadro de incidências por rubrica no ADP; base INSS bate com o eSocial (S-1200).","Alta"],
+ ["4.1.c","Cálculo e preenchimento de INSS patronal e RAT/SAT","Encargos INSS/IRRF/FGTS","DCTFWeb apura patronal + RAT*FAP + terceiros; auditar enquadramento FPAS e alíquota RAT.","Alta"],
+ ["4.1.e","Enquadramento correto no SAT/RAT","Encargos INSS/IRRF/FGTS","Validar FAP vigente por CNPJ no e-CAC; impacto direto no custo da folha.","Alta"],
+ ["4.1.i","Verbas sem incidência de INSS conforme tabela","Encargos INSS/IRRF/FGTS","Rubricas indenizatórias corretamente classificadas (eSocial) para não gerar contribuição indevida.","Média"],
+ ["4.2.b","GFIP/GRFP corretas (hoje DCTFWeb/FGTS Digital)","eSocial & Obrigações","SEFIP/GFIP foram substituídas: auditar fechamento eSocial → DCTFWeb e FGTS Digital por competência.","Alta"],
+ ["4.2.g","Salário-maternidade com documentação exigida","Encargos INSS/IRRF/FGTS","Afastamento maternidade (S-2230), compensação na DCTFWeb e reembolso do 13º proporcional.","Média"],
+ ["4.3.a","Resumo da folha: verbas com incidência de FGTS","Encargos INSS/IRRF/FGTS","Base FGTS por rubrica x FGTS Digital; conferir 8% + base do 13º.","Alta"],
+ ["4.3.c","Recolhimento de FGTS dos últimos 4-5 meses","Encargos INSS/IRRF/FGTS","Conferência por trabalhador no FGTS Digital; divergências históricas e individualização.","Alta"]
+],
+5:[
+ ["5.1.b","Obrigatoriedade e constituição da CIPA conforme nº de funcionários","SST","Dimensionar CIPA por estabelecimento/CNPJ (NR-5); designado quando desobrigado.","Média"],
+ ["5.1.d","SIPAT realizada com documentos comprobatórios","SST","Evidência de SIPAT anual por unidade.","Baixa"],
+ ["5.1.g","CAT emitida e anexada para cada acidente","SST","CAT no prazo + evento S-2210; auditar acidentes sem CAT (risco previdenciário).","Alta"],
+ ["5.2.a","PPRA, PCMSO e relatórios anuais (hoje PGR/PCMSO)","SST","PPRA virou PGR (NR-1): auditar PGR + PCMSO vigentes por CNPJ no SOC/Essense.","Alta"],
+ ["5.3","Exames admissional, periódico e demissional nos prazos","SST","Agenda de ASO no SOC; bloqueio de rescisão sem demissional; eventos S-2220/S-2299.","Alta"],
+ ["5.4.a","PPP emitido para expostos a risco","SST","PPP eletrônico via eSocial (S-2240); auditar expostos e enquadramento de aposentadoria especial.","Média"],
+ ["5.5.a","Documentação à disposição da fiscalização (PGR, PCMSO, PPP, LTCAT)","SST","Repositório por CNPJ pronto p/ auditoria fiscal do trabalho.","Média"]
+],
+6:[
+ ["6.d","Inexistência de vínculo nos autônomos (subordinação)","Terceiros, RPA & PJ","Auditar pejotização/subordinação: risco de reconhecimento de vínculo e passivo.","Alta"],
+ ["6.e","Retenção de INSS de contribuintes individuais (11%)","Terceiros, RPA & PJ","RPA com retenção de 11% (teto) + patronal 20%; declarar no eSocial (S-2300/S-1200).","Alta"],
+ ["6.g","Autônomos relacionados no eSocial","eSocial & Obrigações","TSVE no eSocial (S-2300) para prestadores sem vínculo; auditar completude.","Média"],
+ ["6.i","INSS sobre serviços de cooperativas","Terceiros, RPA & PJ","Validar retenções e enquadramento de cooperativas/PJ na contratação.","Média"]
+],
+7:[
+ ["7.a","Férias indenizadas e proporcionais conforme período aquisitivo","Rescisão","TRCT calcula automático no ADP; auditar avos pelo aquisitivo (não pelo mês de admissão).","Alta"],
+ ["7.b","Aviso indenizado projeta +1/12 em férias e 13º","Rescisão","Projeção do aviso (Súmula 371/OJ 82) parametrizada; conferir reflexos.","Alta"],
+ ["7.d","Médias de variáveis do aviso = últimos 12 meses","Rescisão","Base de médias (comissão/HE) dos 12 meses no cálculo rescisório.","Alta"],
+ ["7.g","Prazo de pagamento da rescisão (10 dias) cumprido","Rescisão","Reforma: prazo único de 10 dias corridos; auditar data de quitação x homologação (multa art. 477).","Crítica"],
+ ["7.i","INSS sobre 13º apurado em separado","Rescisão","13º indenizado/proporcional com base/encargos próprios; conferir DCTFWeb.","Média"],
+ ["7.o","FGTS + multa 40% sobre o saldo (extrato)","Rescisão","FGTS Digital gera guia rescisória; auditar multa 40% sobre depósitos do contrato.","Alta"],
+ ["7.q","Não demitir estável (CIPA, gestante, acidentado, sindical)","Rescisão","Checagem de estabilidade antes do desligamento; risco de reintegração/indenização.","Crítica"],
+ ["7.compl","Complementares: PLR, VCC e comissão de desligados pagos e tributados","Rescisão","Rotina de pagamento extemporâneo de variáveis a desligados com eSocial/encargos corretos.","Alta"]
+],
+8:[
+ ["8.1.b","Verbas indenizatórias (aviso, férias indenizadas, FGTS) sem INSS","Reclamatórias","Classificar corretamente as verbas do acordo no eSocial (S-2500/S-2501).","Alta"],
+ ["8.1.d","Recolhimento de INSS de reclamatória até o dia 02 do mês seguinte","Reclamatórias","Captura S-2500/S-2501 e DCTFWeb da reclamatória no prazo.","Alta"],
+ ["8.3.a","IRRF sobre parcelas da reclamatória retido/recolhido","Reclamatórias","Fonte pagadora obrigada ainda que não retido; rendimento recebido acumuladamente (RRA).","Alta"],
+ ["8.5.b1","Mapear ações perdidas por revelia e causa-raiz","Reclamatórias","Cruzar reclamatórias com causa-raiz na folha (HE, comissão, rescisão) para prevenir reincidência.","Alta"],
+ ["8.5.b5","Preparo de preposto e testemunhas","Reclamatórias","Preposto com conhecimento do processo/matéria; reduzir perda por prova.","Média"]
+],
+9:[
+ ["9.1","Férias vencidas e não gozadas (em dobro)","Férias","Painel de férias vencidas no ADP; risco de pagamento em dobro (art. 137).","Alta"],
+ ["9.2.a","Médias de variáveis das férias pelo período aquisitivo","Férias","HE, adicionais, comissões na média; conferir base e 1/3 constitucional.","Média"],
+ ["9.3.d","Avos das férias pelo período aquisitivo (não pelo mês de admissão)","Férias","Validar cálculo de avos no ADP; erro comum em rescisão.","Média"],
+ ["9.4","Integração das férias na folha por competência","Férias","Provisão e integração corretas; conciliação contábil.","Média"],
+ ["9.6","Prazos: comunicação (30d), pagamento (2d antes), gozo e férias em dobro","Férias","Auditar prazos legais no fluxo de programação de férias.","Média"]
+],
+10:[
+ ["10.a","Cálculo do 13º proporcional por avos","13º salário","Adiantamento + parcela final no ADP; fração ≥ 15 dias conta avo.","Média"],
+ ["10.b","Médias de variáveis do 13º (12 meses)","13º salário","Base de médias (comissão/HE) correta; conferir parcela final.","Média"],
+ ["10.e","Reembolso de INSS do 13º no período de licença-maternidade","13º salário","Compensação na DCTFWeb do 13º proporcional à maternidade.","Média"]
+],
+11:[
+ ["11.a","PAT: cesta/vale-alimentação não pago em dinheiro; empresa inscrita","Benefícios & PAT","Inscrição no PAT vigente; benefício via Alelo/iFood (não em espécie); conferir tributação.","Média"],
+ ["11.b","Provisões de férias e 13º conferidas","Governança & BI","Relatórios de provisão x contábil por centro de custo; conciliação mensal.","Média"],
+ ["11.c","Contribuição sindical de categorias diferenciadas","CCT & Sindical","Pós-reforma, só com autorização; advogados (OAB) isentos; conferir recolhimento por categoria.","Baixa"],
+ ["11.e","CAGED e RAIS entregues no prazo (hoje via eSocial)","eSocial & Obrigações","CAGED foi substituído por S-2200/S-2299/S-2300; RAIS pelo eSocial. Auditar fechamento e prazos.","Média"],
+ ["11.f3","Assinatura do colaborador nas vias do Seguro-Desemprego","Rescisão","Requerimento eletrônico de SD na rescisão; evidência de habilitação.","Baixa"]
+],
+12:[
+ ["12.b","Contrato de terceirização bem elaborado e estudado","Terceiros, RPA & PJ","Risco de responsabilidade subsidiária/solidária (Súmula 331/Lei 13.429); auditar cláusulas.","Alta"],
+ ["12.atividade","Atividade-fim do prestador compatível e impessoalidade","Terceiros, RPA & PJ","Evitar pessoalidade e subordinação direta aos terceiros (caracterização de vínculo).","Alta"],
+ ["12.epi","Fornecimento de EPI/EPC e responsabilidade por acidentes pela contratada","Terceiros, RPA & PJ","Cláusula de SST + evidência de EPI da contratada; reduz risco solidário.","Média"],
+ ["12.solidaria","Cláusula sobre encargos trabalhistas/previdenciários e fiscalização do tomador","Terceiros, RPA & PJ","Fiscalizar recolhimento (INSS/FGTS) da contratada; reter quando aplicável; guardar evidência.","Alta"],
+ ["12.vigencia","Prazo de vigência, foro, rescisão e testemunhas no contrato","Terceiros, RPA & PJ","Governança contratual mínima; checklist jurídico antes de assinar.","Baixa"]
+],
+13:[
+ ["13.1","Elegibilidade por CCT/política: cada colaborador recebe o pacote correto","Benefícios & PAT","Conferir regra de elegibilidade por cargo/CNPJ/sindicato no ato da admissão; benefício indevido gera custo e passivo.","Alta"],
+ ["13.2","Movimentação (admissão, afastamento, desligamento) refletida no fornecedor no prazo","Benefícios & PAT","Cruzar movimentação ADP x portais dos fornecedores; atraso gera cobrança de inativo ou colaborador sem benefício.","Alta"],
+ ["13.3","Conciliação fatura do fornecedor x folha ADP (VR/VA — Alelo e iFood)","Benefícios & PAT","Bater fatura mensal x desconto em folha x dias trabalhados; diferença é não conformidade financeira.","Alta"],
+ ["13.4","Plano de saúde: vidas ativas x fatura x coparticipação/desconto","Benefícios & PAT","Conferência de vidas (titulares + dependentes) x fatura operadora x copay/desconto na folha por CNPJ.","Alta"],
+ ["13.5","Odontológico: vidas x fatura x desconto","Benefícios & PAT","Mesma conciliação do plano de saúde para o odonto; dependentes elegíveis e desligados cortados.","Média"],
+ ["13.6","Farmácia / copay: limite, autorização e desconto em folha","Benefícios & PAT","Validar teto de desconto, autorização do colaborador e repasse correto da coparticipação de farmácia.","Média"],
+ ["13.7","Seguro de vida (MetLife): capital, elegibilidade e custo x folha","Benefícios & PAT","Conferir capital segurado por faixa/cargo, vidas ativas e rateio de custo; desligados excluídos.","Média"],
+ ["13.8","Previdência privada: adesão, match da empresa e desconto","Benefícios & PAT","Validar adesão, contrapartida da empresa e desconto da parte do colaborador na folha ADP.","Média"],
+ ["13.9","Wellhub (Gympass) / Petlove: adesão ativa x cobrança x desconto","Benefícios & PAT","Cruzar usuários ativos x fatura x desconto; cancelar cobrança de inativos e desligados.","Média"],
+ ["13.10","Sonova Cuida / Sapore (refeitório): faturamento x headcount x subsídio","Benefícios & PAT","Conciliar faturamento x número de elegíveis x subsídio da empresa por unidade/CNPJ.","Média"],
+ ["13.11","Coparticipação e desconto x autorização formal do colaborador","Benefícios & PAT","Todo desconto de benefício precisa de autorização assinada; cruzar autorização x rubrica de desconto.","Alta"],
+ ["13.12","Tributação: benefício como utilidade (não-salarial) x risco de integração","Encargos INSS/IRRF/FGTS","Classificar saúde, VT, PAT e demais como não-salariais; integração indevida gera INSS/FGTS/IRRF retroativos.","Alta"],
+ ["13.13","Desligados: corte de benefício e cobrança pró-rata do período","Benefícios & PAT","Rotina de corte na rescisão e cobrança/devolução proporcional; evitar pagamento de inativo.","Alta"],
+ ["13.14","Governança de fornecedores: contrato, SLA e reajuste de cada benefício","Governança & BI","Inventário de fornecedores com contrato vigente, SLA e data de reajuste; base para renegociação e BI.","Baixa"]
+]
+};
+
+</script>
+<script>
+/* ============================================================
+   Mapa de Auditoria Trabalhista - Sonova | app.js
+   IDs persistentes, merge não destrutivo, localStorage,
+   checklist + BI + ponte + plano/gantt + risco + tabela
+   ============================================================ */
+const STORAGE_KEY = "sonova_mapa_auditoria_trab_v1";
+const RESPOSTAS = ["Pendente","Conforme","Parcial","Não conforme","N/A"];
+const RISCOS = ["Baixa","Média","Alta","Crítica"];
+const VIEW_TITLES = {painel:"Painel BI",checklist:"Checklist de auditoria",ponte:"Clássico × Sonova",plano:"Plano de ação / Gantt",risco:"Risco × Controle",tabela:"Tabela geral"};
+const VIEW_SUBS = {
+  painel:"Conformidade, risco e maturidade por capítulo da auditoria trabalhista.",
+  checklist:"Responda cada procedimento e registre responsável, evidência e observação. Salva sozinho no navegador.",
+  ponte:"Cada procedimento clássico do roteiro traduzido para a operação real da Sonova (ADP, eSocial, FGTS Digital, DCTFWeb).",
+  plano:"Itens não conformes, parciais e de alto risco viram plano de ação com Gantt arrastável.",
+  risco:"Matriz de risco e controle por capítulo, com teste e evidência.",
+  tabela:"Tabela completa editável, estilo planilha, com exportação."
+};
+const BASE_CAPITULOS = JSON.parse(JSON.stringify(CAPITULOS));
+const EVIDENCE_DB = "sonova_evidencias_originais_v1";
+const EVIDENCE_STORE = "originais";
+const EVIDENCE_SETTINGS = "settings";
+
+let state = loadState();
+let ui = {view:"painel", f:{q:"",cap:"",area:"",resp:"",risco:"",responsavel:""}, chip:"", scale:"days", drag:null, toastTimer:null, editing:null, pasteId:null, folderHandle:null, lb:null};
+
+document.addEventListener("DOMContentLoaded", init);
+function init(){ bind(); syncCustomCapitulosFromItems(); hydrateFilters(); render(); initEvidenceStorage(); toast("Mapa carregado. Responda os itens direto na tela."); }
+
+/* ---------- helpers ---------- */
+function $(id){ return document.getElementById(id); }
+function qsa(s,r=document){ return [...r.querySelectorAll(s)]; }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function esc(v){ return String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function parseDate(s){ const d=s?new Date(s+"T00:00:00"):new Date(); return isNaN(d)?new Date():d; }
+function fmtDate(s){ if(!s) return ""; const [y,m,d]=s.split("-"); return `${d}/${m}/${y}`; }
+function addDays(s,n){ const d=parseDate(s); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function daysBetween(a,b){ return Math.round((parseDate(b)-parseDate(a))/86400000); }
+function clamp(n,a,b){ return Math.max(a,Math.min(b,n)); }
+function slug(s){ return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9]+/g,"-").replace(/^-|-$/g,""); }
+
+function safeFileName(s){ return String(s||"print").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]+/g,"_").replace(/^_+|_+$/g,"").slice(0,120) || "print"; }
+const THUMB_PLACEHOLDER = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="92" height="92" viewBox="0 0 92 92"><rect width="92" height="92" rx="14" fill="#EEF3F6"/><path d="M24 58l13-15 10 11 8-9 13 13" fill="none" stroke="#0083CA" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="31" r="7" fill="#6EB4DC"/><text x="46" y="78" text-anchor="middle" font-family="Arial" font-size="10" fill="#5E7180">print</text></svg>`);
+function imgMeta(raw){ return typeof raw==="string" ? {id:"", thumb:raw, name:"print_legado.webp", type:"image/webp", legacy:true, savedToDisk:false, storedOriginal:false} : (raw||{}); }
+function normalizeImgs(arr){ return Array.isArray(arr) ? arr.map(x => typeof x==="string" ? {id:"", thumb:x, name:"print_legado.webp", type:"image/webp", legacy:true, savedToDisk:false, storedOriginal:false} : x).filter(Boolean) : []; }
+function compactImgMeta(raw, pruneLegacy=false){
+  const m=imgMeta(raw); if(!m) return null;
+  if(m.id){ const {thumb,src,blob,...rest}=m; return rest; }
+  if(pruneLegacy && (m.thumb || m.src)){ const {thumb,src,blob,...rest}=m; return {...rest, thumbLost:true}; }
+  return m;
+}
+function stateForStorage(pruneLegacy=false){
+  return {...state, items:state.items.map(it=>({...it, evidenciaImgs:normalizeImgs(it.evidenciaImgs||[]).map(x=>compactImgMeta(x, pruneLegacy)).filter(Boolean)}))};
+}
+function nextImgId(item){ return "EV-"+safeFileName(item.codigo||"item")+"-"+Date.now().toString(36).toUpperCase()+"-"+Math.floor(Math.random()*9000+1000); }
+function dataUrlToBlob(dataUrl){ const [head,body]=String(dataUrl).split(','); const mime=(head.match(/data:([^;]+)/)||[])[1]||"application/octet-stream"; const bin=atob(body||""); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i); return new Blob([arr],{type:mime}); }
+function downloadBlob(blob,name){ const u=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=u; a.download=safeFileName(name||"evidencia.png"); a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
+
+/* ---------- model build ---------- */
+function buildDefaultItems(){
+  const out=[]; let seq=0;
+  CAPITULOS.forEach(cap=>{
+    (ITENS_RAW[cap.n]||[]).forEach(row=>{
+      const [codigo,proc,area,moderniza,risco]=row;
+      const id="IT-"+cap.n+"-"+slug(codigo);
+      const inicio=addDays(todayISO(), seq*1);
+      const offset = (risco==="Crítica"||risco==="Alta")?5:(risco==="Média"?7:9);
+      out.push({
+        id, cap:cap.n, capNome:cap.nome, codigo, procedimento:proc, area, moderniza, risco,
+        responsavel:RESP_AREA[area]||"A definir", resposta:"Pendente", evidencia:"", evidenciaImgs:[], obs:"",
+        inicio, fim:addDays(inicio,offset), custom:false
+      });
+      seq++;
+    });
+  });
+  return out;
+}
+function loadState(){
+  const base={meta:{app:"Mapa de Auditoria Trabalhista Sonova",versao:"1.0",criadoEm:todayISO()}, items:buildDefaultItems()};
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw){ return mergeState(JSON.parse(raw), base); }
+  }catch(e){ console.warn(e); }
+  return base;
+}
+/* merge: preserva respostas/edições por id; adiciona itens novos do modelo; mantém itens custom */
+function mergeState(saved, base){
+  const savedById={}; (saved.items||[]).forEach(i=>savedById[i.id]=i);
+  const items = base.items.map(def=>{
+    const s=savedById[def.id];
+    if(!s) return def;
+    return {...def,
+      resposta:s.resposta??def.resposta, risco:s.risco??def.risco,
+      responsavel:s.responsavel??def.responsavel, evidencia:s.evidencia??def.evidencia,
+      obs:s.obs??def.obs, inicio:s.inicio??def.inicio, fim:s.fim??def.fim,
+      evidenciaImgs:normalizeImgs(Array.isArray(s.evidenciaImgs)?s.evidenciaImgs:(def.evidenciaImgs||[])),
+      area:s.area??def.area, procedimento:s.procedimento??def.procedimento, moderniza:s.moderniza??def.moderniza
+    };
+  });
+  const known=new Set(base.items.map(i=>i.id));
+  (saved.items||[]).filter(i=>i.custom && !known.has(i.id)).forEach(i=>{ i.evidenciaImgs=normalizeImgs(i.evidenciaImgs); items.push(i); });
+  return {meta:saved.meta||base.meta, items};
+}
+function save(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(stateForStorage(false))); return true; }
+  catch(e){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateForStorage(true)));
+      toast("O projeto foi salvo em modo leve. Os prints ficam no IndexedDB/pasta, e o JSON guarda só os metadados.");
+      return true;
+    }catch(err){
+      console.warn(err);
+      toast("Armazenamento cheio. Escolha/exporte uma pasta dos prints ou remova evidências antigas.");
+      return false;
+    }
+  }
+}
+
+function restoreBaseCapitulos(){
+  CAPITULOS.splice(0, CAPITULOS.length, ...BASE_CAPITULOS.map(c=>({...c})));
+}
+function syncCustomCapitulosFromItems(){
+  const existing=new Set(CAPITULOS.map(c=>Number(c.n)));
+  state.items.forEach(it=>{
+    const n=Number(it.cap);
+    if(!existing.has(n)){
+      CAPITULOS.push({n, nome:it.capNome||("Capítulo "+n), custom:true});
+      existing.add(n);
+    }
+  });
+  CAPITULOS.sort((a,b)=>Number(a.n)-Number(b.n));
+}
+function nextChapterNumber(){
+  return Math.max(...CAPITULOS.map(c=>Number(c.n)||0), ...state.items.map(i=>Number(i.cap)||0)) + 1;
+}
+
+/* ---------- filtering ---------- */
+function filtered(){
+  const f=ui.f;
+  return state.items.filter(it=>{
+    const hay=[it.codigo,it.procedimento,it.area,it.moderniza,it.responsavel,it.risco,it.resposta,it.evidencia,it.obs,it.capNome].join(" ").toLowerCase();
+    if(f.q && !hay.includes(f.q.toLowerCase())) return false;
+    if(f.cap && String(it.cap)!==f.cap) return false;
+    if(f.area && it.area!==f.area) return false;
+    if(f.resp && it.resposta!==f.resp) return false;
+    if(f.risco && it.risco!==f.risco) return false;
+    if(f.responsavel && it.responsavel!==f.responsavel) return false;
+    if(ui.chip==="pend" && it.resposta!=="Pendente") return false;
+    if(ui.chip==="nc" && !["Não conforme","Parcial"].includes(it.resposta)) return false;
+    if(ui.chip==="alto" && !["Alta","Crítica"].includes(it.risco)) return false;
+    return true;
+  });
+}
+function planItems(){ return state.items.filter(it=>["Não conforme","Parcial"].includes(it.resposta) || ["Alta","Crítica"].includes(it.risco)); }
+
+/* ---------- binding ---------- */
+function bind(){
+  qsa(".nav-btn").forEach(b=>b.addEventListener("click",()=>setView(b.dataset.view)));
+  ["q","fCap","fArea","fResp","fRisco","fResponsavel"].forEach(id=>$(id).addEventListener(id==="q"?"input":"change",onFilter));
+  $("btnClear").addEventListener("click",clearFilters);
+  $("btnExportJson").addEventListener("click",exportJson);
+  $("btnExportCsv").addEventListener("click",exportCsv);
+  $("btnChooseEvidenceFolder")?.addEventListener("click",chooseEvidenceFolder);
+  $("btnExportOriginals")?.addEventListener("click",exportOriginalsToFolder);
+  $("btnPrint").addEventListener("click",()=>window.print());
+  $("btnReset").addEventListener("click",resetModel);
+  $("fileInput").addEventListener("change",importJson);
+  $("btnClose").addEventListener("click",closeDialog); $("btnCancel").addEventListener("click",closeDialog);
+  $("btnDelete").addEventListener("click",deleteItem); $("itemForm").addEventListener("submit",saveItemFromDialog);
+  const bd=$("btnDup"); if(bd) bd.addEventListener("click",()=>{ const id=$("itemId").value; closeDialog(); addItemCopy(id); });
+  document.addEventListener("click",onClick);
+  document.addEventListener("change",onChange);
+  document.addEventListener("blur",onBlur,true);
+  document.addEventListener("dragstart",onDragStart); document.addEventListener("dragover",onDragOver);
+  document.addEventListener("dragleave",onDragLeave); document.addEventListener("drop",onDrop);
+  document.addEventListener("dragend",()=>ui.drag=null);
+  document.addEventListener("paste",onPaste);
+  document.addEventListener("focusin",e=>{ const z=e.target.closest("[data-paste-id]"); if(z) ui.pasteId=z.dataset.pasteId; });
+  document.addEventListener("wheel",onLightboxWheel,{passive:false});
+  document.addEventListener("pointerdown",onLightboxPointerDown);
+  document.addEventListener("pointermove",onLightboxPointerMove);
+  document.addEventListener("pointerup",onLightboxPointerUp);
+  document.addEventListener("keydown",onLightboxKey);
+}
+function onFilter(e){ const map={fCap:"cap",fArea:"area",fResp:"resp",fRisco:"risco",fResponsavel:"responsavel",q:"q"}; ui.f[map[e.target.id]]=e.target.value; render(); }
+function clearFilters(){ ui.f={q:"",cap:"",area:"",resp:"",risco:"",responsavel:""}; ui.chip=""; ["q","fCap","fArea","fResp","fRisco","fResponsavel"].forEach(id=>$(id).value=""); render(); }
+function setView(v){ ui.view=v; qsa(".view").forEach(x=>x.classList.toggle("active",x.id===v)); qsa(".nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.view===v)); $("viewTitle").textContent=VIEW_TITLES[v]; $("viewSubtitle").textContent=VIEW_SUBS[v]; render(); }
+function hydrateFilters(){
+  fillSel("fCap", CAPITULOS.map(c=>({v:String(c.n),t:c.n+". "+c.nome})), "Todos os capítulos");
+  fillSel("fArea", uniq(state.items.map(i=>i.area)).map(v=>({v,t:v})), "Todas as áreas");
+  fillSel("fResp", RESPOSTAS.map(v=>({v,t:v})), "Todas as respostas");
+  fillSel("fRisco", RISCOS.map(v=>({v,t:v})), "Todos os riscos");
+  fillSel("fResponsavel", uniq(state.items.map(i=>i.responsavel)).map(v=>({v,t:v})), "Todos");
+  fillSel("iRisco", RISCOS.map(v=>({v,t:v})), "");
+  fillSel("iResp", RESPOSTAS.map(v=>({v,t:v})), "");
+}
+function fillSel(id,arr,empty){ const el=$(id); if(!el) return; const cur=el.value; const first=(empty!==""?`<option value="">${esc(empty)}</option>`:""); el.innerHTML=first+arr.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join(""); if(arr.some(o=>o.v===cur)||cur==="") el.value=cur; }
+function uniq(a){ return [...new Set(a.filter(Boolean))].sort((x,y)=>String(x).localeCompare(String(y),"pt-BR")); }
+
+/* ---------- render ---------- */
+function render(){
+  hydrateFilters();
+  const items=filtered();
+  const nc=items.filter(i=>["Não conforme","Parcial"].includes(i.resposta)).length;
+  const pend=items.filter(i=>i.resposta==="Pendente").length;
+  $("summaryPill").textContent=`${items.length} itens · ${nc} não conf. · ${pend} pendentes`;
+  $("navCount").textContent=state.items.length;
+  $("navPlano").textContent=planItems().length;
+  const v=ui.view;
+  if(v==="painel") renderPainel();
+  if(v==="checklist") renderChecklist();
+  if(v==="ponte") renderPonte();
+  if(v==="plano") renderPlano();
+  if(v==="risco") renderRisco();
+  if(v==="tabela") renderTabela();
+  hydrateThumbImages();
+}
+
+/* ---------- BI ---------- */
+function conformidade(items){
+  const base=items.filter(i=>i.resposta!=="N/A").length;
+  const ok=items.filter(i=>i.resposta==="Conforme").length;
+  return base? Math.round(ok/base*100):0;
+}
+function renderPainel(){
+  const items=filtered();
+  const total=items.length;
+  const conf=items.filter(i=>i.resposta==="Conforme").length;
+  const nc=items.filter(i=>i.resposta==="Não conforme").length;
+  const parcial=items.filter(i=>i.resposta==="Parcial").length;
+  const pend=items.filter(i=>i.resposta==="Pendente").length;
+  const alto=items.filter(i=>["Alta","Crítica"].includes(i.risco) && i.resposta!=="Conforme" && i.resposta!=="N/A").length;
+  const pct=conformidade(items);
+  $("painel").innerHTML=`
+    <section class="kpi-grid">
+      ${kpi("Itens no escopo",total,"Procedimentos auditados","")}
+      ${kpi("Conformidade",pct+"%","Conformes / respondidos","k-ok")}
+      ${kpi("Não conformes",nc,"Exigem ação","k-bad")}
+      ${kpi("Parciais",parcial,"Em adequação","k-warn")}
+      ${kpi("Pendentes",pend,"Ainda não avaliados","")}
+      ${kpi("Risco alto aberto",alto,"Alta/Crítica não resolvido","k-bad")}
+    </section>
+    <section class="bi-grid">
+      <div class="panel"><div class="panel-title"><h2>Conformidade por capítulo</h2><p>Verde conforme · vinho não conforme · terra parcial · azul claro N/A · cinza pendente.</p></div>${stackedByCap(items)}${legend()}</div>
+      <div class="panel"><div class="panel-title"><h2>Resposta geral</h2></div>${barsCount(countBy(items,i=>i.resposta))}</div>
+    </section>
+    <section class="bi-grid-3">
+      <div class="panel"><div class="panel-title"><h2>Risco</h2></div>${barsCount(countBy(items,i=>i.risco))}</div>
+      <div class="panel"><div class="panel-title"><h2>Por responsável</h2></div>${barsCount(countBy(items,i=>i.responsavel))}</div>
+      <div class="panel"><div class="panel-title"><h2>Pareto não conformidade (área)</h2></div>${barsCount(countBy(items.filter(i=>["Não conforme","Parcial"].includes(i.resposta)),i=>i.area))}</div>
+    </section>
+    <section class="panel">
+      <div class="panel-title-row">
+        <div class="panel-title"><h2>Mapa por capítulo</h2><p>Clique para abrir o capítulo no checklist ou duplique um card inteiro para criar uma nova frente de auditoria.</p></div>
+        <div class="right-actions"><button class="primary" data-duplast="1">Duplicar último card</button></div>
+      </div>
+      <div class="heat-grid">${CAPITULOS.map(c=>{
+        const ci=items.filter(i=>i.cap===c.n); if(!ci.length) return "";
+        const risk=ci.some(i=>["Alta","Crítica"].includes(i.risco)&&["Não conforme","Parcial","Pendente"].includes(i.resposta))?"alto":ci.some(i=>i.resposta!=="Conforme"&&i.resposta!=="N/A")?"medio":"baixo";
+        return `<div class="heat-card" data-risk="${risk}"><strong>${c.n}. ${esc(c.nome)}</strong><small>${ci.length} itens · ${conformidade(ci)}% conforme</small><div class="heat-bar">${segBar(ci)}</div><div class="heat-actions"><button data-goto-cap="${c.n}">Abrir</button><button class="mini-ghost" data-dupcap="${c.n}">Duplicar card</button></div></div>`;
+      }).join("")}</div>
+    </section>`;
+}
+function kpi(label,val,small,cls){ return `<div class="kpi ${cls||""}"><span>${esc(label)}</span><strong>${esc(val)}</strong><small>${esc(small)}</small></div>`; }
+function countBy(arr,fn){ return arr.reduce((m,x)=>{const k=fn(x)||"—";m[k]=(m[k]||0)+1;return m;},{}); }
+function barsCount(obj){ const e=Object.entries(obj).sort((a,b)=>b[1]-a[1]); const max=Math.max(1,...e.map(x=>x[1])); return `<div class="bar-list">${e.map(([n,v])=>`<div class="bar-row"><div class="bar-name" title="${esc(n)}">${esc(n)}</div><div class="bar-bg"><div class="bar-fill" style="width:${Math.max(4,v/max*100)}%"></div></div><div class="bar-num">${v}</div></div>`).join("")}</div>`; }
+function segClass(r){ return r==="Conforme"?"seg-ok":r==="Não conforme"?"seg-bad":r==="Parcial"?"seg-part":r==="N/A"?"seg-na":"seg-pend"; }
+function segBar(items){ const total=items.length||1; return RESPOSTAS.map(r=>{const n=items.filter(i=>i.resposta===r).length; return n?`<div class="bar-fill ${segClass(r)}" style="width:${n/total*100}%" title="${r}: ${n}"></div>`:"";}).join(""); }
+function stackedByCap(items){ return `<div class="bar-list">${CAPITULOS.map(c=>{const ci=items.filter(i=>i.cap===c.n); if(!ci.length) return ""; return `<div class="bar-row"><div class="bar-name" title="${esc(c.nome)}">${c.n}. ${esc(c.nome)}</div><div class="bar-bg">${segBar(ci)}</div><div class="bar-num">${ci.length}</div></div>`;}).join("")}</div>`; }
+function legend(){ return `<div class="legend">
+  <span><i style="background:var(--ok)"></i>Conforme</span>
+  <span><i style="background:var(--risco)"></i>Não conforme</span>
+  <span><i style="background:var(--terra)"></i>Parcial</span>
+  <span><i style="background:var(--azul-claro)"></i>N/A</span>
+  <span><i style="background:var(--borda)"></i>Pendente</span></div>`; }
+
+/* ---------- Checklist ---------- */
+function renderChecklist(){
+  const items=filtered();
+  const last=items.length?items[items.length-1].id:null;
+  const toolbar=`<div class="toolbar"><div class="left">
+      <button class="primary" data-addnew="${esc(last||"")}">+ Novo item (copia o anterior)</button>
+      <span class="pill">Dica: clique na área de evidência e cole o print com Ctrl+V</span>
+    </div></div>`;
+  const chips=`<div class="chips">
+    <span class="chip ${ui.chip===""?"active":""}" data-chip="">Todos (${state.items.length})</span>
+    <span class="chip ${ui.chip==="pend"?"active":""}" data-chip="pend">Pendentes</span>
+    <span class="chip ${ui.chip==="nc"?"active":""}" data-chip="nc">Não conformes / parciais</span>
+    <span class="chip ${ui.chip==="alto"?"active":""}" data-chip="alto">Risco alto</span>
+  </div>`;
+  let rows="";
+  CAPITULOS.forEach(c=>{
+    const ci=items.filter(i=>i.cap===c.n); if(!ci.length) return;
+    rows+=`<tr class="cap-row"><td colspan="7">Cap. ${c.n} — ${esc(c.nome)} · ${conformidade(ci)}% conforme · ${ci.length} itens <button class="cap-add" data-capadd="${c.n}">+ item neste capítulo</button></td></tr>`;
+    ci.forEach(it=>{ rows+=itemRow(it); });
+  });
+  $("checklist").innerHTML=toolbar+chips+`<div class="table-wrap"><table>
+    <thead><tr><th style="width:78px">Código</th><th>Procedimento</th><th style="width:150px">Resposta</th><th style="width:104px">Risco</th><th style="width:120px">Responsável</th><th style="width:230px">Evidência / print / obs.</th><th style="width:64px">Editar</th></tr></thead>
+    <tbody>${rows||`<tr><td colspan="7">Nenhum item para os filtros atuais.</td></tr>`}</tbody></table></div>`;
+}
+function itemRow(it){
+  return `<tr data-resp="${esc(it.resposta)}">
+    <td><strong>${esc(it.codigo)}</strong></td>
+    <td>${esc(it.procedimento)}<span class="moderniza">→ ${esc(it.moderniza)}</span><span class="mini"><span class="tag-area">${esc(it.area)}</span></span></td>
+    <td><select class="resp-sel" data-field="resposta" data-id="${esc(it.id)}">${RESPOSTAS.map(r=>`<option ${r===it.resposta?"selected":""}>${r}</option>`).join("")}</select></td>
+    <td><select data-field="risco" data-id="${esc(it.id)}" class="risco-${esc(it.risco)}">${RISCOS.map(r=>`<option ${r===it.risco?"selected":""}>${r}</option>`).join("")}</select></td>
+    <td><span contenteditable="true" data-edit="responsavel" data-id="${esc(it.id)}">${esc(it.responsavel)}</span></td>
+    <td>${evidenceCell(it)}</td>
+    <td><button data-open="${esc(it.id)}">⋯</button><button data-dup="${esc(it.id)}" title="Duplicar este card">⧉</button></td>
+  </tr>`;
+}
+function evidenceCell(it){
+  return `<div class="ev-cell">
+    <span class="ev-note" contenteditable="true" data-edit="evidencia" data-paste-id="${esc(it.id)}" data-id="${esc(it.id)}" placeholder="anote link/evidência">${esc(it.evidencia)}</span>
+    <div class="ev-paste" tabindex="0" data-paste-id="${esc(it.id)}" title="Clique aqui e cole o print (Ctrl+V)">📎 colar print (Ctrl+V)</div>
+    ${thumbsHtml(it)}
+    <span class="mini" contenteditable="true" data-edit="obs" data-id="${esc(it.id)}" placeholder="obs.">${esc(it.obs)}</span>
+  </div>`;
+}
+function thumbsHtml(it){
+  const imgs=normalizeImgs(it.evidenciaImgs||[]); if(!imgs.length) return "";
+  return `<div class="ev-thumbs">${imgs.map((raw,i)=>{
+    const img=imgMeta(raw), thumb=img.thumb||img.src||THUMB_PLACEHOLDER;
+    const need=(img.id && !(img.thumb||img.src))?' data-loadthumb="1"':'';
+    const ok=img.savedToDisk?'<span class="thumb-ok" title="Original salvo em pasta">HD</span>':(img.storedOriginal?'<span class="thumb-ok" title="Original salvo no navegador">DB</span>':"");
+    return `<span class="thumb"><img src="${thumb}"${need} data-viewimg data-id="${esc(it.id)}" data-idx="${i}" alt="evidência"><button class="thumb-x" data-delimg data-id="${esc(it.id)}" data-idx="${i}" title="Remover">×</button><button class="thumb-dl" data-downloadimg data-id="${esc(it.id)}" data-idx="${i}" title="Baixar original">⇩</button>${ok}</span>`;
+  }).join("")}</div>`;
+}
+
+
+/* ---------- Ponte clássico x moderno ---------- */
+function renderPonte(){
+  const items=filtered();
+  let rows="";
+  CAPITULOS.forEach(c=>{
+    const ci=items.filter(i=>i.cap===c.n); if(!ci.length) return;
+    rows+=`<tr class="cap-row"><td colspan="4">Cap. ${c.n} — ${esc(c.nome)}</td></tr>`;
+    ci.forEach(it=>{ rows+=`<tr>
+      <td><strong>${esc(it.codigo)}</strong></td>
+      <td>${esc(it.procedimento)}</td>
+      <td>${esc(it.moderniza)}</td>
+      <td><span class="tag-area">${esc(it.area)}</span><span class="mini risco-${esc(it.risco)}">Risco ${esc(it.risco)}</span></td></tr>`; });
+  });
+  $("ponte").innerHTML=`<div class="panel slim"><div class="panel-title"><p>Coluna central = como o procedimento clássico do roteiro se materializa hoje na Sonova. É a ponte entre o checklist tradicional e a operação ADP/eSocial.</p></div></div>
+    <div class="table-wrap"><table><thead><tr><th style="width:78px">Código</th><th style="width:30%">Procedimento clássico</th><th>Tradução para a Sonova</th><th style="width:170px">Área / Risco</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+/* ---------- Plano / Gantt ---------- */
+function renderPlano(){
+  let items=planItems().filter(it=>{ const f=ui.f; if(f.cap&&String(it.cap)!==f.cap) return false; if(f.area&&it.area!==f.area) return false; if(f.responsavel&&it.responsavel!==f.responsavel) return false; if(f.q&&![it.codigo,it.procedimento,it.area,it.responsavel].join(" ").toLowerCase().includes(f.q.toLowerCase())) return false; return true; });
+  items=items.sort((a,b)=>a.inicio.localeCompare(b.inicio));
+  if(!items.length){ $("plano").innerHTML='<div class="panel">Nenhum item não conforme, parcial ou de alto risco com os filtros atuais. O plano se preenche conforme você responde o checklist.</div>'; return; }
+  const min=items.reduce((m,t)=>t.inicio<m?t.inicio:m,items[0].inicio);
+  const max=items.reduce((m,t)=>t.fim>m?t.fim:m,items[0].fim);
+  const start=addDays(min,-2), end=addDays(max,2);
+  const total=daysBetween(start,end)+1;
+  const days=[...Array(total)].map((_,i)=>addDays(start,i));
+  const grp=items.reduce((m,t)=>{(m[t.capNome]||(m[t.capNome]=[])).push(t);return m;},{});
+  $("plano").innerHTML=`<div class="toolbar"><div class="left"><span class="pill">${items.length} ações de auditoria</span><label>Escala<select id="ganttScale"><option value="days">Dias</option><option value="weeks">Semanas</option></select></label></div><div class="right"><span class="pill">Arraste pelo cabo ⋮ e edite o texto direto</span></div></div>
+  <div class="gantt-wrap"><div class="gantt" style="--day-w:${ui.scale==='weeks'?60:30}px">
+    <div class="gantt-row header"><div class="gantt-left"><span></span><span>Ação</span><span>Resposta</span><span>%/Prazo</span></div><div class="gantt-grid">${days.filter((d,i)=>ui.scale==='days'||i%7===0).map(d=>`<div class="gantt-day">${ui.scale==='days'?d.slice(8):'S'}<br><small>${d.slice(5,7)}</small></div>`).join("")}</div></div>
+    ${Object.entries(grp).map(([g,arr])=>`<div class="gantt-row"><div class="gantt-left group">${esc(g)} · ${arr.length}</div><div class="gantt-grid"></div></div>${arr.map(t=>ganttRow(t,start,days)).join("")}`).join("")}
+  </div></div>`;
+  $("ganttScale").value=ui.scale;
+  $("ganttScale").addEventListener("change",e=>{ui.scale=e.target.value;renderPlano();});
+}
+function ganttRow(t,start,days){
+  const colStart=daysBetween(start,t.inicio); const dur=Math.max(1,daysBetween(t.inicio,t.fim)+1);
+  const factor=ui.scale==='weeks'?7:1; const left=Math.floor(colStart/factor); const width=Math.max(1,Math.ceil(dur/factor));
+  const cells=days.filter((d,i)=>ui.scale==='days'||i%7===0).map(d=>`<div class="gantt-cell" data-gdate="${d}"></div>`).join("");
+  return `<div class="gantt-row" data-row="${esc(t.id)}"><div class="gantt-left">
+    <span class="drag-handle" draggable="true" data-gtask="${esc(t.id)}">⋮</span>
+    <div><div class="gantt-title-inline" contenteditable="true" data-edit="procedimento" data-id="${esc(t.id)}">${esc(t.codigo)} · ${esc(t.procedimento)}</div><div class="gantt-meta">${esc(t.responsavel)} · ${esc(t.area)}</div></div>
+    <select class="mini-input" data-field="resposta" data-id="${esc(t.id)}">${RESPOSTAS.map(r=>`<option ${r===t.resposta?"selected":""}>${r}</option>`).join("")}</select>
+    <div class="gantt-meta">${esc(t.risco)}<br>${fmtDate(t.fim)}</div></div>
+    <div class="gantt-grid">${cells}<div class="gantt-bar" data-risk="${esc(t.risco)}" style="left:calc(${left} * var(--day-w) + 2px); width:calc(${width} * var(--day-w) - 4px)" title="${esc(t.procedimento)}"><span class="drag-handle" draggable="true" data-gtask="${esc(t.id)}">⋮</span><span class="bar-title">${esc(t.codigo)}</span></div></div></div>`;
+}
+
+/* ---------- Risco x Controle ---------- */
+function renderRisco(){
+  const items=filtered().filter(i=>["Alta","Crítica","Média"].includes(i.risco)||["Não conforme","Parcial"].includes(i.resposta));
+  $("risco").innerHTML=items.length?`<div class="matrix-grid">${items.map(it=>`
+    <article class="control-card" data-risk="${esc(it.risco)}">
+      <h3>${esc(it.codigo)} · ${esc(it.area)}</h3>
+      <div class="field-label">Procedimento (risco se falhar)</div><div>${esc(it.procedimento)}</div>
+      <div class="field-label">Controle Sonova</div><div>${esc(it.moderniza)}</div>
+      <div class="field-label">Teste / evidência</div><div contenteditable="true" data-edit="evidencia" data-id="${esc(it.id)}">${esc(it.evidencia)||"Definir evidência"}</div>
+      <div class="legend" style="margin-top:10px"><span class="pill risco-${esc(it.risco)}">Risco ${esc(it.risco)}</span><span class="pill">${esc(it.resposta)}</span><span class="pill">${esc(it.responsavel)}</span></div>
+    </article>`).join("")}</div>`:`<div class="panel">Sem itens de risco relevante para os filtros atuais.</div>`;
+}
+
+/* ---------- Tabela geral ---------- */
+function renderTabela(){
+  const items=filtered();
+  $("tabela").innerHTML=`<div class="table-wrap"><table><thead><tr><th style="width:70px">Código</th><th style="width:50px">Cap</th><th>Procedimento</th><th>Área</th><th>Resposta</th><th>Risco</th><th>Responsável</th><th>Início</th><th>Prazo</th><th>Evidência</th></tr></thead><tbody>${items.map(it=>`<tr data-resp="${esc(it.resposta)}">
+    <td contenteditable="true" data-edit="codigo" data-id="${esc(it.id)}">${esc(it.codigo)}</td>
+    <td>${it.cap}</td>
+    <td contenteditable="true" data-edit="procedimento" data-id="${esc(it.id)}">${esc(it.procedimento)}</td>
+    <td contenteditable="true" data-edit="area" data-id="${esc(it.id)}">${esc(it.area)}</td>
+    <td><select data-field="resposta" data-id="${esc(it.id)}">${RESPOSTAS.map(r=>`<option ${r===it.resposta?"selected":""}>${r}</option>`).join("")}</select></td>
+    <td><select data-field="risco" data-id="${esc(it.id)}">${RISCOS.map(r=>`<option ${r===it.risco?"selected":""}>${r}</option>`).join("")}</select></td>
+    <td contenteditable="true" data-edit="responsavel" data-id="${esc(it.id)}">${esc(it.responsavel)}</td>
+    <td><input type="date" value="${it.inicio}" data-input="inicio" data-id="${esc(it.id)}"></td>
+    <td><input type="date" value="${it.fim}" data-input="fim" data-id="${esc(it.id)}"></td>
+    <td contenteditable="true" data-edit="evidencia" data-id="${esc(it.id)}">${esc(it.evidencia)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ---------- events: edit ---------- */
+function setField(id,field,value,rerender){ const it=state.items.find(x=>x.id===id); if(!it) return; it[field]=value; save(); if(rerender) render(); }
+function onChange(e){
+  const sel=e.target.closest("[data-field]"); if(sel){ setField(sel.dataset.id, sel.dataset.field, sel.value, true); toast("Atualizado."); }
+  const inp=e.target.closest("[data-input]"); if(inp){ setField(inp.dataset.id, inp.dataset.input, inp.value, false); }
+  const chip=e.target.closest("[data-chip]"); // handled in click
+}
+function onBlur(e){ const ed=e.target.closest("[data-edit]"); if(ed){ const txt=ed.innerText.trim(); setField(ed.dataset.id, ed.dataset.edit, txt, false); } }
+function onClick(e){
+  const chip=e.target.closest("[data-chip]"); if(chip){ ui.chip=chip.dataset.chip; render(); return; }
+  const duplast=e.target.closest("[data-duplast]"); if(duplast){ const last=[...CAPITULOS].sort((a,b)=>Number(a.n)-Number(b.n)).at(-1); if(last) duplicateChapter(Number(last.n)); return; }
+  const dupcap=e.target.closest("[data-dupcap]"); if(dupcap){ duplicateChapter(Number(dupcap.dataset.dupcap)); return; }
+  const goto=e.target.closest("[data-goto-cap]"); if(goto){ ui.f.cap=goto.dataset.gotoCap; $("fCap").value=goto.dataset.gotoCap; setView("checklist"); return; }
+  const open=e.target.closest("[data-open]"); if(open){ openDialog(open.dataset.open); return; }
+  const addnew=e.target.closest("[data-addnew]"); if(addnew){ addItemCopy(addnew.dataset.addnew||null); return; }
+  const capadd=e.target.closest("[data-capadd]"); if(capadd){ addItemToCap(Number(capadd.dataset.capadd)); return; }
+  const dup=e.target.closest("[data-dup]"); if(dup){ addItemCopy(dup.dataset.dup); return; }
+  const dl=e.target.closest("[data-downloadimg]"); if(dl){ downloadOriginal(dl.dataset.id, Number(dl.dataset.idx)); return; }
+  const del=e.target.closest("[data-delimg]"); if(del){ deleteImg(del.dataset.id, Number(del.dataset.idx)); return; }
+  const vw=e.target.closest("[data-viewimg]"); if(vw){ openLightbox(vw.dataset.id, Number(vw.dataset.idx)); return; }
+  const lbClose=e.target.closest("[data-lbclose]"); if(lbClose){ closeLightbox(); return; }
+  const lbZoom=e.target.closest("[data-lbzoom]"); if(lbZoom){ zoomLightbox(Number(lbZoom.dataset.lbzoom)); return; }
+  const lbFit=e.target.closest("[data-lbfit]"); if(lbFit){ fitLightbox(); return; }
+  const lbDownload=e.target.closest("[data-lbdownload]"); if(lbDownload && ui.lb){ downloadOriginal(ui.lb.itemId, ui.lb.idx); return; }
+  if(e.target && e.target.id==="lightbox"){ closeLightbox(); return; }
+}
+
+/* ---------- drag (gantt) ---------- */
+function onDragStart(e){ const h=e.target.closest("[data-gtask]"); if(h){ ui.drag={id:h.dataset.gtask}; e.dataTransfer.effectAllowed="move"; } }
+function onDragOver(e){ const cell=e.target.closest("[data-gdate]"); if(cell&&ui.drag){ e.preventDefault(); cell.classList.add("drop-hover"); } }
+function onDragLeave(e){ e.target.closest("[data-gdate]")?.classList.remove("drop-hover"); }
+function onDrop(e){ const cell=e.target.closest("[data-gdate]"); if(cell&&ui.drag){ e.preventDefault(); const it=state.items.find(x=>x.id===ui.drag.id); if(it){ const dur=Math.max(0,daysBetween(it.inicio,it.fim)); it.inicio=cell.dataset.gdate; it.fim=addDays(cell.dataset.gdate,dur); save(); renderPlano(); toast("Ação reposicionada no Gantt."); } } qsa(".drop-hover").forEach(x=>x.classList.remove("drop-hover")); ui.drag=null; }
+
+/* ---------- dialog ---------- */
+function openDialog(id){
+  const it=state.items.find(x=>x.id===id); if(!it) return; ui.editing=id;
+  $("modalTitle").textContent="Item "+it.codigo;
+  $("itemId").value=it.id; $("iCodigo").value=it.codigo; $("iCap").value=it.cap+". "+it.capNome;
+  $("iProc").value=it.procedimento; $("iModerniza").value=it.moderniza; $("iArea").value=it.area;
+  $("iResponsavel").value=it.responsavel; $("iRisco").value=it.risco; $("iResp").value=it.resposta;
+  $("iInicio").value=it.inicio; $("iFim").value=it.fim; $("iEvidencia").value=it.evidencia; $("iObs").value=it.obs;
+  $("btnDelete").style.display=it.custom?"inline-flex":"none";
+  const ip=$("iPaste"); if(ip) ip.dataset.pasteId=it.id;
+  renderDialogThumbs(it);
+  $("itemDialog").showModal();
+}
+function closeDialog(){ $("itemDialog").close(); ui.editing=null; }
+function saveItemFromDialog(e){
+  e.preventDefault(); const it=state.items.find(x=>x.id===$("itemId").value); if(!it) return;
+  Object.assign(it,{codigo:$("iCodigo").value,procedimento:$("iProc").value,moderniza:$("iModerniza").value,area:$("iArea").value,responsavel:$("iResponsavel").value,risco:$("iRisco").value,resposta:$("iResp").value,inicio:$("iInicio").value,fim:$("iFim").value,evidencia:$("iEvidencia").value,obs:$("iObs").value});
+  save(); closeDialog(); render(); toast("Item salvo.");
+}
+function deleteItem(){ const it=state.items.find(x=>x.id===$("itemId").value); if(!it||!it.custom){ toast("Itens do modelo não são excluídos; marque como N/A."); return; } if(!confirm("Excluir este item personalizado?")) return; state.items=state.items.filter(x=>x.id!==it.id); save(); closeDialog(); render(); toast("Item excluído."); }
+
+/* ---------- import / export / reset ---------- */
+function exportJson(){ download("mapa_auditoria_sonova.json", JSON.stringify(stateForStorage(false),null,2), "application/json"); }
+function exportCsv(){
+  const arr=filtered(); if(!arr.length){ toast("Nada para exportar."); return; }
+  const keys=["codigo","cap","capNome","procedimento","moderniza","area","resposta","risco","responsavel","inicio","fim","evidencia","obs"];
+  const csv=[keys.join(";"),...arr.map(o=>keys.map(k=>`"${String(o[k]??"").replace(/"/g,'""').replace(/\n/g," ")}"`).join(";"))].join("\n");
+  download("checklist_auditoria_sonova.csv","\ufeff"+csv,"text/csv;charset=utf-8");
+}
+async function importJson(e){ const f=e.target.files[0]; if(!f) return; try{ const obj=JSON.parse(await f.text()); const base={meta:obj.meta||state.meta,items:buildDefaultItems()}; state=mergeState(obj,base); syncCustomCapitulosFromItems(); save(); hydrateFilters(); render(); toast("JSON importado e mesclado."); }catch(err){ alert("JSON inválido: "+err.message); } e.target.value=""; }
+function resetModel(){ if(!confirm("Restaurar o modelo e apagar as respostas salvas neste navegador?")) return; localStorage.removeItem(STORAGE_KEY); restoreBaseCapitulos(); state={meta:{app:"Mapa de Auditoria Trabalhista Sonova",versao:"1.0",criadoEm:todayISO()},items:buildDefaultItems()}; hydrateFilters(); render(); toast("Modelo restaurado."); }
+function download(name,content,type){ const b=new Blob([content],{type}); const u=URL.createObjectURL(b); const a=document.createElement("a"); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u); }
+
+/* ---------- evidência: muitos prints: miniatura e original no IndexedDB/pasta; JSON leve ---------- */
+function openEvidenceDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(EVIDENCE_DB,1);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(EVIDENCE_STORE)) db.createObjectStore(EVIDENCE_STORE,{keyPath:"id"});
+      if(!db.objectStoreNames.contains(EVIDENCE_SETTINGS)) db.createObjectStore(EVIDENCE_SETTINGS,{keyPath:"key"});
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbTx(store,mode,fn){
+  const db=await openEvidenceDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(store,mode);
+    const st=tx.objectStore(store);
+    let req;
+    try{ req=fn(st); }catch(err){ reject(err); return; }
+    if(req){ req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }
+    else tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+function putOriginal(rec){ return idbTx(EVIDENCE_STORE,"readwrite",st=>st.put(rec)); }
+function getOriginal(id){ return id ? idbTx(EVIDENCE_STORE,"readonly",st=>st.get(id)) : Promise.resolve(null); }
+function deleteOriginal(id){ return id ? idbTx(EVIDENCE_STORE,"readwrite",st=>st.delete(id)) : Promise.resolve(); }
+function getAllOriginals(){ return idbTx(EVIDENCE_STORE,"readonly",st=>st.getAll()); }
+function putSetting(key,value){ return idbTx(EVIDENCE_SETTINGS,"readwrite",st=>st.put({key,value})); }
+function getSetting(key){ return idbTx(EVIDENCE_SETTINGS,"readonly",st=>st.get(key)); }
+async function initEvidenceStorage(){
+  try{
+    if(!window.indexedDB) throw new Error("IndexedDB indisponível");
+    const folder=await getSetting("folderHandle").catch(()=>null);
+    if(folder?.value){ ui.folderHandle=folder.value; }
+    await migrateEvidenceThumbsToIDB();
+    updateFolderStatus();
+    hydrateThumbImages();
+  }catch(err){
+    console.warn(err);
+    const el=$("folderStatus"); if(el) el.textContent="Originais: IndexedDB indisponível; use baixar original.";
+  }
+}
+async function migrateEvidenceThumbsToIDB(){
+  let changed=false, migrated=0;
+  for(const it of state.items){
+    const imgs=normalizeImgs(it.evidenciaImgs||[]);
+    for(let i=0;i<imgs.length;i++){
+      const meta=imgMeta(imgs[i]);
+      const thumb=meta.thumb||meta.src||"";
+      if(!thumb) continue;
+      if(meta.id){
+        const rec=await getOriginal(meta.id).catch(()=>null);
+        let ok=false;
+        if(rec){ ok=await putOriginal({...rec, thumb:rec.thumb||thumb}).then(()=>true).catch(()=>false); }
+        else{
+          let blob=null;
+          try{ blob=thumb.startsWith("data:")?dataUrlToBlob(thumb):null; }catch(e){}
+          ok=await putOriginal({id:meta.id,itemId:it.id,codigo:it.codigo,cap:it.cap,name:meta.name||"print_legado.webp",type:meta.type||blob?.type||"image/webp",size:meta.size||blob?.size||0,createdAt:meta.createdAt||new Date().toISOString(),blob,thumb}).then(()=>true).catch(()=>false);
+        }
+        if(ok){
+          const {thumb:_,src:__,blob:___,...rest}=meta;
+          imgs[i]=rest;
+          changed=true; migrated++;
+        }
+      }else{
+        const imgId=nextImgId(it);
+        let blob=null;
+        try{ blob=thumb.startsWith("data:")?dataUrlToBlob(thumb):null; }catch(e){}
+        const ok=await putOriginal({id:imgId,itemId:it.id,codigo:it.codigo,cap:it.cap,name:meta.name||"print_legado.webp",type:meta.type||blob?.type||"image/webp",size:meta.size||blob?.size||0,createdAt:meta.createdAt||new Date().toISOString(),blob,thumb}).then(()=>true).catch(()=>false);
+        if(ok){
+          imgs[i]={id:imgId,name:meta.name||"print_legado.webp",type:meta.type||blob?.type||"image/webp",size:meta.size||blob?.size||0,createdAt:meta.createdAt||new Date().toISOString(),savedToDisk:!!meta.savedToDisk,storedOriginal:true};
+          changed=true; migrated++;
+        }
+      }
+    }
+    it.evidenciaImgs=imgs;
+  }
+  if(changed){ save(); render(); if(migrated) toast(migrated+" miniaturas antigas foram migradas para armazenamento leve."); }
+}
+
+function updateFolderStatus(){
+  const el=$("folderStatus"); if(!el) return;
+  if(ui.folderHandle) el.textContent="Originais: pasta escolhida. Ao colar, o arquivo original será gravado nela; a tela guarda só miniatura.";
+  else el.textContent="Originais: salvos no navegador; escolha/exporte uma pasta para gravar os arquivos na máquina.";
+}
+async function chooseEvidenceFolder(){
+  if(!window.showDirectoryPicker){ toast("Seu navegador não permite escolher pasta aqui. Use Chrome/Edge ou o botão de baixar original."); return; }
+  try{
+    const handle=await window.showDirectoryPicker({mode:"readwrite"});
+    if(!(await ensureWritePermission(handle))){ toast("Permissão de gravação não concedida."); return; }
+    ui.folderHandle=handle;
+    await putSetting("folderHandle",handle).catch(()=>{});
+    updateFolderStatus();
+    toast("Pasta escolhida. Próximos prints terão o original salvo nela.");
+  }catch(err){ if(err?.name!=="AbortError") toast("Não consegui selecionar a pasta."); }
+}
+async function ensureWritePermission(handle){
+  if(!handle) return false;
+  const opts={mode:"readwrite"};
+  if((await handle.queryPermission(opts))==="granted") return true;
+  return (await handle.requestPermission(opts))==="granted";
+}
+async function writeOriginalToFolder(blob,name,folderHandle=ui.folderHandle){
+  if(!folderHandle) return false;
+  try{
+    if(!(await ensureWritePermission(folderHandle))) return false;
+    const fh=await folderHandle.getFileHandle(safeFileName(name),{create:true});
+    const w=await fh.createWritable();
+    await w.write(blob); await w.close();
+    return true;
+  }catch(err){ console.warn(err); return false; }
+}
+async function exportOriginalsToFolder(){
+  if(!window.showDirectoryPicker){ toast("Este navegador não permite exportar para pasta. Abra no Chrome/Edge ou baixe item por item."); return; }
+  const all=await getAllOriginals().catch(()=>[]);
+  if(!all.length){ toast("Não encontrei originais salvos no navegador."); return; }
+  try{
+    const folder=await window.showDirectoryPicker({mode:"readwrite"});
+    if(!(await ensureWritePermission(folder))){ toast("Permissão de gravação não concedida."); return; }
+    let ok=0;
+    for(const rec of all){ if(await writeOriginalToFolder(rec.blob, rec.name||rec.id+".png", folder)) ok++; }
+    toast(ok+" originais exportados para a pasta escolhida.");
+  }catch(err){ if(err?.name!=="AbortError") toast("Não consegui exportar os originais."); }
+}
+function onPaste(e){
+  const zone=e.target.closest("[data-paste-id]");
+  const id=zone?zone.dataset.pasteId:ui.pasteId;
+  if(!id) return;
+
+  const clipItems=[...((e.clipboardData||window.clipboardData)?.items||[])];
+  const files=[];
+  for(const it of clipItems){
+    if(it.type && it.type.indexOf("image")===0){
+      const f=it.getAsFile();
+      if(f) files.push(f);
+    }
+  }
+  if(!files.length) return;
+
+  e.preventDefault();
+  const item=state.items.find(x=>x.id===id);
+  if(!item) return;
+  item.evidenciaImgs=normalizeImgs(item.evidenciaImgs||[]);
+  const antes=item.evidenciaImgs.length;
+
+  (async()=>{
+    let falhas=0;
+    for(const file of files){
+      const type=file.type||"image/png";
+      const ext=type.includes("jpeg")||type.includes("jpg")?"jpg":type.includes("webp")?"webp":"png";
+      const imgId=nextImgId(item);
+      const name=safeFileName(`${item.codigo||"item"}_${new Date().toISOString().replace(/[:.]/g,"-")}_${item.evidenciaImgs.length+1}.${ext}`);
+      let thumb="";
+      try{ thumb=await compressImage(file, 220, 0.28); }catch(err){ console.warn(err); }
+
+      let savedToDisk=false;
+      if(ui.folderHandle){ savedToDisk=await writeOriginalToFolder(file,name); }
+
+      let storedOriginal=false;
+      try{
+        await putOriginal({id:imgId,itemId:item.id,codigo:item.codigo,cap:item.cap,name,type,size:file.size||0,createdAt:new Date().toISOString(),blob:file,thumb});
+        storedOriginal=true;
+      }catch(err){
+        console.warn(err);
+        if(!savedToDisk){ downloadBlob(file,name); }
+      }
+
+      const meta={id:storedOriginal?imgId:"", name, type, size:file.size||0, createdAt:new Date().toISOString(), savedToDisk, storedOriginal};
+      if(!storedOriginal && thumb) meta.thumb=thumb;
+      item.evidenciaImgs.push(meta);
+      if(!save()){
+        item.evidenciaImgs.pop();
+        if(storedOriginal) await deleteOriginal(imgId).catch(()=>{});
+        falhas++;
+      }
+    }
+    if(ui.editing===id) renderDialogThumbs(item);
+    render();
+    const adicionados=item.evidenciaImgs.length-antes;
+    if(adicionados>0){
+      const destino = ui.folderHandle ? "originais na pasta escolhida" : "originais no navegador";
+      toast(adicionados===1 ? `Print salvo: miniatura leve + ${destino}.` : `${adicionados} prints salvos: miniaturas leves + ${destino}.`);
+    }
+    if(falhas>0) toast(falhas+" print(s) não couberam. Exporte a pasta de originais ou limpe evidências antigas.");
+  })().catch(err=>{ console.warn(err); toast("Não consegui ler a imagem da área de transferência."); });
+}
+
+function compressImage(file,maxW=360,q=0.34){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file); const img=new Image();
+    img.onload=()=>{
+      const scale=Math.min(1,maxW/(img.width||maxW));
+      const w=Math.max(1,Math.round((img.width||maxW)*scale)), h=Math.max(1,Math.round((img.height||maxW)*scale));
+      const c=document.createElement("canvas"); c.width=w; c.height=h; const ctx=c.getContext("2d");
+      ctx.fillStyle="#fff"; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      try{
+        let out=c.toDataURL("image/webp",q);
+        if(!out.startsWith("data:image/webp")) out=c.toDataURL("image/jpeg",q);
+        res(out);
+      }catch(err){ rej(err); }
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(); };
+    img.src=url;
+  });
+}
+async function deleteImg(id,idx){
+  const it=state.items.find(x=>x.id===id); if(!it||!it.evidenciaImgs) return;
+  const meta=imgMeta(it.evidenciaImgs[idx]);
+  it.evidenciaImgs.splice(idx,1);
+  if(meta.id) await deleteOriginal(meta.id).catch(()=>{});
+  save(); if(ui.editing===id) renderDialogThumbs(it); render(); toast("Print removido da tela e do banco local.");
+}
+async function getThumbSource(itemId,idx){
+  const it=state.items.find(x=>x.id===itemId); if(!it) return THUMB_PLACEHOLDER;
+  const meta=imgMeta((it.evidenciaImgs||[])[idx]);
+  if(meta.thumb||meta.src) return meta.thumb||meta.src;
+  if(meta.id){
+    const rec=await getOriginal(meta.id).catch(()=>null);
+    if(rec?.thumb) return rec.thumb;
+    if(rec?.blob){
+      try{
+        const thumb=await compressImage(rec.blob,220,0.28);
+        await putOriginal({...rec, thumb}).catch(()=>{});
+        return thumb;
+      }catch(err){ console.warn(err); }
+    }
+  }
+  return THUMB_PLACEHOLDER;
+}
+async function hydrateThumbImages(root=document){
+  const imgs=qsa('img[data-viewimg][data-loadthumb="1"]', root);
+  for(const img of imgs){
+    const src=await getThumbSource(img.dataset.id, Number(img.dataset.idx));
+    if(img.isConnected){ img.src=src||THUMB_PLACEHOLDER; img.removeAttribute('data-loadthumb'); }
+  }
+}
+async function getImageSource(itemId,idx){
+  const it=state.items.find(x=>x.id===itemId); if(!it) return null;
+  const meta=imgMeta((it.evidenciaImgs||[])[idx]);
+  if(meta.id){
+    const rec=await getOriginal(meta.id).catch(()=>null);
+    if(rec?.blob){ return {src:URL.createObjectURL(rec.blob), objectUrl:true, meta:{...meta, ...rec}, original:true}; }
+    if(rec?.thumb){ return {src:rec.thumb, objectUrl:false, meta:{...meta, ...rec}, original:false}; }
+  }
+  const src=meta.thumb||meta.src||"";
+  return {src, objectUrl:false, meta, original:false};
+}
+async function downloadOriginal(itemId,idx){
+  const it=state.items.find(x=>x.id===itemId); if(!it) return;
+  const meta=imgMeta((it.evidenciaImgs||[])[idx]);
+  if(meta.id){
+    const rec=await getOriginal(meta.id).catch(()=>null);
+    if(rec?.blob){ downloadBlob(rec.blob, rec.name||meta.name||"evidencia.png"); return; }
+    if(rec?.thumb){ downloadBlob(dataUrlToBlob(rec.thumb), rec.name||meta.name||"evidencia_miniatura.webp"); return; }
+  }
+  const src=meta.thumb||meta.src;
+  if(src){
+    const blob=src.startsWith("data:")?dataUrlToBlob(src):new Blob([src],{type:"text/plain"});
+    downloadBlob(blob,meta.name||"evidencia_miniatura.webp");
+  }
+}
+
+async function openLightbox(itemId,idx){
+  const data=await getImageSource(itemId,idx);
+  if(!data?.src){ toast("Não encontrei esta imagem."); return; }
+  let lb=$("lightbox"); if(!lb){ lb=document.createElement("div"); lb.id="lightbox"; document.body.appendChild(lb); }
+  if(ui.lb?.objectUrl) URL.revokeObjectURL(ui.lb.src);
+  ui.lb={itemId,idx,src:data.src,objectUrl:data.objectUrl,scale:1,x:0,y:0,pan:null,meta:data.meta};
+  const title=esc(data.meta?.name || "evidência");
+  lb.innerHTML=`<div class="lb-toolbar"><span class="lb-title">${title}</span><button data-lbzoom="-0.25">🔍−</button><button data-lbfit>100%</button><button data-lbzoom="0.25">🔍+</button><button data-lbdownload>Baixar original</button><button data-lbclose>×</button></div><div class="lb-stage" id="lbStage"><img id="lbImg" src="${data.src}" alt="evidência"></div><div class="lb-help">Use a lupa, o scroll do mouse para aproximar/afastar e arraste a imagem para analisar detalhes.</div>`;
+  lb.classList.add("show");
+  fitLightbox();
+}
+function applyLightboxTransform(){
+  if(!ui.lb) return;
+  const img=$("lbImg"); if(!img) return;
+  img.style.transform=`translate(${ui.lb.x}px, ${ui.lb.y}px) scale(${ui.lb.scale})`;
+}
+function zoomLightbox(delta){
+  if(!ui.lb) return;
+  ui.lb.scale=clamp((ui.lb.scale||1)+delta,0.25,6);
+  applyLightboxTransform();
+}
+function fitLightbox(){ if(!ui.lb) return; ui.lb.scale=1; ui.lb.x=0; ui.lb.y=0; applyLightboxTransform(); }
+function closeLightbox(){
+  const lb=$("lightbox"); if(lb) lb.classList.remove("show");
+  if(ui.lb?.objectUrl) URL.revokeObjectURL(ui.lb.src);
+  ui.lb=null;
+}
+function onLightboxWheel(e){
+  if(!$('lightbox')?.classList.contains('show') || !e.target.closest('#lightbox')) return;
+  e.preventDefault(); zoomLightbox(e.deltaY<0?0.18:-0.18);
+}
+function onLightboxPointerDown(e){
+  if(!ui.lb || !e.target.closest('#lbStage')) return;
+  ui.lb.pan={sx:e.clientX,sy:e.clientY,ox:ui.lb.x,oy:ui.lb.y};
+}
+function onLightboxPointerMove(e){
+  if(!ui.lb?.pan) return;
+  ui.lb.x=ui.lb.pan.ox+(e.clientX-ui.lb.pan.sx);
+  ui.lb.y=ui.lb.pan.oy+(e.clientY-ui.lb.pan.sy);
+  applyLightboxTransform();
+}
+function onLightboxPointerUp(){ if(ui.lb) ui.lb.pan=null; }
+function onLightboxKey(e){
+  if(!$('lightbox')?.classList.contains('show')) return;
+  if(e.key==='Escape') closeLightbox();
+  if(e.key==='+' || e.key==='=') zoomLightbox(0.25);
+  if(e.key==='-') zoomLightbox(-0.25);
+  if(e.key==='0') fitLightbox();
+}
+function renderDialogThumbs(it){ const box=$("iThumbs"); if(box){ box.innerHTML=thumbsHtml(it); hydrateThumbImages(box); } }
+
+/* ---------- novos cards / duplicar (copia o anterior) ---------- */
+function duplicateChapter(capN){
+  const cap=CAPITULOS.find(c=>Number(c.n)===Number(capN));
+  if(!cap){ toast("Não encontrei o card para duplicar."); return; }
+  const srcItems=state.items.filter(i=>Number(i.cap)===Number(capN));
+  if(!srcItems.length){ toast("Este card não tem itens para duplicar."); return; }
+  const newN=nextChapterNumber();
+  const nome=prompt("Nome do novo card/capítulo:", cap.nome+" (cópia)");
+  if(nome===null) return;
+  const newCap={n:newN, nome:(nome||cap.nome+" (cópia)"), custom:true};
+  CAPITULOS.push(newCap);
+  srcItems.forEach((src,idx)=>{
+    const it=clone(src);
+    it.id=nextCustomId();
+    it.cap=newN;
+    it.capNome=newCap.nome;
+    it.codigo=newN+"."+(idx+1);
+    it.resposta="Pendente";
+    it.evidencia="";
+    it.evidenciaImgs=[];
+    it.obs="";
+    it.custom=true;
+    it.inicio=addDays(todayISO(), idx);
+    it.fim=addDays(it.inicio, ["Crítica","Alta"].includes(it.risco)?5:(it.risco==="Média"?7:9));
+    state.items.push(it);
+  });
+  save();
+  syncCustomCapitulosFromItems();
+  hydrateFilters();
+  ui.f.cap=String(newN);
+  $("fCap").value=String(newN);
+  setView("checklist");
+  toast("Card duplicado. Evidências e prints foram limpos para você preencher de novo.");
+}
+function nextCustomId(){ return "IT-CUSTOM-"+Date.now().toString(36).toUpperCase()+Math.floor(Math.random()*900+100); }
+function addItemCopy(fromId){
+  const src=fromId?state.items.find(x=>x.id===fromId):null;
+  const it = src ? clone(src) : {cap:1,capNome:CAPITULOS[0].nome,codigo:"NOVO",procedimento:"Novo procedimento",area:"Governança & BI",moderniza:"Descrever a tradução para a operação Sonova.",risco:"Média",responsavel:"A definir",inicio:todayISO(),fim:addDays(todayISO(),7)};
+  it.id=nextCustomId();
+  it.codigo=(src?src.codigo:"NOVO")+" (cópia)";
+  it.resposta="Pendente"; it.evidencia=""; it.evidenciaImgs=[]; it.obs=""; it.custom=true;
+  if(src){ const i=state.items.findIndex(x=>x.id===src.id); state.items.splice(i+1,0,it); } else state.items.push(it);
+  save(); render(); toast("Card criado a partir do anterior. Edite, responda e cole o print."); openDialog(it.id);
+}
+function addItemToCap(capN){
+  const cap=CAPITULOS.find(c=>c.n===capN);
+  const lastInCap=[...state.items].reverse().find(x=>x.cap===capN);
+  if(lastInCap){ addItemCopy(lastInCap.id); return; }
+  const it={id:nextCustomId(),cap:capN,capNome:cap.nome,codigo:capN+".novo",procedimento:"Novo procedimento",area:"Governança & BI",moderniza:"Descrever a tradução para a operação Sonova.",risco:"Média",responsavel:"A definir",resposta:"Pendente",evidencia:"",evidenciaImgs:[],obs:"",inicio:todayISO(),fim:addDays(todayISO(),7),custom:true};
+  state.items.push(it); save(); render(); toast("Item criado no capítulo "+capN+"."); openDialog(it.id);
+}
+
+function toast(m){ const el=$("toast"); el.textContent=m; el.classList.add("show"); clearTimeout(ui.toastTimer); ui.toastTimer=setTimeout(()=>el.classList.remove("show"),2600); }
+
+</script>
+</body>
+</html>
