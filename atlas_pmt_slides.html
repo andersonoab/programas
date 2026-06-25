@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas PMT RH/DP — Apresentação | Sonova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --azul:#0083CA; --azul-escuro:#003C64; --verde:#005A64; --azul-claro:#6EB4DC;
+    --vinho:#7D0041; --terra:#8C321E; --texto:#333333; --texto2:#646464; --borda:#CCCCCC; --bg2:#F6F8FA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Roboto',Arial,sans-serif;font-weight:300;color:var(--texto);background:#11212e;overflow:hidden}
+  h1,h2,h3,h4{font-family:'Rufina',Georgia,serif;color:var(--azul-escuro);font-weight:700}
+
+  .viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  .scaler{width:1280px;height:720px;position:relative;transform-origin:center center;flex-shrink:0}
+  .slide{position:absolute;inset:0;background:#fff;overflow:hidden;opacity:0;pointer-events:none;
+    transition:opacity .25s ease;display:flex;flex-direction:column}
+  .slide.active{opacity:1;pointer-events:auto}
+
+  /* ---- slide chrome ---- */
+  .accent{height:6px;background:var(--azul);flex-shrink:0}
+  .s-pad{padding:46px 64px 0;flex:1;display:flex;flex-direction:column;min-height:0}
+  .s-kicker{font-family:'Rufina',serif;font-size:15px;text-transform:uppercase;letter-spacing:2px;color:var(--azul);font-weight:700}
+  .s-title{font-size:40px;line-height:1.1;margin:6px 0 4px;color:var(--azul-escuro)}
+  .s-sub{font-size:18px;color:var(--texto2);margin-bottom:14px}
+  .s-foot{height:42px;flex-shrink:0;border-top:1px solid var(--borda);margin:0 64px;
+    display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--texto2)}
+  .s-foot .pg{font-family:'Rufina',serif;color:var(--azul)}
+  .wave{display:inline-flex;align-items:flex-end;gap:3px;height:26px;vertical-align:middle}
+  .wave i{width:4px;background:var(--azul);border-radius:2px;display:block}
+  .wave i:nth-child(1){height:9px}.wave i:nth-child(2){height:17px}.wave i:nth-child(3){height:26px}
+  .wave i:nth-child(4){height:17px}.wave i:nth-child(5){height:12px}.wave i:nth-child(6){height:21px}
+
+  .body{font-size:18px;line-height:1.55;flex:1;min-height:0;overflow:hidden}
+  .body p{margin:0 0 12px}
+  .body ul{margin:2px 0 12px 22px}.body li{margin:7px 0}
+  .body strong{font-weight:500;color:var(--azul-escuro)}
+  .lead{border-left:5px solid var(--azul);background:#f4fafe;padding:14px 18px;border-radius:0 8px 8px 0;font-size:18px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .card{border:1px solid var(--borda);border-radius:10px;padding:18px 20px;background:#fff}
+  .card h4{font-size:18px;margin:0 0 8px;color:var(--verde)}
+  .card ul{margin:0 0 0 18px;font-size:16px}.card li{margin:6px 0}
+
+  table{width:100%;border-collapse:collapse;font-size:15.5px}
+  th{background:var(--azul);color:#fff;text-align:left;padding:9px 12px;font-weight:500}
+  td{border:1px solid var(--borda);padding:8px 12px;vertical-align:top}
+  tr:nth-child(even) td{background:#fafcfe}
+  td.cat{color:var(--verde);font-weight:500;white-space:nowrap}
+
+  /* ---- title slide ---- */
+  .slide.title{background:linear-gradient(135deg,#003C64 0%,#0083CA 100%);color:#fff;justify-content:center;padding:0 80px}
+  .slide.title .wave i{background:#fff}
+  .slide.title h1{color:#fff;font-size:62px;line-height:1.05;margin:18px 0 10px}
+  .slide.title .tsub{font-size:24px;color:#dceefb;font-weight:300;margin-bottom:30px}
+  .slide.title .meta{font-size:16px;color:#cfe6f7;line-height:1.7;border-top:1px solid rgba(255,255,255,.3);padding-top:18px;max-width:620px}
+  .slide.title .meta b{color:#fff;font-weight:500}
+
+  /* ---- divider slide ---- */
+  .slide.divider{background:var(--azul);color:#fff;justify-content:center;padding:0 80px}
+  .slide.divider .dn{font-family:'Rufina',serif;font-size:120px;color:rgba(255,255,255,.25);line-height:1}
+  .slide.divider h2{color:#fff;font-size:54px;margin-top:-10px}
+  .slide.divider p{font-size:20px;color:#dceefb;margin-top:10px;max-width:680px}
+
+  /* ---- big picture ---- */
+  .bp{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;height:100%}
+  .bp-col{border:1px solid var(--borda);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+  .bp-head{padding:11px;color:#fff;font-family:'Rufina';font-size:16px;text-align:center}
+  .bp-body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;background:#fff}
+  .bp-block{font-size:14px;padding:8px 10px;border-radius:7px;background:#f3f7fa;border:1px solid #e1ebf1}
+
+  .gov{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .gov div{border:2px dashed var(--vinho);border-radius:12px;padding:22px;text-align:center;background:#fdf6f9}
+  .gov .d{font-family:'Rufina';font-size:40px;color:var(--vinho)}
+  .gov .t{font-size:16px;color:var(--texto2);margin-top:6px}
+
+  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;height:100%}
+  .pillar{border-radius:14px;padding:26px;color:#fff;display:flex;flex-direction:column}
+  .pillar h3{color:#fff;font-size:24px;margin-bottom:12px}
+  .pillar ul{margin-left:18px}.pillar li{font-size:17px;margin:10px 0}
+
+  .phase-flow{display:flex;gap:10px;margin:6px 0 16px}
+  .phase-flow span{flex:1;text-align:center;font-size:15px;padding:12px 8px;border-radius:8px;background:#eaf4fb;color:var(--azul-escuro);border:1px solid #cce4f4}
+  .phase-flow span.act{background:var(--azul);color:#fff;border-color:var(--azul)}
+
+  /* ---- gantt ---- */
+  .gantt{border:1px solid var(--borda);border-radius:10px;overflow:hidden}
+  .g-head,.g-row{display:grid;grid-template-columns:230px 1fr}
+  .g-head{background:var(--azul);color:#fff;font-size:13px}
+  .g-head .gl{padding:8px 12px;font-family:'Rufina'}
+  .g-marks{position:relative;height:30px}
+  .g-mark{position:absolute;top:0;height:100%;border-left:1px dashed rgba(255,255,255,.6);padding-left:5px;font-size:12px;color:#fff}
+  .g-row{border-bottom:1px solid #eef2f5}.g-row:last-child{border-bottom:none}
+  .gl{padding:6px 12px;font-size:13.5px;display:flex;align-items:center;gap:8px}
+  .g-dot{width:9px;height:9px;border-radius:50%}
+  .g-track{position:relative;height:28px;background:repeating-linear-gradient(90deg,#fff 0,#fff calc(100%/9 - 1px),#eef2f5 calc(100%/9 - 1px),#eef2f5 calc(100%/9))}
+  .g-bar{position:absolute;top:6px;height:16px;border-radius:8px;display:flex;align-items:center;padding:0 8px;color:#fff;font-size:11px;white-space:nowrap;overflow:hidden}
+
+  .agenda{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .ag{border:1px solid var(--borda);border-left:6px solid var(--azul);border-radius:10px;padding:18px 22px}
+  .ag h4{font-size:20px;color:var(--azul-escuro);margin-bottom:6px}
+  .ag p{font-size:15.5px;color:var(--texto2);margin:0}
+  .ag .nn{font-family:'Rufina';color:var(--azul);font-size:15px}
+
+  .cl-list{columns:2;column-gap:28px;font-size:16.5px}
+  .cl-list div{break-inside:avoid;margin-bottom:12px;padding-left:14px;border-left:3px solid var(--azul-claro)}
+  .cl-list b{color:var(--azul-escuro);font-weight:500}
+  .cl-list span{color:var(--texto2);font-size:14px}
+
+  .editable[contenteditable="true"]{outline:2px dashed var(--azul-claro);outline-offset:6px;border-radius:6px}
+
+  /* ---- controls ---- */
+  .bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;
+    background:rgba(0,30,50,.82);backdrop-filter:blur(4px);padding:7px 10px;border-radius:30px;z-index:50}
+  .bar button{background:transparent;border:none;color:#fff;font-size:16px;cursor:pointer;padding:6px 9px;border-radius:18px;font-family:'Roboto'}
+  .bar button:hover{background:rgba(255,255,255,.18)}
+  .bar .count{color:#fff;font-size:13px;font-family:'Rufina';min-width:54px;text-align:center}
+  .bar .on{background:#fff;color:var(--azul-escuro)}
+  .bar .sep{width:1px;height:20px;background:rgba(255,255,255,.3)}
+  .prog{position:fixed;top:0;left:0;height:4px;background:var(--azul);z-index:50;transition:width .25s}
+  .navzone{position:fixed;top:0;bottom:60px;width:18%;z-index:40;cursor:pointer}
+  .navzone.l{left:0}.navzone.r{right:0}
+  body.editing .navzone{display:none}
+
+  .ov{position:fixed;inset:0;background:rgba(8,20,30,.96);z-index:60;display:none;padding:40px;overflow-y:auto}
+  .ov.show{display:block}
+  .ov h3{color:#fff;font-size:20px;margin-bottom:18px;text-align:center}
+  .ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:1100px;margin:0 auto}
+  .ov-grid div{background:#fff;border-radius:8px;padding:14px;cursor:pointer;border:2px solid transparent;font-size:13px}
+  .ov-grid div:hover{border-color:var(--azul)}
+  .ov-grid .oi{font-family:'Rufina';color:var(--azul);font-size:12px}
+  .ov-grid .ot{color:var(--azul-escuro);font-weight:500;margin-top:3px}
+
+  .hint{position:fixed;top:62px;left:50%;transform:translateX(-50%);background:rgba(0,30,50,.82);color:#fff;
+    font-size:12.5px;padding:6px 14px;border-radius:20px;z-index:50;opacity:0;transition:opacity .3s;pointer-events:none}
+  .hint.show{opacity:1}
+
+
+  .g-editbtn{display:none;margin-top:16px;background:var(--azul);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:15px;cursor:pointer;font-family:'Roboto'}
+  body.editing .g-editbtn{display:inline-block}
+  .gbody{overflow:auto}
+  #gmodal .gm-wrap{max-width:900px;margin:0 auto;background:#fff;border-radius:10px;padding:20px}
+  .gp-head,.gp-row{display:grid;grid-template-columns:1fr 150px 72px 72px 30px;gap:8px;align-items:center}
+  .gp-head{font-size:11px;color:var(--texto2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .gp-row{margin:6px 0}
+  .gp-row input,.gp-row select{border:1px solid var(--borda);border-radius:5px;padding:6px 8px;font-size:13px;font-family:'Roboto'}
+  .gp-del{color:var(--terra);cursor:pointer;text-align:center;font-weight:700;font-size:16px}
+  .gp-add{background:var(--azul);color:#fff;border:none;border-radius:6px;padding:9px 16px;cursor:pointer;font-size:13px;margin-top:10px}
+  .gm-close{background:var(--azul-escuro);color:#fff;border:none;border-radius:6px;padding:9px 16px;cursor:pointer;font-size:13px;margin:10px 0 0 8px}
+
+
+  .fmtbar{position:fixed;top:12px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:6px;
+    background:#fff;border:1px solid var(--borda);box-shadow:0 5px 16px rgba(0,0,0,.18);border-radius:30px;padding:6px 12px;z-index:65}
+  body.editing .fmtbar{display:flex}
+  .fmtbar .fl{font-size:11px;color:var(--texto2);text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
+  .fmtbar select,.fmtbar button{font-family:'Roboto';font-size:13px;border:1px solid var(--borda);background:#fff;border-radius:6px;padding:5px 8px;cursor:pointer;color:var(--texto)}
+  .fmtbar button{min-width:30px}
+  .fmtbar button:hover{background:#eaf4fb}
+  .fmtbar input[type=color]{width:30px;height:30px;border:1px solid var(--borda);border-radius:6px;padding:0;cursor:pointer;background:#fff}
+  .fmtbar .sep{width:1px;height:20px;background:var(--borda)}
+
+  @media print{
+    @page{size:1280px 720px;margin:0}
+    body{background:#fff;overflow:visible}
+    .viewport{position:static;display:block}
+    .scaler{transform:none!important;width:1280px;height:auto}
+    .slide{position:relative;opacity:1!important;page-break-after:always;height:720px;box-shadow:none}
+    .bar,.prog,.navzone,.ov,.hint{display:none!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"></div>
+<div class="hint" id="hint">Modo edição: clique nos textos para alterar. As mudanças ficam salvas neste navegador.</div>
+
+<div class="viewport">
+  <div class="scaler" id="scaler">
+
+    <!-- 1 TÍTULO -->
+    <section class="slide title" data-type="title" data-skey="s1">
+      <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <h1 class="editable" data-id="s1t">Atlas PMT — RH/DP</h1>
+      <div class="tsub editable" data-id="s1s">Playbook de Transição Pós-Aquisição · Audiological Care</div>
+      <div class="meta editable" data-id="s1m"><b>Sonova Brasil</b> — Coordenação de RH<br>
+        Base: Retail Post-Merger Transition Playbook v1.0 (Dez/2025), recorte de RH/DP<br>
+        <b>Anderson Souza</b> · Coordenação de RH</div>
+    </section>
+
+    <!-- 2 AGENDA -->
+    <section class="slide content" data-type="content" data-skey="s2">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Agenda</div>
+        <div class="s-title">O que veremos</div>
+        <div class="body">
+          <div class="agenda editable" data-id="s2">
+            <div class="ag"><div class="nn">01</div><h4>Visão Geral</h4><p>Big Picture da jornada, governança por prazo e pilares de RH</p></div>
+            <div class="ag"><div class="nn">02</div><h4>Cronograma</h4><p>Gantt da transição e Transition Tracker de RH/DP</p></div>
+            <div class="ag"><div class="nn">03</div><h4>Playbook RH</h4><p>Propósito, fatores de sucesso, retenção, comunicação, performance</p></div>
+            <div class="ag"><div class="nn">04</div><h4>Checklists de RH/DP</h4><p>DD trabalhista, admissão, remuneração, compliance, sistemas, SST, eSocial</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 3 DIVISOR -->
+    <section class="slide divider" data-type="divider" data-skey="s3">
+      <div class="dn">01</div><h2 class="editable" data-id="s3">Visão Geral</h2>
+      <p>A jornada da transição sob a ótica de pessoas</p>
+    </section>
+
+    <!-- 4 BIG PICTURE -->
+    <section class="slide content" data-type="content" data-skey="s4">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Visão Geral</div>
+        <div class="s-title">Big Picture — jornada de RH/DP</div>
+        <div class="body">
+          <div class="bp editable" data-id="s4">
+            <div class="bp-col"><div class="bp-head" style="background:#6EB4DC;color:#003C64">Due Diligence</div>
+              <div class="bp-body"><div class="bp-block">DD trabalhista & passivos</div><div class="bp-block">Headcount real (FTEs/HCPs)</div><div class="bp-block">PGR/PCMSO, ASOs e laudos</div><div class="bp-block">eSocial e convenção coletiva</div></div></div>
+            <div class="bp-col"><div class="bp-head" style="background:#005A64">Negociação</div>
+              <div class="bp-body"><div class="bp-block">Estrutura de remuneração</div><div class="bp-block">Custos de pessoas no BC</div><div class="bp-block">Plano de retenção</div><div class="bp-block">CNPJ destino e comunicação</div></div></div>
+            <div class="bp-col"><div class="bp-head" style="background:#0083CA">Transição</div>
+              <div class="bp-body"><div class="bp-block">Townhall & Welcome Event</div><div class="bp-block">Novos contratos Sonova</div><div class="bp-block">Sonnet · Payroll · O365</div><div class="bp-block">LMS · DoA/ICS · LGPD</div></div></div>
+            <div class="bp-col"><div class="bp-head" style="background:#003C64">Pós-Transição</div>
+              <div class="bp-body"><div class="bp-block">FTE tracker (Actual vs. BCS)</div><div class="bp-block">WP review mensal (3 FYs)</div><div class="bp-block">Pesquisas +3m / +6m</div><div class="bp-block">Flying HCPs · contramedidas</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 5 GOVERNANÇA -->
+    <section class="slide content" data-type="content" data-skey="s5">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Visão Geral</div>
+        <div class="s-title">Governança por prazo (pós-closing)</div>
+        <div class="s-sub">Diretriz Global Sonova PMT — obrigatória para deals com vendas &gt; CHF 5m ou &gt; 25 FTEs</div>
+        <div class="body"><div class="gov editable" data-id="s5">
+          <div><div class="d">30d</div><div class="t">Compliance &amp; Controls Transition Plan</div></div>
+          <div><div class="d">60d</div><div class="t">Status update mensal</div></div>
+          <div><div class="d">90d</div><div class="t">Status update mensal</div></div>
+          <div><div class="d">180d</div><div class="t">Close-out report (CEO/CFO/GC)</div></div>
+        </div></div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 6 PILARES -->
+    <section class="slide content" data-type="content" data-skey="s6">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Visão Geral</div>
+        <div class="s-title">Pilares de RH na transição</div>
+        <div class="body"><div class="pillars editable" data-id="s6">
+          <div class="pillar" style="background:#003C64"><h3>Liderança</h3><ul><li>MD hands-on pós-closing</li><li>Sponsor de causa-raiz e contramedidas</li><li>Performance por deal nos reviews</li></ul></div>
+          <div class="pillar" style="background:#005A64"><h3>Staffing</h3><ul><li>FTE tracker (HCPs e demais)</li><li>Flying HCPs e recrutamento antecipado</li><li>Plano B de retenção</li></ul></div>
+          <div class="pillar" style="background:#0083CA"><h3>Cultura &amp; Comunicação</h3><ul><li>Townhall, welcome, updates</li><li>Pesquisas antes/3m/6m</li><li>Blended teams com Retail</li></ul></div>
+        </div></div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 7 DIVISOR -->
+    <section class="slide divider" data-type="divider" data-skey="s7">
+      <div class="dn">02</div><h2 class="editable" data-id="s7">Cronograma</h2>
+      <p>Linha do tempo e plano de ação de RH/DP</p>
+    </section>
+
+    <!-- 8 GANTT -->
+    <section class="slide content" data-type="content" data-gantt="1" data-skey="s8">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="gtext">
+          <div class="s-kicker">Cronograma</div>
+          <div class="s-title">Gantt da transição (RH/DP)</div>
+          <div class="s-sub">Semanas relativas ao Closing (semana 0)</div>
+        </div>
+        <div class="body gbody"><div id="ganttMount"></div>
+          <button class="g-editbtn" id="gEditBtn">Editar Gantt</button>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 9 TRACKER -->
+    <section class="slide content" data-type="content" data-skey="s9">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Cronograma</div>
+        <div class="s-title">Transition Tracker — RH/DP</div>
+        <div class="s-sub">Plano de ação por workstream (extrato — versão completa no Atlas app)</div>
+        <div class="body"><table class="editable" data-id="s9"><thead><tr><th>Workstream</th><th>Atividade-chave</th><th>Owner</th></tr></thead><tbody>
+          <tr><td class="cat">Comunicação</td><td>Seller onboarding, Townhall e Welcome Event</td><td>MD / Transition</td></tr>
+          <tr><td class="cat">Contratos</td><td>1:1 + assinatura de novos contratos Sonova</td><td>Eduarda</td></tr>
+          <tr><td class="cat">Remuneração</td><td>Revisar estrutura do target e definir esquema pós-merger</td><td>RH / Corporate HR</td></tr>
+          <tr><td class="cat">Sistemas</td><td>Sonnet, migração de folha (ADP) e O365</td><td>Jair</td></tr>
+          <tr><td class="cat">Compliance</td><td>LMS (CoC, antissuborno, LGPD), DoA/ICS</td><td>RH / Compliance</td></tr>
+          <tr><td class="cat">SST</td><td>PGR/PCMSO, ASOs, laudos e clínica ocupacional</td><td>Jameson</td></tr>
+          <tr><td class="cat">Pesquisa</td><td>Clima antes · 3 meses · 6 meses (MS Forms)</td><td>RH</td></tr>
+          <tr><td class="cat">Performance</td><td>FTE tracker (Actual vs. BCS) e WP review</td><td>RH / Finance</td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 10 DIVISOR -->
+    <section class="slide divider" data-type="divider" data-skey="s10">
+      <div class="dn">03</div><h2 class="editable" data-id="s10">Playbook RH</h2>
+      <p>Referência conceitual e operacional de pessoas</p>
+    </section>
+
+    <!-- 11 PROPÓSITO -->
+    <section class="slide content" data-type="content" data-skey="s11">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 1.1</div>
+        <div class="s-title">Propósito</div>
+        <div class="body editable" data-id="s11">
+          <p>Recorte de <strong>RH/Departamento Pessoal</strong> do Retail Post-Merger Transition Playbook, voltado às aquisições de clínicas/lojas de Audiological Care no Brasil.</p>
+          <div class="lead">Cada aquisição é diferente. O conteúdo é o <strong>mínimo obrigatório</strong> (mesmo para deals pequenos) e deve ser customizado ao projeto e às regulações locais.</div>
+          <p style="margin-top:14px"><strong>Duas prioridades:</strong> atingir o business case aprovado e limitar disrupções ao negócio atual.</p>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 12 JORNADA / DRIVERS -->
+    <section class="slide content" data-type="content" data-skey="s12">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 2.0</div>
+        <div class="s-title">Jornada de pessoas</div>
+        <div class="body editable" data-id="s12">
+          <div class="phase-flow"><span>Due Diligence</span><span>Negociação</span><span class="act">Transição</span><span>Pós-Transição</span></div>
+          <div class="grid2">
+            <div class="card"><h4>Leadership Focus</h4><ul><li>MD hands-on nos primeiros meses pós-closing</li><li>Ações corretivas rápidas</li></ul></div>
+            <div class="card"><h4>Staffing</h4><ul><li>Impacto da falta de staffing (rVTO)</li><li>Onboarding considerando cultura e sistemas</li><li>Visibilidade de FTEs — flying HCPs</li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 13 FATORES -->
+    <section class="slide content" data-type="content" data-skey="s13">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 2.2</div>
+        <div class="s-title">Fatores de sucesso</div>
+        <div class="body editable" data-id="s13">
+          <p><strong>Por que PMT?</strong> Processos e recursos certos entregam transição bem-sucedida; transição rápida entrega performance precoce.</p>
+          <ul>
+            <li>Transição como prioridade da GC que adquire</li>
+            <li>Project leader dedicado e workstream leaders com capacidade</li>
+            <li>Plano de ação documentado para todos os workstreams</li>
+            <li>Governança com revisões periódicas de conclusão</li>
+            <li>Revisão mensal de performance vs. whitepaper, com contramedidas</li>
+          </ul>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 14 MARCOS -->
+    <section class="slide content" data-type="content" data-skey="s14">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 2.8</div>
+        <div class="s-title">Marcos de RH no timeline</div>
+        <div class="body editable" data-id="s14">
+          <div class="grid2">
+            <div>
+              <ul>
+                <li>Strategy → Townhall → Seller onboarding</li>
+                <li>Novos contratos assinados → todos com contrato Sonova</li>
+                <li>Sonnet · LMS · treinamentos-chave concluídos</li>
+                <li>DoA (e ICS no share deal) → LMS concluído</li>
+                <li>LGPD: processo temporário → revisão</li>
+              </ul>
+            </div>
+            <div class="card"><h4>Janelas indicativas</h4>
+              <table><tbody>
+                <tr><td>Pre-Close</td><td>2–4 sem.</td></tr>
+                <tr><td>Close</td><td>1–2 sem.</td></tr>
+                <tr><td>Set-up / Onboarding</td><td>6 sem.</td></tr>
+                <tr><td>Implementation</td><td>18 sem.</td></tr>
+              </tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 15 ORGANIZAÇÃO -->
+    <section class="slide content" data-type="content" data-skey="s15">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 3.x</div>
+        <div class="s-title">Organização &amp; governança RH</div>
+        <div class="body editable" data-id="s15">
+          <table><thead><tr><th>Papel</th><th>Escopo de RH</th></tr></thead><tbody>
+            <tr><td class="cat">HR / PMT Coach</td><td>Change management, contratos, Sonnet, treinamento e onboarding</td></tr>
+            <tr><td class="cat">HR / Compliance</td><td>Comunicação, contratos, payroll, LMS, DoA/ICS, LGPD</td></tr>
+            <tr><td class="cat">Workstream leader local</td><td>Plano de ação, status semanal, alinhamento mensal com MD</td></tr>
+          </tbody></table>
+          <div class="lead" style="margin-top:14px">Funções globais (incl. <strong>MBM HR</strong>) obrigatórias para deals com <strong>vendas &gt; CHF 5m</strong> ou <strong>&gt; 25 FTEs</strong>.</div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 16 RETENÇÃO -->
+    <section class="slide content" data-type="content" data-skey="s16">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 3.4</div>
+        <div class="s-title">Retenção &amp; remuneração</div>
+        <div class="body editable" data-id="s16">
+          <div class="grid2">
+            <div class="card"><h4>Passos-chave</h4><ul><li>Revisar remuneração do target (base, comissões, benefícios, previdência)</li><li>Definir esquema pós-merger (faseado, grandfathering)</li><li>Incorporar custos no Business Case</li></ul></div>
+            <div class="card"><h4>Plano de transição</h4><ul><li>Comunicação transparente e change management</li><li>Bônus de retenção para talentos</li><li>Blended teams com Retail</li><li>Plano B · flying HCPs · recrutamento antecipado</li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 17 COMUNICAÇÃO -->
+    <section class="slide content" data-type="content" data-skey="s17">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 3.5</div>
+        <div class="s-title">Comunicação &amp; onboarding</div>
+        <div class="body editable" data-id="s17">
+          <table><thead><tr><th>Evento</th><th>Owner</th><th>Essência</th></tr></thead><tbody>
+            <tr><td class="cat">Seller Onboarding</td><td>Transition Mgr</td><td>Alinhar plano de comunicação e de transição</td></tr>
+            <tr><td class="cat">Townhall</td><td>Managing Director</td><td>Mensagem roteirizada · 1ª impressão</td></tr>
+            <tr><td class="cat">1:1 — contrato</td><td>HR Manager</td><td>Novo contrato · valores e cultura</td></tr>
+            <tr><td class="cat">Welcome Event</td><td>MD / RSM</td><td>Pertencimento à família Sonova</td></tr>
+            <tr><td class="cat">Updates periódicos</td><td>MD / RSM</td><td>Manter engajamento (vídeos, calls, cartas)</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 18 DOS & DONTS -->
+    <section class="slide content" data-type="content" data-skey="s18">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 3.6</div>
+        <div class="s-title">Dos &amp; Don’ts da comunicação</div>
+        <div class="body editable" data-id="s18">
+          <div class="grid2">
+            <div class="card"><h4>Dos</h4><ul><li>Comunicação precoce</li><li>Aberta e honesta</li><li>Updates regulares em vários canais</li><li>Espírito de time · incentivar feedback</li><li>Prover recursos (FAQ, guias)</li></ul></div>
+            <div class="card"><h4 style="color:var(--terra)">Don’ts</h4><ul><li>Atrasar informações importantes</li><li>“Adoçar” mudanças</li><li>Negligenciar necessidades individuais</li><li>Ignorar diferenças culturais</li><li>Sobrecarregar com informação</li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 19 PESQUISAS -->
+    <section class="slide content" data-type="content" data-skey="s19">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 3.7</div>
+        <div class="s-title">Pesquisas com colaboradores</div>
+        <div class="body editable" data-id="s19">
+          <p>Medem preocupações, motivação e avaliação da transição — base para agir e reduzir <strong>attrition regrettable</strong>.</p>
+          <div class="phase-flow"><span>Antes da transição</span><span>+3 meses</span><span>+6 meses</span></div>
+          <div class="lead">Ferramenta gratuita: <strong>MS Forms</strong>. Liderança e RH agem sobre os resultados a cada ciclo.</div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 20 PERFORMANCE -->
+    <section class="slide content" data-type="content" data-skey="s20">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Playbook RH · 4.3</div>
+        <div class="s-title">Performance pós-transição</div>
+        <div class="body editable" data-id="s20">
+          <div class="grid2">
+            <div class="card"><h4>Foco de RH (Whitepaper · 3 FYs)</h4><ul><li>FTE tracker: Actual vs. BCS (HCPs e demais)</li><li>Flying HCPs + recrutamento</li><li>WP reviews mensais · causa-raiz · contramedidas</li><li>Pesquisas 3m/6m → ações de retenção</li></ul></div>
+            <div class="card"><h4>Cadência de governança</h4><table><tbody>
+              <tr><td>30 dias</td><td>Compliance &amp; Controls Plan</td></tr>
+              <tr><td>60 / 90 dias</td><td>Status update mensal</td></tr>
+              <tr><td>180 dias</td><td>Close-out (CEO/CFO/GC)</td></tr>
+            </tbody></table></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 21 DIVISOR -->
+    <section class="slide divider" data-type="divider" data-skey="s21">
+      <div class="dn">04</div><h2 class="editable" data-id="s21">Checklists de RH/DP</h2>
+      <p>Requisitos mínimos e checklists trabalhistas/DP (contexto brasileiro)</p>
+    </section>
+
+    <!-- 22 MAPA DOS CHECKLISTS -->
+    <section class="slide content" data-type="content" data-skey="s22">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Checklists</div>
+        <div class="s-title">Os 9 checklists do Atlas</div>
+        <div class="body"><div class="cl-list editable" data-id="s22">
+          <div><b>Requisitos Mínimos (PMT)</b> <span>— obrigatórios do playbook</span></div>
+          <div><b>Due Diligence Trabalhista</b> <span>— passivos, sindical, sucessão (CLT)</span></div>
+          <div><b>Admissão &amp; Migração de Contratos</b> <span>— CNPJ destino, S-2200, benefícios</span></div>
+          <div><b>Remuneração &amp; Benefícios</b> <span>— gaps, isonomia, adicionais</span></div>
+          <div><b>Compliance &amp; Treinamentos</b> <span>— DoA/ICS, LMS, LGPD</span></div>
+          <div><b>Sistemas de RH/DP</b> <span>— Sonnet, folha, ponto, O365</span></div>
+          <div><b>SST &amp; Saúde Ocupacional</b> <span>— PGR/PCMSO, ASOs, laudos</span></div>
+          <div><b>eSocial &amp; Obrigações DP</b> <span>— S-1200/2200/2299, FGTS, DCTFWeb</span></div>
+          <div><b>Comunicação, Cultura &amp; Pesquisas</b> <span>— townhall, welcome, clima</span></div>
+        </div></div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 23 REQUISITOS MÍNIMOS -->
+    <section class="slide content" data-type="content" data-skey="s23">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Checklist</div>
+        <div class="s-title">Requisitos mínimos (PMT)</div>
+        <div class="body editable" data-id="s23">
+          <div class="grid2">
+            <div class="card"><h4>Governança</h4><ul><li>Estrutura de governança do projeto</li><li>Whitepaper review implementado</li><li>Verificar aplicabilidade da Global Guideline</li><li>Timeline de marcos (Gantt) e plano por workstream</li></ul></div>
+            <div class="card"><h4>Staffing / RH</h4><ul><li>Revisar remuneração do target e planejar transição</li><li>Plano de onboarding &amp; comunicação</li><li>≥1 pesquisa pós-transição</li><li>FTE tracker (Actual vs. BCS)</li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 24 DD TRABALHISTA -->
+    <section class="slide content" data-type="content" data-skey="s24">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Checklist · DP/BR</div>
+        <div class="s-title">Due Diligence Trabalhista</div>
+        <div class="body editable" data-id="s24">
+          <div class="grid2">
+            <div class="card"><h4>Riscos &amp; passivos</h4><ul><li>Passivo trabalhista (ações, provisões)</li><li>Convenção/acordo coletivo (sindicato, data-base)</li><li>Sucessão trabalhista (arts. 10, 448, 448-A CLT)</li><li>Equiparação salarial e horas extras</li></ul></div>
+            <div class="card"><h4>Conformidade</h4><ul><li>FGTS, INSS e CRF regulares</li><li>eSocial do target (eventos pendentes)</li><li>PGR/PCMSO, ASOs e laudos</li><li>Headcount real vs. informado (FTEs/HCPs)</li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 25 ADMISSÃO -->
+    <section class="slide content" data-type="content" data-skey="s25">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Checklist · DP/BR</div>
+        <div class="s-title">Admissão &amp; migração de contratos</div>
+        <div class="body editable" data-id="s25">
+          <div class="grid2">
+            <div class="card"><h4>Formalização</h4><ul><li>CNPJ destino por colaborador (cluster)</li><li>Novos contratos Sonova (minuta jurídico)</li><li>1:1 + assinatura · documentação admissional</li><li>Admissão no eSocial (S-2200) no prazo</li></ul></div>
+            <div class="card"><h4>Transição</h4><ul><li>Férias e 13º proporcionais (transferência x quitação)</li><li>ASO admissional / aproveitamento</li><li>Ponto, escala e benefícios</li><li>Encerramento no seller (rescisão/sucessão)</li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 26 REMUNERAÇÃO + COMPLIANCE -->
+    <section class="slide content" data-type="content" data-skey="s26">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Checklist · DP/BR</div>
+        <div class="s-title">Remuneração &amp; Compliance</div>
+        <div class="body editable" data-id="s26">
+          <div class="grid2">
+            <div class="card"><h4>Remuneração &amp; Benefícios</h4><ul><li>Mapear estrutura e comparar vs. Sonova</li><li>Esquema pós-merger e impacto no BC</li><li>Equiparação/isonomia e adicionais (laudos)</li><li>Migrar fornecedores de benefícios</li></ul></div>
+            <div class="card"><h4>Compliance &amp; Treinamentos</h4><ul><li>DoA (e ICS em share deal)</li><li>LMS: CoC, antissuborno, LGPD, concorrencial</li><li>Processo LGPD temporário → revisão</li><li>Evidência de conclusão · canal de denúncias</li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 27 SISTEMAS / ESOCIAL / SST -->
+    <section class="slide content" data-type="content" data-skey="s27">
+      <div class="accent"></div>
+      <div class="s-pad">
+        <div class="s-kicker">Checklist · DP/BR</div>
+        <div class="s-title">Sistemas · eSocial · SST</div>
+        <div class="body editable" data-id="s27">
+          <div class="grid3">
+            <div class="card"><h4>Sistemas</h4><ul><li>Sonnet + carga</li><li>Folha (ADP) · paralela 1ª comp.</li><li>O365 · ponto · acessos (LGPD)</li></ul></div>
+            <div class="card"><h4>eSocial</h4><ul><li>Procuração e certificado por CNPJ</li><li>S-2200 / S-2299 / S-1200</li><li>FGTS Digital · DCTFWeb</li></ul></div>
+            <div class="card"><h4>SST</h4><ul><li>PGR / PCMSO · ASOs</li><li>Laudos (LTCAT, insal./peric.)</li><li>S-2210/2220/2240</li></ul></div>
+          </div>
+        </div>
+      </div>
+      <div class="s-foot"><span>Uso interno · Atlas PMT RH/DP</span><span class="pg"></span></div>
+    </section>
+
+    <!-- 28 ENCERRAMENTO -->
+    <section class="slide title" data-type="title" data-skey="s28">
+      <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <h1 class="editable" data-id="s28t" style="font-size:48px">Pronto para conduzir a próxima aquisição</h1>
+      <div class="tsub editable" data-id="s28s">Big Picture · Gantt · Tracker · 9 checklists de RH/DP — tudo no Atlas</div>
+      <div class="meta editable" data-id="s28m"><b>Anderson Souza</b> · Coordenação de RH — Sonova Brasil<br>
+        Versão interativa e editável disponível no Atlas PMT RH/DP (app)</div>
+    </section>
+
+  </div>
+</div>
+
+<div class="navzone l" id="navL"></div>
+<div class="navzone r" id="navR"></div>
+
+<div class="fmtbar" id="fmtbar">
+  <span class="fl">Fonte</span>
+  <select id="fmtFont" title="Família da fonte">
+    <option value="">Família</option>
+    <option value="'Roboto',sans-serif">Roboto</option>
+    <option value="'Rufina',serif">Rufina</option>
+    <option value="Arial,Helvetica,sans-serif">Arial</option>
+    <option value="Georgia,serif">Georgia</option>
+    <option value="'Times New Roman',serif">Times New Roman</option>
+    <option value="Calibri,sans-serif">Calibri</option>
+    <option value="Verdana,sans-serif">Verdana</option>
+    <option value="Tahoma,sans-serif">Tahoma</option>
+    <option value="'Courier New',monospace">Courier New</option>
+  </select>
+  <select id="fmtSize" title="Tamanho da fonte">
+    <option value="">Tamanho</option>
+    <option value="12px">12</option><option value="14px">14</option><option value="16px">16</option>
+    <option value="18px">18</option><option value="20px">20</option><option value="24px">24</option>
+    <option value="28px">28</option><option value="32px">32</option><option value="40px">40</option>
+    <option value="48px">48</option><option value="56px">56</option><option value="64px">64</option>
+  </select>
+  <span class="sep"></span>
+  <button id="fmtB" title="Negrito"><b>N</b></button>
+  <button id="fmtI" title="Itálico"><i>I</i></button>
+  <button id="fmtU" title="Sublinhado"><span style="text-decoration:underline">S</span></button>
+  <input type="color" id="fmtColor" value="#0083CA" title="Cor do texto">
+  <button id="fmtClear" title="Limpar formatação">Limpar</button>
+</div>
+
+<div class="bar">
+  <button id="bFirst" title="Início (Home)">«</button>
+  <button id="bPrev" title="Anterior (←)">‹</button>
+  <span class="count" id="count">1 / 1</span>
+  <button id="bNext" title="Próximo (→)">›</button>
+  <button id="bLast" title="Fim (End)">»</button>
+  <span class="sep"></span>
+  <button id="bOv" title="Miniaturas (O)">▦</button>
+  <button id="bFull" title="Tela cheia (F)">⛶</button>
+  <button id="bEdit" title="Editar (E)">Editar</button>
+  <button id="bPrint" title="Imprimir / PDF (P)">PDF</button>
+  <span class="sep"></span>
+  <button id="bExport" title="Exportar edições">↧</button>
+  <button id="bImport" title="Importar edições">↥</button>
+  <input type="file" id="impFile" accept="application/json" style="display:none">
+</div>
+
+<div class="ov" id="ov"><h3>Slides — clique para ir</h3><div class="ov-grid" id="ovGrid"></div></div>
+
+<div class="ov" id="gmodal" style="z-index:70"><h3>Editar Gantt — atividade, categoria, início (sem.) e duração (sem.)</h3><div class="gm-wrap" id="gmodalBody"></div></div>
+
+<script>
+const LS='sonova_atlas_deck_v2';
+const slides=[...document.querySelectorAll('.slide')];
+const total=slides.length;
+let cur=0, editMode=false;
+
+const G_MIN=-8,G_MAX=28;
+const G_MARKS=[{w:-8,l:'LOI'},{w:-4,l:'Signing'},{w:0,l:'Closing'},{w:1,l:'GoLive'},{w:13,l:'+3m'},{w:26,l:'+6m'}];
+const CAT={'Comunicacao':'#0083CA','Comunicação':'#0083CA','Contratos':'#003C64','Remuneração':'#005A64','Sistemas':'#6EB4DC','Compliance':'#7D0041','Treinamento':'#7D0041','Pesquisa':'#0083CA','Performance':'#005A64','SST':'#8C321E'};
+function DEFAULTG(){return [
+  {task:'Revisão remuneração do target',cat:'Remuneração',start:-8,dur:4},
+  {task:'Seller onboarding',cat:'Comunicação',start:-6,dur:2},
+  {task:'Processo LGPD (temporário)',cat:'Compliance',start:-2,dur:8},
+  {task:'Pesquisa de clima (antes)',cat:'Pesquisa',start:-1,dur:1},
+  {task:'Townhall',cat:'Comunicação',start:0,dur:1},
+  {task:'1:1 + novos contratos',cat:'Contratos',start:0,dur:4},
+  {task:'Setup Sonnet',cat:'Sistemas',start:0,dur:3},
+  {task:'Migração de folha',cat:'Sistemas',start:0,dur:5},
+  {task:'O365 / contas',cat:'Sistemas',start:0,dur:2},
+  {task:'DoA / ICS',cat:'Compliance',start:0,dur:3},
+  {task:'Welcome Event',cat:'Comunicação',start:1,dur:1},
+  {task:'Treinamentos LMS',cat:'Compliance',start:1,dur:5},
+  {task:'Treinamento IT & produtos',cat:'Treinamento',start:2,dur:6},
+  {task:'FTE tracker / WP review',cat:'Performance',start:1,dur:25},
+  {task:'Pesquisa (+3m)',cat:'Pesquisa',start:13,dur:1},
+  {task:'Pesquisa (+6m)',cat:'Pesquisa',start:26,dur:2}
+];}
+
+function load(){ try{return JSON.parse(localStorage.getItem(LS)||'{}');}catch(e){return{};} }
+let store=load();
+const editsText=store.text||{};
+let G=Array.isArray(store.gantt)&&store.gantt.length?store.gantt:DEFAULTG();
+function persist(){ try{localStorage.setItem(LS,JSON.stringify({text:editsText,gantt:G}));}catch(e){} }
+let _pt; function persistDebounced(){ clearTimeout(_pt); _pt=setTimeout(persist,200); }
+
+function editContainer(s){ return s.dataset.gantt==='1' ? s.querySelector('.gtext') : s; }
+const originals={};
+function esc(t){return (t==null?'':String(t)).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+(function(){let n=0;slides.forEach(s=>{const pg=s.querySelector('.pg');if(pg){n++;pg.textContent=n;}});})();
+
+slides.forEach(s=>{ const key=s.dataset.skey; const c=editContainer(s); if(!c) return;
+  originals[key]=c.innerHTML;
+  if(editsText[key]!=null) c.innerHTML=editsText[key];
+  c.addEventListener('input',()=>{ editsText[key]=c.innerHTML; persistDebounced(); });
+  const ob=new MutationObserver(()=>{ if(!editMode) return; editsText[key]=c.innerHTML; persistDebounced(); });
+  ob.observe(c,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style','face','size','color']});
+});
+
+function fit(){const sc=Math.min(innerWidth/1280,innerHeight/720);document.getElementById('scaler').style.transform='scale('+sc+')';}
+addEventListener('resize',fit);fit();
+
+function render(){ slides.forEach((s,i)=>s.classList.toggle('active',i===cur));
+  document.getElementById('count').textContent=(cur+1)+' / '+total;
+  document.getElementById('prog').style.width=((cur+1)/total*100)+'%';
+  if(slides[cur].dataset.gantt==='1') mountGantt();
+}
+function go(i){cur=Math.max(0,Math.min(total-1,i));render();}
+function next(){go(cur+1);}function prev(){go(cur-1);}
+
+document.getElementById('bNext').onclick=next;
+document.getElementById('bPrev').onclick=prev;
+document.getElementById('bFirst').onclick=()=>go(0);
+document.getElementById('bLast').onclick=()=>go(total-1);
+document.getElementById('navR').onclick=next;
+document.getElementById('navL').onclick=prev;
+
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('gmodal').classList.contains('show')){ if(e.key==='Escape') closeG(); return; }
+  if(editMode){ if(e.key==='Escape'){ closeOv(); } return; }
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+  else if(e.key==='Home')go(0); else if(e.key==='End')go(total-1);
+  else if(e.key==='f'||e.key==='F')toggleFull();
+  else if(e.key==='o'||e.key==='O')toggleOv();
+  else if(e.key==='e'||e.key==='E')toggleEdit();
+  else if(e.key==='p'||e.key==='P')window.print();
+  else if(e.key==='Escape')closeOv();
+});
+
+function toggleFull(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); else document.exitFullscreen&&document.exitFullscreen(); }
+document.getElementById('bFull').onclick=toggleFull;
+
+function toggleEdit(force){ editMode=(typeof force==='boolean')?force:!editMode;
+  const b=document.getElementById('bEdit'); b.classList.toggle('on',editMode); b.textContent=editMode?'Concluir':'Editar';
+  document.body.classList.toggle('editing',editMode);
+  slides.forEach(s=>{ const c=editContainer(s); if(c) c.contentEditable=editMode?'true':'false'; });
+  const h=document.getElementById('hint'); h.classList.toggle('show',editMode); if(editMode) setTimeout(()=>h.classList.remove('show'),3800);
+}
+document.getElementById('bEdit').onclick=()=>toggleEdit();
+
+function buildOv(){const g=document.getElementById('ovGrid');g.innerHTML='';
+  slides.forEach((s,i)=>{const t=s.querySelector('.s-title')||s.querySelector('h1')||s.querySelector('h2');const k=s.querySelector('.s-kicker');
+    const d=document.createElement('div');d.innerHTML='<div class="oi">'+(i+1)+' · '+(k?k.textContent:(s.dataset.type==='divider'?'Seção':'Capa'))+'</div><div class="ot">'+(t?t.textContent:'')+'</div>';
+    d.onclick=()=>{go(i);closeOv();};g.appendChild(d);});}
+function toggleOv(force){const o=document.getElementById('ov');const show=(typeof force==='boolean')?force:!o.classList.contains('show');o.classList.toggle('show',show);}
+function closeOv(){document.getElementById('ov').classList.remove('show');}
+document.getElementById('bOv').onclick=()=>toggleOv();
+document.getElementById('ov').onclick=e=>{if(e.target.id==='ov')closeOv();};
+buildOv();
+
+document.getElementById('bPrint').onclick=()=>window.print();
+document.getElementById('bExport').onclick=()=>{const blob=new Blob([JSON.stringify({text:editsText,gantt:G},null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='atlas_deck_edicoes.json';a.click();URL.revokeObjectURL(u);};
+document.getElementById('bImport').onclick=()=>document.getElementById('impFile').click();
+document.getElementById('impFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result)||{};const t=d.text||{};for(const k in editsText)delete editsText[k];Object.assign(editsText,t);
+    if(Array.isArray(d.gantt)&&d.gantt.length)G=d.gantt;
+    slides.forEach(s=>{const key=s.dataset.skey;const c=editContainer(s);if(c)c.innerHTML=(editsText[key]!=null)?editsText[key]:originals[key];});
+    persist(); if(slides[cur].dataset.gantt==='1')mountGantt();
+  }catch(err){}};r.readAsText(f);e.target.value='';};
+
+function pos(start,dur){const t=G_MAX-G_MIN;let l=(start-G_MIN)/t*100,w=dur/t*100;if(l<0){w+=l;l=0;}if(l+w>100)w=100-l;if(w<1.5)w=1.5;return[l,w];}
+function mountGantt(){const m=document.getElementById('ganttMount');if(!m)return;const t=G_MAX-G_MIN;
+  const marks=G_MARKS.map(x=>'<div class="g-mark" style="left:'+((x.w-G_MIN)/t*100)+'%">'+x.l+'</div>').join('');
+  let h='<div class="gantt"><div class="g-head"><div class="gl">Atividade</div><div class="g-marks">'+marks+'</div></div>';
+  G.forEach(g=>{const c=CAT[g.cat]||'#0083CA';const p=pos(g.start,g.dur);
+    h+='<div class="g-row"><div class="gl"><span class="g-dot" style="background:'+c+'"></span>'+esc(g.task)+'</div><div class="g-track"><div class="g-bar" style="left:'+p[0]+'%;width:'+p[1]+'%;background:'+c+'">'+g.dur+'sem</div></div></div>';});
+  m.innerHTML=h+'</div>';}
+
+function renderGRows(){const b=document.getElementById('gmodalBody');const cats=['Comunicação','Contratos','Remuneração','Sistemas','Compliance','Treinamento','Pesquisa','Performance','SST'];
+  let h='<div class="gp-head"><div>Atividade</div><div>Categoria</div><div>Início</div><div>Duração</div><div></div></div>';
+  G.forEach((g,i)=>{h+='<div class="gp-row" data-i="'+i+'"><input data-f="task" value="'+esc(g.task)+'">'+
+    '<select data-f="cat">'+cats.map(c=>'<option '+(c===g.cat?'selected':'')+'>'+c+'</option>').join('')+'</select>'+
+    '<input data-f="start" type="number" value="'+g.start+'"><input data-f="dur" type="number" min="1" value="'+g.dur+'">'+
+    '<span class="gp-del" data-i="'+i+'">×</span></div>';});
+  b.innerHTML=h+'<button class="gp-add" id="gAdd">+ Atividade</button><button class="gm-close" id="gClose2">Fechar</button>';
+  b.querySelectorAll('.gp-row').forEach(row=>{const i=+row.dataset.i;
+    row.querySelectorAll('[data-f]').forEach(inp=>{const ev=inp.tagName==='SELECT'?'change':'input';
+      inp.addEventListener(ev,()=>{let v=inp.value;if(inp.dataset.f==='start')v=parseInt(v||0,10);if(inp.dataset.f==='dur')v=Math.max(1,parseInt(v||1,10));G[i][inp.dataset.f]=v;persist();mountGantt();});});
+    row.querySelector('.gp-del').onclick=()=>{G.splice(i,1);persist();mountGantt();renderGRows();};});
+  document.getElementById('gAdd').onclick=()=>{G.push({task:'Nova atividade',cat:'Comunicação',start:0,dur:2});persist();mountGantt();renderGRows();};
+  document.getElementById('gClose2').onclick=closeG;
+}
+function openG(){renderGRows();document.getElementById('gmodal').classList.add('show');}
+function closeG(){document.getElementById('gmodal').classList.remove('show');}
+var gBtn=document.getElementById('gEditBtn'); if(gBtn) gBtn.onclick=openG;
+document.getElementById('gmodal').onclick=e=>{if(e.target.id==='gmodal')closeG();};
+
+
+/* ---- barra de formatação (fonte) ---- */
+try{document.execCommand('styleWithCSS',false,true);}catch(e){}
+let savedRange=null, savedEditable=null;
+document.addEventListener('selectionchange',()=>{
+  const sel=getSelection(); if(!sel.rangeCount) return;
+  const r=sel.getRangeAt(0); let n=r.commonAncestorContainer; let el=(n.nodeType===3?n.parentElement:n);
+  const ce=el&&el.closest?el.closest('[contenteditable="true"]'):null;
+  if(ce){ savedRange=r.cloneRange(); savedEditable=ce; }
+});
+function restoreSel(){ if(savedRange){ const s=getSelection(); s.removeAllRanges(); s.addRange(savedRange); } }
+function persistFromEditable(el){ const slide=el.closest('.slide'); if(!slide) return; const key=slide.dataset.skey; const c=editContainer(slide); if(c){ editsText[key]=c.innerHTML; persist(); } }
+function fmtExec(cmd,val){ if(!savedEditable){ return; } restoreSel(); try{document.execCommand('styleWithCSS',false,true);}catch(e){} document.execCommand(cmd,false,val); persistFromEditable(savedEditable); savedEditable.focus(); }
+function fmtSetSize(px){ if(!savedEditable||!px) return; restoreSel(); document.execCommand('fontSize',false,'7');
+  savedEditable.querySelectorAll('font[size="7"]').forEach(f=>{ const sp=document.createElement('span'); sp.style.fontSize=px; while(f.firstChild) sp.appendChild(f.firstChild); f.replaceWith(sp); });
+  persistFromEditable(savedEditable); }
+const fmtbarEl=document.getElementById('fmtbar');
+fmtbarEl.addEventListener('mousedown',e=>{ if(e.target.closest('select')||(e.target.type==='color')) return; e.preventDefault(); });
+document.getElementById('fmtB').onclick=()=>fmtExec('bold');
+document.getElementById('fmtI').onclick=()=>fmtExec('italic');
+document.getElementById('fmtU').onclick=()=>fmtExec('underline');
+document.getElementById('fmtClear').onclick=()=>fmtExec('removeFormat');
+document.getElementById('fmtColor').oninput=function(){ fmtExec('foreColor',this.value); };
+document.getElementById('fmtFont').onchange=function(){ if(this.value) fmtExec('fontName',this.value); this.selectedIndex=0; };
+document.getElementById('fmtSize').onchange=function(){ fmtSetSize(this.value); this.selectedIndex=0; };
+
+
+render();
+</script>
+</body>
+</html>
