@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DP 360 Sonova</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Rufina:wght@400;700&display=swap');
+    :root{
+      --blue:#0083CA;--blue-dark:#003C64;--blue-light:#6EB4DC;
+      --wine:#7D0041;--terra:#7D0041;--bg:#FFFFFF;--paper:#FFFFFF;--line:#CCCCCC;
+      --text:#333333;--muted:rgba(51,51,51,.68);--green:#0083CA;--amber:#6EB4DC;--red:#7D0041;
+      --focus:#0083CA;
+      --font-title:'Rufina',Georgia,serif;--font-body:'Roboto',Arial,sans-serif;
+      --shadow:0 12px 34px rgba(0,60,100,.14);--radius:16px
+    }
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:var(--font-body);font-weight:300;color:var(--text);background:var(--bg)}
+    button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+    button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,.wheel-node:focus-visible,.step-row:focus-visible,.check-row:focus-visible{outline:3px solid var(--focus)!important;outline-offset:2px!important;border-radius:6px}
+    .step-row{outline:none}.check-row{outline:none;border-radius:6px}
+    .kbd-hint{font-size:9px;color:var(--muted);padding:2px 6px;border:1px solid var(--line);border-radius:4px;background:#F7FAFC;margin-left:4px;font-family:var(--font-body);font-weight:500}
+    .insert-row{display:flex;justify-content:center;padding:2px 0;opacity:0;transition:opacity .15s;height:22px}
+    .insert-row:hover,.insert-row:focus-within,.step-full:hover+.insert-row,.step-full:focus-within+.insert-row{opacity:1}
+    .insert-btn{border:1px dashed var(--blue-light);background:#FFFFFF;color:var(--blue);border-radius:12px;padding:2px 12px;font-size:10px;font-weight:500;display:inline-flex;align-items:center;gap:5px}
+    .insert-btn:hover,.insert-btn:focus-visible{background:rgba(110,180,220,.14);border-style:solid;border-color:var(--blue)}
+    .insert-btn strong{display:grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--blue);color:#FFFFFF;font-size:12px;font-weight:300;line-height:1}
+    .sticky-shell{position:sticky;top:0;z-index:40;background:#FFFFFF;box-shadow:0 4px 14px rgba(0,60,100,.12)}
+    .topbar{position:relative;background:#0083CA;color:#FFFFFF;padding:13px 23px;display:flex;align-items:center;gap:18px;min-height:58px;border-top:7px solid #FFFFFF}
+    .brand{display:flex;align-items:center;gap:10px;flex:1}.brand h1{margin:0;font-size:21px;line-height:1.15;color:#FFFFFF}.header-signature{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#FFFFFF;white-space:nowrap}.commandbar{background:#FFFFFF;border-bottom:1px solid var(--line);padding:10px 22px;display:flex;align-items:center;gap:12px;position:relative}.nav{display:flex;gap:7px;flex:1}.nav button{border:1px solid var(--line);background:#FFFFFF;color:#333333;padding:8px 13px;border-radius:8px;font-size:11px}.nav button.active,.nav button:hover{background:#0083CA;border-color:#0083CA;color:#FFFFFF}.top-actions{display:flex;gap:7px;align-items:center}.top-actions button{border:1px solid var(--line);background:#FFFFFF;color:#003C64;padding:8px 10px;border-radius:8px;font-size:11px}.top-actions button.primary{background:#0083CA;border-color:#0083CA;color:#FFFFFF;font-weight:500}.save-status{font-size:10px;color:var(--muted);white-space:nowrap}
+    .toolbar{background:rgba(110,180,220,.08);border-bottom:1px solid var(--line);padding:9px 22px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:relative}
+    .toolbar input,.toolbar select{border:1px solid var(--line);background:#fff;padding:8px 10px;border-radius:8px;color:var(--text);font-size:12px}.toolbar .search{min-width:260px}.toolbar .spacer{flex:1}.btn{border:1px solid var(--line);background:#fff;color:var(--blue-dark);padding:8px 11px;border-radius:8px;font-size:11px}.btn:hover{border-color:var(--blue);color:var(--blue)}.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.danger{color:var(--red)}.btn.on{background:#e7f5fc;border-color:var(--blue);font-weight:700}
+    .main{max-width:1600px;margin:0 auto;padding:18px 22px 44px}.eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--blue);font-weight:800}.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:15px}.page-head h2{font:700 30px var(--font-title);color:var(--blue-dark);margin:3px 0}.page-head p{margin:0;color:var(--muted);font-size:13px;max-width:760px;line-height:1.55}
+    .metrics{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:10px;margin-bottom:16px}.metric{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;position:relative;overflow:hidden}.metric:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--blue)}.metric.warn:before{background:var(--amber)}.metric.risk:before{background:var(--red)}.metric.good:before{background:var(--green)}.metric span{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}.metric strong{display:block;font-size:24px;color:var(--blue-dark);margin-top:3px}.metric small{font-size:10px;color:var(--muted)}
+    .wheel-map{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 30px rgba(0,55,85,.07);overflow:hidden}.wheel-stage{max-width:1180px;margin:0 auto;padding:8px 10px 0}.wheel-stage svg{display:block;width:100%;height:auto;min-height:560px;max-height:720px}.wheel-node{cursor:pointer;transition:.18s;outline:none}.wheel-node:hover,.wheel-node:focus{filter:drop-shadow(0 5px 8px rgba(0,50,80,.25))}.wheel-node.dim{opacity:.16;filter:grayscale(.7)}.wheel-node text{pointer-events:none}.wheel-hit{fill:transparent;pointer-events:all}.wheel-line{stroke:#d9e4e9;stroke-width:1.3}.wheel-line.active{stroke:#9fc9dc;stroke-width:1.8}.wheel-label{font:500 13px var(--font-body);fill:#173345}.wheel-code{font:700 9px var(--font-body);letter-spacing:.12em;fill:#0083ca}.wheel-count{font:300 9px var(--font-body);fill:#70858f}.wheel-hub-title{font:700 23px var(--font-title);fill:#003c64}.wheel-hub-sub{font:300 11px var(--font-body);fill:#6e7f89}.wheel-hub-kpi{font:700 10px var(--font-body);fill:#0083ca}.wheel-legend{border-top:1px solid var(--line);background:#f7fafc;padding:12px 18px 14px;display:flex;justify-content:center;gap:9px 18px;flex-wrap:wrap}.legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)}.legend-item i{width:10px;height:10px;border-radius:50%;display:block}.legend-item b{color:var(--blue-dark)}.wheel-help{text-align:center;padding:0 15px 12px;color:var(--muted);font-size:10px}.wheel-help b{color:var(--blue)}
+    .process-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:0 3px 12px rgba(0,55,85,.05);transition:.18s;min-height:430px;display:flex;flex-direction:column}.process-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#b6d8e9}.pc-head{padding:16px;color:#fff;display:flex;gap:11px;align-items:flex-start}.pc-icon{font-size:24px;line-height:1}.pc-title{flex:1}.pc-title small{font-size:9px;text-transform:uppercase;letter-spacing:.13em;opacity:.85}.pc-title h3{font:700 20px var(--font-title);margin:3px 0 0;line-height:1.12}.health-dot{width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.2)}
+    .pc-body{padding:13px 15px;flex:1}.pc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}.pc-stat{background:#f5f8fa;border-radius:8px;padding:7px;text-align:center}.pc-stat b{display:block;font-size:14px;color:var(--blue-dark)}.pc-stat span{font-size:9px;color:var(--muted)}.label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:800;margin:11px 0 6px}.chips{display:flex;flex-wrap:wrap;gap:5px}.chip{font-size:9px;padding:4px 7px;border:1px solid #cbdbe3;border-radius:7px;background:#f8fbfc;color:var(--blue-dark)}.chip.output{background:#edf8f0;border-color:#bcdcc7;color:#146447}
+    .step-mini{display:flex;gap:7px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed #e2e9ed;font-size:10px}.step-mini:last-child{border-bottom:0}.step-code{min-width:34px;color:var(--blue);font-weight:800}.step-text{flex:1;line-height:1.35}.sys{color:var(--muted);font-size:9px}.crit{width:7px;height:7px;border-radius:50%;margin-top:3px;background:var(--blue-light)}.crit.Crítico{background:var(--wine)}.crit.Alto{background:var(--terra)}
+    .pc-foot{border-top:1px solid var(--line);background:#f7fafc;padding:10px 14px;display:flex;align-items:center;gap:8px}.avatar{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:var(--blue);color:#fff;font-weight:800;font-size:9px}.owner{font-size:9px;color:var(--muted)}.owner b{display:block;color:var(--text);font-size:10px}.pc-foot .open{margin-left:auto;border:0;background:transparent;color:var(--blue);font-weight:800;font-size:10px}
+    .progress{height:5px;background:#e6edf1;border-radius:8px;overflow:hidden;margin-top:10px}.progress i{display:block;height:100%;background:var(--blue);border-radius:8px}
+    .empty{background:#fff;border:1px dashed #b7c8d1;border-radius:14px;padding:36px;text-align:center;color:var(--muted)}
+    .todo-board{display:grid;grid-template-columns:repeat(4,minmax(260px,1fr));gap:12px;align-items:start}.todo-col{background:#e6edf1;border:1px solid #d3dfe5;border-radius:13px;min-height:220px;overflow:hidden}.todo-col-head{padding:11px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#e6edf1}.todo-col-head b{font-size:12px;color:var(--blue-dark)}.todo-col-head span{font-size:10px;color:var(--muted)}.todo-list{padding:8px}.todo-card{background:#fff;border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:9px;padding:10px;margin-bottom:8px;box-shadow:0 2px 7px rgba(0,45,70,.04)}.todo-card.late{border-left-color:var(--red)}.todo-card h4{font-size:12px;margin:4px 0 7px;line-height:1.4}.todo-meta{display:flex;flex-wrap:wrap;gap:5px}.pill{font-size:9px;background:#edf4f7;color:var(--muted);border-radius:10px;padding:3px 6px}.pill.late{background:#fdecee;color:var(--red)}.todo-card button{margin-top:9px;border:0;background:transparent;color:var(--blue);font-size:10px;font-weight:800;padding:0}
+    .training-grid{display:grid;grid-template-columns:repeat(3,minmax(280px,1fr));gap:12px}.training-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px}.training-top{display:flex;gap:10px;align-items:center}.training-top .avatar{width:36px;height:36px}.training-top h4{margin:0;font-size:13px}.training-top p{margin:3px 0 0;color:var(--muted);font-size:10px}.training-card .actions{display:flex;justify-content:space-between;align-items:center;margin-top:11px}.training-card button{border:0;background:transparent;color:var(--blue);font-size:10px;font-weight:800}
+    .overlay{position:fixed;inset:0;background:rgba(0,38,59,.46);z-index:60;opacity:0;pointer-events:none;transition:.18s}.overlay.show{opacity:1;pointer-events:auto}.drawer{position:absolute;right:0;top:0;height:100%;width:min(780px,96vw);background:#fff;box-shadow:-18px 0 55px rgba(0,30,50,.22);transform:translateX(100%);transition:.25s;display:flex;flex-direction:column}.overlay.show .drawer{transform:none}.overlay.process-modal{display:flex;align-items:center;justify-content:center;padding:22px}.overlay.process-modal .drawer{position:relative;right:auto;top:auto;width:min(760px,97vw);height:min(92vh,900px);border-radius:19px;overflow:hidden;box-shadow:0 24px 80px rgba(0,30,50,.34);transform:translateY(20px) scale(.98)}.overlay.process-modal.show .drawer{transform:none}.drawer-head{padding:18px 20px;color:#fff;display:flex;gap:12px;align-items:flex-start}.drawer-head .title{flex:1}.drawer-head small{font-size:9px;text-transform:uppercase;letter-spacing:.13em;opacity:.85}.drawer-head h2{font:700 25px var(--font-title);margin:3px 0}.drawer-head p{margin:6px 0 0;font-size:11px;line-height:1.4;opacity:.9}.close{border:0;background:rgba(255,255,255,.18);color:#fff;width:32px;height:32px;border-radius:8px;font-size:20px}.drawer-tabs{display:flex;border-bottom:1px solid var(--line);padding:0 16px;overflow:auto}.drawer-tabs button{border:0;background:#fff;padding:12px 13px;font-size:11px;color:var(--muted);white-space:nowrap;border-bottom:3px solid transparent}.drawer-tabs button.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:800}.drawer-content{padding:17px 20px 30px;overflow:auto;overflow-anchor:none;flex:1}.section-title{display:flex;align-items:center;justify-content:space-between;margin:15px 0 8px}.section-title h3{font:700 16px var(--font-title);color:var(--blue-dark);margin:0}.section-title small{color:var(--muted);font-size:9px}.info-box{background:#f2f8fb;border-left:4px solid var(--blue);padding:11px 12px;border-radius:8px;font-size:11px;line-height:1.55;margin-bottom:12px}.part-list{margin:0;padding-left:18px;font-size:11px;line-height:1.65;color:#365467}
+    .step-full{border:1px solid rgba(0,131,202,.26);border-radius:10px;margin-bottom:8px;overflow:hidden}.step-row{display:flex;gap:9px;align-items:center;padding:12px 11px;background:#FFFFFF;border-left:4px solid transparent}.step-row:hover{background:rgba(110,180,220,.08)}.step-row .num{width:47px;color:var(--blue);font-size:11px;font-weight:700}.step-row .main{padding:0;margin:0;flex:1}.step-row h4{margin:0;font-size:11px;line-height:1.4}.step-row p{margin:4px 0 0;color:var(--muted);font-size:9px}.step-row .row-actions{display:flex;gap:4px}.step-row .row-actions button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 6px;font-size:9px;color:var(--blue-dark)}.step-detail{background:#f7fafc;border-top:1px solid var(--line);padding:11px;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.detail-item{font-size:10px;line-height:1.45}.detail-item b{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:2px}.detail-item.full{grid-column:1/-1}
+    .checklist-banner{display:flex;align-items:center;gap:10px;margin:16px 0 8px}.checklist-banner>span{display:grid;place-items:center;width:31px;height:31px;border-radius:50%;background:#0083CA;color:#FFFFFF;font-size:18px;font-weight:700}.checklist-banner h3{margin:0;font:700 16px var(--font-title);color:#003C64}.checklist-banner small{display:block;margin-top:2px;color:var(--muted);font-size:9px}.step-row.done{background:rgba(110,180,220,.13);border-left-color:#0083CA}.step-row.done .main h4,.step-row.done .main p{text-decoration:line-through;color:var(--muted)}.step-row:not(.done) .main h4,.step-row:not(.done) .main p{text-decoration:none!important}.step-row:not(.done) .main h4{color:var(--text)!important}.quick-check{display:grid;place-items:center;flex:0 0 25px}.quick-check input{width:20px;height:20px;margin:0;accent-color:var(--blue);cursor:pointer}.quick-progress{display:flex;align-items:center;gap:10px;padding:11px 12px;margin:8px 0 13px;border:1px solid #6EB4DC;border-radius:10px;background:rgba(110,180,220,.09)}.quick-progress .progress{flex:1;height:8px;margin:0}.quick-progress b{color:var(--blue-dark);font-size:10px;white-space:nowrap}.add-step-row{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px dashed var(--blue-light)}.add-step-btn{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--blue);background:#FFFFFF;color:var(--blue);border-radius:999px;padding:7px 14px 7px 7px;font-weight:500}.add-step-btn strong{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:var(--blue);color:#FFFFFF;font-size:21px;font-weight:300;line-height:1}.add-step-btn:hover{background:rgba(110,180,220,.12)}
+    .brand h1,.page-head h2,.pc-title h3,.wheel-hub-title,.drawer-head h2,.section-title h3,.modal-head h3{font-family:var(--font-title)}.wheel-label,.wheel-code,.wheel-count,.wheel-hub-sub,.wheel-hub-kpi{font-family:var(--font-body)}
+    .wheel-label{fill:#333333}.wheel-count,.wheel-hub-sub{fill:#333333;opacity:.68}.wheel-code,.wheel-hub-kpi{fill:#0083CA}.wheel-hub-title{fill:#003C64}.part-list{color:#333333}.chip.output{background:#FFFFFF;border-color:#6EB4DC;color:#003C64}.crit.Alto{background:#7D0041}.wheel-legend,.pc-foot,.step-detail{background:rgba(110,180,220,.08)}.drawer-head{background:#0083CA!important;color:#FFFFFF}
+    .print-head{border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);color:#FFFFFF;border-radius:8px;padding:7px 10px;font-size:10px;font-weight:500;white-space:nowrap;margin-right:6px}
+    .print-head:hover,.print-head:focus-visible{background:rgba(255,255,255,.28)}
+    .edit-ui-btn{border-color:#7D0041!important;color:#7D0041!important;font-weight:500}.text-edit-note{background:rgba(110,180,220,.12);border:1px solid #6EB4DC;border-radius:9px;padding:9px 11px;color:#003C64;font-size:10px;margin-bottom:12px}
+    .check-row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;border-bottom:1px solid var(--line);padding:11px 2px}.check-row-main{display:flex;gap:10px;align-items:flex-start;flex:1;min-width:250px;cursor:pointer}.check-row input{width:18px;height:18px;margin-top:1px;accent-color:var(--blue);cursor:pointer;flex:0 0 auto}.check-row.done .check-text,.check-row.done .check-text small{text-decoration:line-through;color:var(--muted)}.check-row:not(.done) .check-text,.check-row:not(.done) .check-text small{text-decoration:none!important}.check-row:not(.done) .check-text{color:var(--text)!important}.check-text{font-size:11px;line-height:1.4;flex:1;min-width:0}.check-text small{display:block;color:var(--muted);font-size:9px;margin-top:3px}.check-actions{display:flex;gap:5px;align-items:center;margin-left:auto}.check-actions .copy-card{white-space:nowrap}.coverage-picker{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:7px;padding:9px;border:1px solid var(--line);border-radius:10px;background:rgba(110,180,220,.06)}.coverage-option{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid rgba(110,180,220,.45);border-radius:8px;background:#fff;font-size:10px;cursor:pointer}.coverage-option input{width:17px;height:17px;accent-color:var(--blue)}.coverage-summary{padding:10px 12px;border:1px solid #6EB4DC;border-radius:9px;background:rgba(110,180,220,.12);color:#003C64;font-size:10px;line-height:1.5}.coverage-badge rect{fill:#FFFFFF;stroke:#6EB4DC;stroke-width:1}.coverage-badge text{fill:#003C64;font-size:7px;font-weight:800;text-anchor:middle;dominant-baseline:middle}.card-actions{display:flex;gap:10px;align-items:center;margin-top:9px;flex-wrap:wrap}.card-actions button{margin-top:0!important}.copy-head{border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);color:#FFFFFF;border-radius:8px;padding:7px 9px;font-size:9px;font-weight:500;white-space:nowrap}.copy-card{display:inline-flex!important;align-items:center;gap:4px;border:1px solid var(--line)!important;background:#FFFFFF!important;color:#003C64!important;border-radius:7px!important;padding:5px 8px!important;font-size:9px!important;font-weight:500!important}.copy-card:hover{border-color:#0083CA!important;color:#0083CA!important}.team-list{display:flex;flex-direction:column;gap:9px}.team-member-row{display:grid;grid-template-columns:minmax(170px,1fr) 130px auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--line);border-radius:10px;background:rgba(110,180,220,.06)}.team-member-row .field{min-width:0}.team-remove{height:34px;min-width:34px}.app-footer{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:14px 22px;border-top:1px solid var(--line);background:#FFFFFF;color:var(--muted);font-size:10px}.app-footer strong{color:#003C64;font-weight:500}
+    .form-overlay{position:fixed;inset:0;background:rgba(0,35,55,.55);z-index:90;display:flex;align-items:center;justify-content:center;padding:18px}.modal{width:min(720px,96vw);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:var(--shadow)}.modal-head{padding:16px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center}.modal-head h3{font:700 20px var(--font-title);color:var(--blue-dark);margin:0;flex:1}.modal-head button{border:0;background:#eef4f7;width:31px;height:31px;border-radius:8px}.modal-body{padding:17px 19px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:8px;padding:9px 10px;color:var(--text);background:#fff;font-size:11px}.field textarea{min-height:74px;resize:vertical}.modal-actions{display:flex;justify-content:flex-end;gap:7px;padding:12px 19px 17px}
+    .notice{position:fixed;right:18px;bottom:18px;z-index:120;background:var(--blue-dark);color:#fff;padding:11px 15px;border-radius:10px;box-shadow:var(--shadow);font-size:11px;opacity:0;transform:translateY(10px);pointer-events:none;transition:.2s}.notice.show{opacity:1;transform:none}
+    .diff-modal{width:min(880px,97vw);max-height:92vh;overflow:hidden;display:flex;flex-direction:column;background:#fff;border-radius:16px;box-shadow:var(--shadow)}
+    .diff-modal .modal-head{padding:16px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+    .diff-modal .modal-head h3{font:700 20px var(--font-title);color:var(--blue-dark);margin:0;flex:1}
+    .diff-summary{padding:12px 19px;background:rgba(110,180,220,.10);border-bottom:1px solid var(--line);font-size:11px;color:var(--blue-dark);display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .diff-summary b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px;font-weight:800}
+    .diff-summary strong{display:block;font-size:16px;color:var(--blue-dark)}
+    .diff-body{overflow:auto;padding:0;flex:1}
+    .diff-group{border-bottom:1px solid var(--line)}
+    .diff-group-head{padding:11px 19px;background:#F7FAFC;display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;font-weight:500;color:var(--blue-dark);position:sticky;top:0;z-index:2}
+    .diff-group-head:hover{background:#EDF4F7}
+    .diff-group-head input[type="checkbox"]{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+    .diff-group-head .toggle-caret{margin-left:auto;font-size:10px;color:var(--muted);transition:transform .15s}
+    .diff-group.collapsed .toggle-caret{transform:rotate(-90deg)}
+    .diff-group.collapsed .diff-list{display:none}
+    .diff-list{padding:6px 19px 12px}
+    .diff-item{display:flex;gap:9px;align-items:flex-start;padding:8px 6px;border-bottom:1px dashed #E2E9ED;font-size:11px;line-height:1.5}
+    .diff-item:last-child{border-bottom:0}
+    .diff-item input[type="checkbox"]{width:15px;height:15px;margin-top:2px;accent-color:var(--blue);cursor:pointer;flex:0 0 auto}
+    .diff-item-body{flex:1;min-width:0}
+    .diff-tag{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:4px;margin-right:6px}
+    .diff-tag.new{background:#E7F5EC;color:#146447}
+    .diff-tag.mod{background:#FFF3D9;color:#7A5300}
+    .diff-tag.del{background:#FDECEE;color:#7D0041}
+    .diff-fields{margin-top:5px;padding:6px 9px;background:#F7FAFC;border-left:3px solid var(--blue-light);border-radius:4px;font-size:10px;color:var(--muted)}
+    .diff-fields div{margin:2px 0}
+    .diff-fields b{color:var(--blue-dark);font-weight:700}
+    .diff-fields .before{color:#7D0041;text-decoration:line-through}
+    .diff-fields .after{color:#146447;font-weight:500}
+    .diff-empty{padding:18px;text-align:center;color:var(--muted);font-size:11px}
+    .diff-modal .modal-actions{padding:12px 19px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;background:#FFFFFF}
+    .diff-modal .modal-actions .diff-counter{flex:1;font-size:11px;color:var(--blue-dark);font-weight:500}
+    @media print{
+      @page{size:A4 landscape;margin:10mm}
+      body{background:#FFFFFF!important;color:#333333!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .sticky-shell,.toolbar,.commandbar,.top-actions,.nav,.app-footer,.form-overlay,.notice,.add-step-row,.row-actions,.copy-head,.copy-card,.print-head,.drawer-tabs,.close,.insert-row,.add-step-btn{display:none!important}
+      .main{max-width:100%!important;padding:0!important;margin:0!important}
+      .page-head{margin-bottom:8px}
+      .page-head h2{font-size:18px!important;margin:0!important}
+      .page-head p{font-size:10px!important;margin-top:2px!important}
+      .eyebrow{font-size:8px!important}
+      .metrics{grid-template-columns:repeat(5,1fr)!important;gap:6px!important;margin-bottom:8px!important;page-break-inside:avoid}
+      .metric{padding:6px 8px!important;box-shadow:none!important}
+      .metric strong{font-size:14px!important}
+      .metric span,.metric small{font-size:8px!important}
+      .wheel-map{border:none!important;box-shadow:none!important;border-radius:0!important}
+      .wheel-stage{padding:0!important;max-width:100%!important}
+      .wheel-stage svg{max-height:none!important;min-height:auto!important;width:100%!important;height:auto!important}
+      .wheel-legend{padding:6px 12px!important;font-size:8px!important;page-break-inside:avoid}
+      .wheel-help{display:none!important}
+      body.print-mode-map .overlay,body.print-mode-map #drawer{display:none!important}
+      body.print-mode-map footer.app-footer,body.print-mode-map .toolbar,body.print-mode-map .commandbar,body.print-mode-map .sticky-shell{display:none!important}
+      body.print-mode-process #mapView,body.print-mode-process #todosView,body.print-mode-process #trainingView,body.print-mode-process .main>.page-head,body.print-mode-process .main>.metrics{display:none!important}
+      body.print-mode-process .overlay.process-modal{position:static!important;background:transparent!important;padding:0!important;pointer-events:auto!important;opacity:1!important}
+      body.print-mode-process .overlay.process-modal .drawer{position:static!important;width:100%!important;height:auto!important;max-height:none!important;box-shadow:none!important;border-radius:0!important;transform:none!important}
+      body.print-mode-process .drawer-head{background:#0083CA!important;color:#FFFFFF!important;padding:10px 14px!important;-webkit-print-color-adjust:exact}
+      body.print-mode-process .drawer-content{padding:8px 14px!important;overflow:visible!important;height:auto!important}
+      body.print-mode-process .step-full{break-inside:avoid;page-break-inside:avoid;border:1px solid #CCCCCC!important;margin-bottom:4px!important}
+      body.print-mode-process .step-row{padding:6px 8px!important}
+      body.print-mode-process .step-row h4{font-size:10px!important}
+      body.print-mode-process .step-row p{font-size:9px!important}
+      body.print-mode-process .step-detail{display:grid!important;padding:6px 8px!important}
+      body.print-mode-process .info-box{font-size:9px!important;padding:6px 8px!important;break-inside:avoid}
+      body.print-mode-process .part-list{font-size:9px!important}
+      body.print-mode-process .quick-progress{break-inside:avoid;page-break-inside:avoid}
+      body.print-mode-process .checklist-banner h3{font-size:12px!important}
+      body.print-mode-process .section-title h3{font-size:12px!important}
+      body.print-mode-process .check-row{padding:6px 4px!important;break-inside:avoid;page-break-inside:avoid}
+      body.print-mode-process .check-text{font-size:10px!important}
+      body.print-mode-process .kbd-hint{display:none!important}
+      body.print-mode-process input[type="checkbox"]{-webkit-appearance:checkbox;appearance:checkbox;width:12px!important;height:12px!important}
+    }
+    @media(max-width:1200px){.metrics{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:900px){.sticky-shell{position:relative}.commandbar{align-items:flex-start;flex-wrap:wrap}.nav{width:100%;overflow:auto}.top-actions{margin-left:auto}.todo-board{grid-template-columns:repeat(2,1fr)}.training-grid{grid-template-columns:repeat(2,1fr)}.wheel-stage svg{min-height:500px}}
+    @media(max-width:620px){.topbar{padding:11px 13px}.brand h1{font-size:17px}.header-signature{font-size:9px}.commandbar{padding:8px 12px}.top-actions .save-status,.top-actions button:not(.primary){display:none}.toolbar{padding:9px 12px}.toolbar .search{min-width:100%;width:100%}.main{padding:14px 12px}.page-head{align-items:flex-start;flex-direction:column}.metrics{grid-template-columns:repeat(2,1fr)}.todo-board,.training-grid{grid-template-columns:1fr}.process-card{min-height:auto}.form-grid,.coverage-picker{grid-template-columns:1fr}.field.full{grid-column:auto}.step-detail{grid-template-columns:1fr}.detail-item.full{grid-column:auto}.wheel-stage{overflow-x:auto;padding:0}.wheel-stage svg{width:760px;max-width:none;min-height:540px}.wheel-map{border-radius:14px}.overlay.process-modal{padding:8px}.overlay.process-modal .drawer{height:96vh}.wheel-help{text-align:left}}
+  </style>
+</head>
+<body>
+  <div class="sticky-shell">
+  <header class="topbar">
+    <div class="brand"><h1 id="headerTitle">Distribuição das Frentes</h1></div>
+    <div class="header-signature" id="headerSignature">SONOVA · DP</div>
+  </header>
+  <div class="commandbar">
+    <nav class="nav" id="mainNav">
+      <button class="active" data-view="map" id="navMap">Mapa dos processos</button>
+      <button data-view="todos" id="navTodos">Minha To Do</button>
+      <button data-view="training" id="navTraining">Academia do DP</button>
+    </nav>
+    <div class="top-actions"><span class="save-status" id="saveStatus">Salvo neste navegador</span><button id="editToggle">Modo edição</button><button class="primary" onclick="openTodoForm()">+ Nova execução</button></div>
+  </div>
+  <div class="toolbar">
+    <input class="search" id="search" placeholder="Buscar processo, atividade, sistema ou particularidade…">
+    <select id="ownerFilter"><option value="">Todos os responsáveis</option></select>
+    <select id="statusFilter"><option value="">Todos os estados</option><option>Com atraso</option><option>Em execução</option><option>Cobertura insuficiente</option><option>Toda a equipe</option><option>Sem treinamento</option></select>
+    <button class="btn" id="clearFilters">Limpar filtros</button>
+    <span class="spacer"></span>
+    <button class="btn" id="editTeamBtn" onclick="openTeamForm()">Equipe de RH</button>
+    <button class="btn hidden" id="addProcessBtn" onclick="openProcessForm()">+ Processo</button>
+    <button class="btn edit-ui-btn hidden" id="editUITextBtn" onclick="openUITextForm()">Editar textos da tela</button>
+    <button class="btn" onclick="printMap()" title="Imprimir o mapa completo dos processos">⎙ Imprimir mapa</button>
+    <button class="btn" onclick="exportState()">Exportar JSON</button>
+    <button class="btn" onclick="document.getElementById('importFile').click()" title="Importar JSON de outro membro da equipe: mostra o diff antes de aplicar">Importar diff</button>
+    <input class="hidden" type="file" id="importFile" accept=".json,.txt,application/json">
+    <button class="btn danger" onclick="resetState()">Resetar tudo</button>
+  </div>
+  </div>
+
+  <main class="main">
+    <div class="page-head"><div><div class="eyebrow" id="viewEyebrow">Gestão à vista</div><h2 id="viewTitle">Mapa operacional do Departamento Pessoal</h2><p id="viewSubtitle">Cada caixinha é um processo mestre. Clique para executar, editar, criar uma ocorrência ou iniciar uma trilha de treinamento.</p></div></div>
+    <section class="metrics" id="metrics"></section>
+    <section id="mapView" class="wheel-map"></section>
+    <section id="todosView" class="todo-board hidden"></section>
+    <section id="trainingView" class="training-grid hidden"></section>
+  </main>
+
+  <footer class="app-footer"><span id="footerLeft">DP 360 Sonova · Uso interno</span><strong id="footerSignature">Anderson Marinho | Igarapé Digital</strong></footer>
+
+  <div class="overlay" id="drawerOverlay" onclick="overlayClose(event)"><aside class="drawer" id="drawer"></aside></div>
+  <div id="formHost"></div>
+  <div class="notice" id="notice"></div>
+
+  <script>
+    const STORAGE_KEY='dp360_sonova_v1';
+    const TEAM=['Anderson','Jair','Eduarda','Ana','Sabrina','Jameson'];
+    const COLORS=['#0083CA','#003C64','#6EB4DC','#7D0041','#0083CA','#003C64'];
+    const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    const clone=o=>JSON.parse(JSON.stringify(o));
+    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const initials=n=>String(n||'—').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();
+    const today=()=>new Date().toISOString().slice(0,10);
+    function addDays(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+    function mkSteps(code,rows){return rows.map((r,i)=>({id:code+'-'+String(i+1).padStart(2,'0'),code:code+'.'+String(i+1).padStart(2,'0'),title:r[0],system:r[1]||'Procedimento',frequency:r[2]||'Por evento',sla:r[3]||'Conforme calendário',criticality:r[4]||'Importante',evidence:r[5]||'Registro da execução e validação',instruction:r[6]||('Executar '+r[0].toLowerCase()+', validar os dados aplicáveis e registrar a evidência.'),exceptions:r[7]||'Validar empresa, CNPJ, estabelecimento, CCT e regra específica aplicável.'}))}
+    function proc(code,name,icon,color,owner,backup,inputs,outputs,particularities,rows,maturity=55){return{id:'p'+code,code,name,icon,color,owner,backup,backup2:'',coverageMode:'selected',assignedMembers:[...new Set([owner,backup].filter(Boolean))],inputs,outputs,particularities,description:'Processo mestre Sonova para execução, controle, evidência e treinamento.',maturity,steps:mkSteps(code,rows)}}
+
+    const DEFAULT_PROCESSES=[
+      proc('01','Admissão e Integração','♙','#0083CA','Eduarda','Jair',['Talent','Pipefy','Carta Oferta','Documentos','CCT','ASO'],['Cadastro ativo','eSocial aceito','Contrato assinado','Benefícios solicitados','Ponto habilitado'],[
+        'Aplicar empresa, CNPJ, estabelecimento, centro de custo, cargo, jornada e CCT corretos.','Registrar opção pelo quinzenal quando aplicável.','Integrar benefícios, ponto, Sonnet, acessos e comunicação do primeiro dia.','Controlar integração obrigatória e certificação Anvisa/RDC 665.','Tratar aprendiz, estágio, PCD, home office e transferências com regras próprias.'
+      ],[
+        ['Receber Carta Oferta aceita e solicitação aprovada','Talent / Pipefy','Por admissão','D-15','Crítico','Carta Oferta e aprovação'],
+        ['Enviar boas-vindas e checklist digital','Pipefy / e-mail','Por admissão','D-12','Alto','Comprovante de envio'],
+        ['Validar empresa, CNPJ, filial e centro de custo','ADP / People BI','Por admissão','D-10','Crítico','Ficha de validação cadastral'],
+        ['Validar cargo, salário, jornada, gestor e tipo de contrato','Carta Oferta / ADP','Por admissão','D-10','Crítico','Conferência contratual'],
+        ['Identificar sindicato, CCT, piso e carta sindical','Matriz CCT','Por admissão','D-9','Crítico','CCT e validação do piso'],
+        ['Solicitar, receber e conferir documentos','Admissão Digital','Por admissão','D-8','Crítico','Checklist documental'],
+        ['Agendar e acompanhar exame admissional','Essence / SOC','Por admissão','Antes do início','Crítico','ASO apto'],
+        ['Cadastrar colaborador no ADP e estruturas aplicáveis','ADP Expert / SSA','Por admissão','D-3','Crítico','Relatório/tela de cadastro'],
+        ['Transmitir e conferir evento admissional','eSocial','Por admissão','Antes do início','Crítico','Protocolo aceito'],
+        ['Registrar opção pelo pagamento quinzenal','ADP / termo','Por admissão','D-2','Alto','Termo ou opção registrada'],
+        ['Gerar contrato, ficha e documentos admissionais','ADP / DocuSign','Por admissão','D-2','Crítico','Documentos assinados'],
+        ['Solicitar VR, VT, saúde, odonto, seguro e demais benefícios','Portais / fornecedores','Por admissão','D-2','Alto','Protocolos de inclusão'],
+        ['Cadastrar jornada, biometria e aplicativo de ponto','ADP Ponto','Por admissão','D-1','Alto','Cadastro e teste do ponto'],
+        ['Solicitar acessos, crachá e ferramentas digitais','Sonnet / TI / Portaria','Por admissão','D-1','Alto','Chamados e confirmações'],
+        ['Comunicar gestor e colaborador sobre o primeiro dia','e-mail / comunicação','Por admissão','D-1','Importante','Comunicação enviada'],
+        ['Realizar integração e certificações obrigatórias','Treinamento / Qualiteam','Por admissão','D+5','Alto','Certificados'],
+        ['Montar dossiê funcional e organizar evidências','Dossiê digital','Por admissão','D+5','Alto','Dossiê completo'],
+        ['Executar auditoria pós-admissão','Checklist DP','Por admissão','D+7','Crítico','Checklist aprovado']
+      ],82),
+      proc('02','Férias e Afastamentos','☀','#6EB4DC','Jair','Anderson',['Solicitação','Saldo','Período aquisitivo','Aprovação','CCT','Atestado'],['Férias pagas','Evento transmitido','Afastamento controlado','Retorno concluído'],[
+        'Operar as duas janelas fixas de férias e os pagamentos antecipados.','Controlar férias fracionadas, abono, cancelamentos e picos superiores a 100 casos.','Integrar afastamentos, INSS, estabilidade, retorno e exame de retorno.','Amarrar solicitação, aprovação, cálculo, pagamento e evidência.'
+      ],[
+        ['Monitorar períodos aquisitivos, concessivos e vencimentos','ADP / relatório','Mensal','Até dia 5','Crítico','Relatório de saldos'],
+        ['Receber programação ou solicitação de férias','ADP / e-mail','Por evento','Conforme janela','Alto','Solicitação registrada'],
+        ['Validar saldo, fracionamento, abono e CCT','ADP / CCT','Por evento','Antes da aprovação','Crítico','Validação de elegibilidade'],
+        ['Obter aprovação formal do gestor','ADP / e-mail','Por evento','D-35','Alto','Aprovação rastreável'],
+        ['Calcular férias da primeira janela','ADP','Mensal','Até dia 20','Crítico','Memória de cálculo'],
+        ['Calcular férias da segunda janela','ADP','Mensal','1ª semana','Crítico','Memória de cálculo'],
+        ['Conferir médias, 1/3, abono e descontos','ADP / planilha','Por cálculo','Antes do pagamento','Crítico','Checklist de cálculo'],
+        ['Gerar arquivo e efetuar pagamento','Banco / Finnet','Por evento','Prazo legal/interno','Crítico','Arquivo e comprovante'],
+        ['Enviar aviso, recibo e comunicação ao colaborador','RPA / e-mail','Por evento','Antes do início','Alto','Comprovante de envio'],
+        ['Transmitir e validar eventos aplicáveis','eSocial','Por evento','Prazo aplicável','Crítico','Protocolo aceito'],
+        ['Receber e validar atestado ou licença','Canal RH / ADP','Por evento','Até 48h','Alto','Atestado e validação'],
+        ['Controlar afastamento previdenciário e documentação','INSS / ADP','Por evento','Durante afastamento','Crítico','Protocolo/controle'],
+        ['Controlar estabilidade e data prevista de retorno','People BI / ADP','Mensal','Até dia 5','Crítico','Relatório de estabilidade'],
+        ['Agendar exame de retorno quando aplicável','Essence / SOC','Por retorno','Antes do retorno','Crítico','ASO retorno'],
+        ['Processar retorno e atualizar sistemas/benefícios','ADP / fornecedores','Por retorno','D0','Alto','Cadastros atualizados'],
+        ['Arquivar evidências e auditar o ciclo','Dossiê digital','Por evento','D+3','Importante','Dossiê completo']
+      ],64),
+      proc('03','Ponto e Jornada','◷','#003C64','Jair','Jameson',['Marcações','Escalas','Atestados','Abonos','Aprovação de HE','CCT'],['Ponto fechado','Banco atualizado','Verbas integradas','Gestores comunicados'],[
+        'Tratar matriz, lojas, laboratório e diferentes REPs/unidades.','Controlar população que registra ponto e jornadas alternativas.','Implantar Ponto Digital e Banco de Horas com treinamento de gestores.','Manter contingência por cartão de ponto e falhas de relógios.'
+      ],[
+        ['Manter cadastro de jornadas, escalas e relógios','ADP Ponto / REP','Por alteração','Antes da vigência','Crítico','Parâmetros e teste'],
+        ['Incluir admitidos e validar habilitação no primeiro dia','ADP Ponto','Por admissão','D0','Alto','Teste de marcação'],
+        ['Coletar marcações de todas as unidades','ADP Ponto','Semanal/Mensal','Conforme calendário','Crítico','Arquivo/relatório'],
+        ['Identificar ausências, atrasos e marcações ímpares','ADP Ponto','Semanal','D+1','Alto','Relatório de divergências'],
+        ['Enviar divergências para colaboradores e gestores','RPA / e-mail','Semanal','D+1','Alto','Comprovante de envio'],
+        ['Receber justificativas, atestados e aprovações','ADP / canal RH','Por evento','Até 48h','Alto','Aprovação/justificativa'],
+        ['Registrar abonos, folgas, compensações e ajustes','ADP Ponto','Por evento','Antes do fechamento','Crítico','Histórico do ajuste'],
+        ['Validar horas extras e autorização prévia','ADP / gestor','Mensal','Antes do fechamento','Crítico','Aprovação da HE'],
+        ['Apurar banco de horas por acordo e CCT','ADP Ponto / CCT','Mensal','Antes do fechamento','Crítico','Saldo do banco'],
+        ['Controlar escalas especiais, feriados e sobreaviso','ADP / CCT','Mensal','Antes da competência','Alto','Escala aprovada'],
+        ['Executar fechamento prévio do ponto','ADP Ponto','Mensal','Antes da folha','Crítico','Prévia de fechamento'],
+        ['Conferir verbas geradas para a folha','ADP / Folha','Mensal','Antes do cálculo','Crítico','Conciliação ponto x folha'],
+        ['Encerrar período e bloquear alterações','ADP Ponto','Mensal','Data de corte','Crítico','Fechamento registrado'],
+        ['Manter plano de contingência de REP e cartões','Planilha / cartões','Contínuo','Imediato','Alto','Plano testado'],
+        ['Treinar gestores e acompanhar indicadores','Academia DP / BI','Mensal','Conforme plano','Importante','Presença e indicadores']
+      ],58),
+      proc('04','Cadastros e Movimentações','✎','#003C64','Eduarda','Jair',['Solicitação','Aprovação','People BI','Estrutura','CCT','Documentos'],['Cadastro atualizado','Histórico preservado','eSocial aceito','Áreas comunicadas'],[
+        'Controlar aproximadamente 146 CNPJs e estruturas adquiridas sem fixar quantidade no código.','Manter históricos de salário, função, férias, afastamento e transferência.','Tratar mudanças de CNPJ, cargo, salário, jornada, gestor e centro de custo.','Controlar aprendizes, PCD, pensões, dados bancários, procurações e acessos.'
+      ],[
+        ['Receber solicitação formal e aprovação da movimentação','Pipefy / e-mail','Por evento','Antes da vigência','Crítico','Solicitação aprovada'],
+        ['Validar empresa, CNPJ, estabelecimento e lotação','ADP / People BI','Por evento','Antes do cadastro','Crítico','Conferência estrutural'],
+        ['Validar cargo, descrição, salário e faixa','ADP / matriz cargos','Por evento','Antes do cadastro','Crítico','Validação salarial'],
+        ['Validar sindicato, CCT, piso e data-base','Matriz CCT','Por evento','Antes da vigência','Crítico','CCT aplicada'],
+        ['Atualizar dados pessoais, bancários e dependentes','ADP','Por solicitação','SLA atendimento','Alto','Cadastro atualizado'],
+        ['Processar alteração salarial, promoção ou mérito','ADP / importação','Por ciclo/evento','Na vigência','Crítico','Histórico salarial'],
+        ['Processar alteração de cargo, função ou jornada','ADP / eSocial','Por evento','Na vigência','Crítico','Histórico e protocolo'],
+        ['Processar transferência entre CNPJs','ADP / formulário','Por evento','Antes da folha','Crítico','Transferência aprovada'],
+        ['Atualizar centro de custo, departamento e gestor','ADP / Sonnet','Por evento','Na vigência','Alto','Estrutura atualizada'],
+        ['Gerar aditivo ou documento aplicável','DocuSign / jurídico','Por evento','D+2','Alto','Aditivo assinado'],
+        ['Atualizar CTPS Digital e eventos aplicáveis','eSocial','Por evento','Prazo aplicável','Crítico','Protocolo aceito'],
+        ['Atualizar benefícios, ponto e acessos impactados','Fornecedores / ADP','Por evento','D+2','Alto','Confirmações'],
+        ['Controlar aprendizes, estagiários e PCD','People BI / fornecedor','Mensal','Até dia 5','Crítico','Relatório de cotas'],
+        ['Controlar pensões, consignados e procurações','ADP / documentos','Mensal','Antes da folha','Crítico','Controle atualizado'],
+        ['Conferir históricos e base após processamento','People BI / ADP','Por evento','D+3','Alto','Comparativo antes/depois'],
+        ['Comunicar colaborador, gestor e áreas envolvidas','e-mail / comunicação','Por evento','D+1','Importante','Comunicação enviada'],
+        ['Arquivar documentação e evidências','Dossiê digital','Por evento','D+3','Alto','Dossiê atualizado']
+      ],61),
+      proc('05','Atendimento RH e Chamados','?','#6EB4DC','Ana','Sabrina',['AskHR','E-mail','Formulário','Colaborador','Gestor'],['Resposta enviada','Chamado resolvido','Conhecimento atualizado','Causa tratada'],[
+        'Implantar canal único e reduzir uso de mensagens sem rastreabilidade.','Classificar temas de folha, benefícios, férias, cadastro, rescisão e informe de rendimentos.','Separar dúvida informativa, correção de folha e exceção.','Transformar recorrência em FAQ e plano de melhoria.'
+      ],[
+        ['Receber solicitação pelo canal oficial','AskHR / e-mail','Contínuo','Imediato','Importante','Número do chamado'],
+        ['Validar identificação, competência e dados mínimos','AskHR','Por chamado','D0','Alto','Dados completos'],
+        ['Classificar tema, urgência e impacto','AskHR','Por chamado','D0','Alto','Categoria registrada'],
+        ['Aplicar SLA conforme tipo de demanda','AskHR','Por chamado','D0','Alto','Prazo atribuído'],
+        ['Consultar histórico e base de conhecimento','FAQ / KM','Por chamado','Antes da resposta','Importante','Artigo consultado'],
+        ['Responder dúvida informativa padronizada','AskHR / FAQ','Por chamado','SLA definido','Importante','Resposta enviada'],
+        ['Encaminhar correção ao especialista responsável','AskHR','Por chamado','SLA definido','Alto','Encaminhamento'],
+        ['Escalar risco legal, financeiro ou de pagamento','AskHR / coordenação','Por chamado','Imediato','Escalonamento'],
+        ['Validar solução com o solicitante','AskHR','Por chamado','Antes de fechar','Importante','Aceite/retorno'],
+        ['Encerrar chamado com causa e solução','AskHR','Por chamado','SLA definido','Importante','Chamado concluído'],
+        ['Atualizar FAQ ou criar artigo quando recorrente','KM / FAQ','Semanal','Até sexta','Importante','Artigo publicado'],
+        ['Analisar volume, SLA, reincidência e causa-raiz','BI Atendimento','Mensal','Até dia 5','Alto','Dashboard mensal']
+      ],47),
+      proc('06','Benefícios e Fornecedores','◆','#7D0041','Sabrina','Ana',['Admissões','Movimentações','Desligados','Faturas','Bases','Notas fiscais'],['Benefícios ativos','Pedidos realizados','Faturas conciliadas','Pagamentos aprovados'],[
+        'Operar VR/VA, VT, Previdência, Univers, Seguro de Vida, Petlove, Sonova Cuida, Wellhub, Creche e premiações.','Considerar fornecedores iFood/Alelo, RB Ticket, Brasilprev, MetLife, Telus e demais contratos.','Cruzar bases por empresa/CNPJ, competência, elegibilidade e movimentação.','Integrar compra, fatura, Pipefy, SSA, rateio FTE, pagamento e conciliação.'
+      ],[
+        ['Consolidar admitidos, movimentados, afastados e desligados','ADP / People BI','Mensal','Até dia 1','Crítico','Base consolidada'],
+        ['Validar elegibilidade por benefício, empresa e CCT','Políticas / CCT','Mensal','Antes do pedido','Crítico','Matriz de elegibilidade'],
+        ['Processar inclusões e alterações admissionais','Portais fornecedores','Por admissão','Mesmo ciclo','Alto','Protocolos'],
+        ['Processar exclusões por desligamento','Portais fornecedores','Por desligamento','D0/D+1','Crítico','Protocolos de exclusão'],
+        ['Calcular VR/VA considerando jornada e eventos','iFood / Alelo','Mensal','Até dia 5','Crítico','Memória de compra'],
+        ['Calcular e comprar VT por empresa e localidade','RB Ticket / layouts','Mensal','Até dia 5','Crítico','Pedido e conferência'],
+        ['Atualizar Previdência Privada e contribuição empresa','Brasilprev / ADP','Mensal','Antes da folha','Alto','Base e verba 3812'],
+        ['Atualizar Univers Drogaria e desconto em folha','Univers / ADP','Mensal','Conforme calendário','Alto','Base conciliada'],
+        ['Atualizar Seguro de Vida','MetLife / corretora','Mensal','Até dia 30','Alto','Relação de vidas'],
+        ['Atualizar Petlove, Wellhub e Sonova Cuida','Portais / arquivos','Mensal','Até dia 30','Alto','Arquivos enviados'],
+        ['Processar auxílio-creche e demais auxílios','ADP / documentos','Mensal','Antes da folha','Crítico','Elegibilidade e documentos'],
+        ['Receber e validar faturas, boletos e notas fiscais','Fornecedor / WTW','Mensal','Até dia 12','Crítico','Checklist de faturamento'],
+        ['Cruzar fatura com base ativa e movimentações','Excel / BI','Mensal','Antes do pagamento','Crítico','Relatório de divergências'],
+        ['Abrir solicitação no Pipefy e título no SSA','Pipefy / SSA','Mensal','Até dia 12','Crítico','Protocolos financeiros'],
+        ['Executar rateio por FTE/CDC e validar contabilização','SSA / FTE','Mensal','Antes do pagamento','Crítico','Rateio aprovado'],
+        ['Acompanhar aprovações e pagamento','Pipefy / Financeiro','Mensal','No vencimento','Crítico','Comprovante'],
+        ['Conciliar base, fatura, folha e pagamento','BI / planilha','Mensal','D+3 pagamento','Crítico','Conciliação fechada'],
+        ['Atualizar indicadores, contratos e renovações','BI / Procurement','Mensal/Anual','Conforme contrato','Alto','Dashboard e controle']
+      ],53),
+      proc('07','Rescisões e Offboarding','↗','#7D0041','Eduarda','Jair',['Solicitação','Aprovação','Ponto','Comissões','CCT','Estabilidade'],['TRCT pago','eSocial aceito','Benefícios cancelados','Acessos bloqueados','Dossiê arquivado'],[
+        'Fluxo Porteiro Digital: Sonnet, termination TI, ADP, terceiros, comunicação interna e gestor.','Validar estabilidade, CCT, trintídio, aviso, justa causa e documentação.','Controlar prazo de pagamento, comissões D+2 e folha complementar.','Tratar continuidade de saúde/odonto e pagamentos pós-desligamento.'
+      ],[
+        ['Receber solicitação e aprovação de desligamento','Pipefy / gestor','Por evento','Antes do aviso','Crítico','Solicitação aprovada'],
+        ['Validar motivo, aviso, estabilidade, CCT e trintídio','CCT / jurídico','Por evento','Antes da comunicação','Crítico','Análise de risco'],
+        ['Preparar termo correto e comunicação ao colaborador','Modelo / jurídico','Por evento','D0','Crítico','Termo assinado'],
+        ['Acionar Porteiro Digital e plano de offboarding','Sonnet / fluxo interno','Por evento','D0','Crítico','Checklist iniciado'],
+        ['Fechar ponto, faltas, HE e banco de horas','ADP Ponto','Por evento','D+1','Crítico','Ponto de rescisão'],
+        ['Coletar comissões, variáveis e demais inputs','Controladoria / gestores','Por evento','D+2','Crítico','Base aprovada'],
+        ['Agendar e controlar exame demissional','Essence / SOC','Por evento','Prazo aplicável','Alto','ASO demissional'],
+        ['Calcular rescisão e verbas aplicáveis','ADP / SSA','Por evento','Prazo interno','Crítico','Memória de cálculo'],
+        ['Executar conferência independente da rescisão','Checklist / outliers','Por evento','Antes do pagamento','Crítico','Dupla conferência'],
+        ['Gerar arquivo bancário e efetuar pagamento','Finnet / Banco','Por evento','Prazo legal','Crítico','Comprovante'],
+        ['Transmitir e validar desligamento no eSocial','eSocial','Por evento','Prazo aplicável','Crítico','Protocolo aceito'],
+        ['Recolher FGTS rescisório e obrigações','FGTS Digital','Por evento','Prazo aplicável','Crítico','Guia e comprovante'],
+        ['Entregar documentos e realizar homologação','DocuSign / sindicato','Por evento','Prazo aplicável','Alto','Documentos entregues'],
+        ['Cancelar benefícios e tratar continuidade','Operadoras / WTW','Por evento','D0/D+1','Crítico','Protocolos'],
+        ['Bloquear acessos internos e terceiros','Sonnet / TI / portais','Por evento','D0','Crítico','Confirmações de bloqueio'],
+        ['Controlar devolução de equipamentos e avarias','Gestor / TI','Por evento','D+2','Alto','Termo de devolução'],
+        ['Comunicar gestor e áreas internas','e-mail / fluxo','Por evento','D0','Alto','Comunicação enviada'],
+        ['Processar complementares e arquivar dossiê','ADP / dossiê','Quando aplicável','Próximo ciclo','Crítico','Complementar e dossiê']
+      ],71),
+      proc('08','SST e Saúde Ocupacional','✚','#003C64','Jameson','Sabrina',['CNPJs','PGR','PCMSO','ASOs','Riscos','Eventos'],['Conformidade SST','Exames realizados','eSocial aceito','Planos de ação acompanhados'],[
+        'Controlar PGR/PCMSO e documentos por todos os CNPJs, inclusive adquiridas e mudanças de endereço.','Operar exames admissionais, periódicos, retorno, mudança de risco e demissionais.','Integrar Essence/SOC, eSocial SST e relatórios específicos.','Executar NR-1 psicossocial, CIPA, EPI, treinamentos e evidências.'
+      ],[
+        ['Manter inventário de CNPJs, riscos, GHEs e responsáveis','Essence / SOC','Mensal','Até dia 5','Crítico','Inventário atualizado'],
+        ['Controlar vigência e atualização de PGR','Essence / documentos','Mensal','Antes do vencimento','Crítico','PGR vigente'],
+        ['Controlar vigência e atualização de PCMSO','Essence / documentos','Mensal','Antes do vencimento','Crítico','PCMSO vigente'],
+        ['Controlar LTCAT, laudos e documentos aplicáveis','SST / jurídico','Anual/evento','Antes do vencimento','Crítico','Laudos vigentes'],
+        ['Gerir exames admissionais','Essence / clínicas','Por admissão','Antes do início','Crítico','ASO apto'],
+        ['Gerir exames periódicos','Essence / clínicas','Mensal','Conforme convocação','Crítico','ASOs realizados'],
+        ['Gerir exames de retorno e mudança de risco','Essence / clínicas','Por evento','Antes do retorno','Crítico','ASO aplicável'],
+        ['Gerir exames demissionais','Essence / clínicas','Por desligamento','Prazo aplicável','Crítico','ASO demissional'],
+        ['Controlar acidentes, CAT e investigação','eSocial / SST','Por evento','Imediato','Crítico','CAT e investigação'],
+        ['Controlar CIPA, designados e estabilidade','SST / People BI','Mensal','Até dia 5','Crítico','Atas e mandatos'],
+        ['Controlar EPI, treinamentos e certificados','SST / Qualiteam','Mensal','Conforme matriz','Alto','Fichas e certificados'],
+        ['Executar avaliação psicossocial NR-1','Essence / pesquisa','Conforme plano','Até 31/07/2026','Crítico','Diagnóstico e base'],
+        ['Integrar riscos e plano de ação ao PGR/GRO','Essence / PGR','Por ciclo','Conforme cronograma','Crítico','Plano integrado'],
+        ['Transmitir e validar eventos SST no eSocial','eSocial / SOC','Mensal/evento','Prazo aplicável','Crítico','Protocolos aceitos'],
+        ['Controlar clínicas, fornecedores e SLA','Essence / Procurement','Mensal','Até dia 12','Alto','SLA e faturas'],
+        ['Tratar mudança de endereço e novos estabelecimentos','Essence / Legal','Por evento','Até 90 dias','Crítico','Documentos atualizados'],
+        ['Acompanhar indicadores e pendências por CNPJ','BI SST','Mensal','Até dia 5','Alto','Dashboard'],
+        ['Arquivar evidências e preparar auditorias','Dossiê SST','Mensal','Até fechamento','Alto','Pasta de evidências']
+      ],46),
+      proc('09','Saúde, Odonto e Copay','♡','#7D0041','Sabrina','Ana',['Base ADP','WTW','Vidas','Dependentes','Faturas','Copay'],['Vidas atualizadas','Faturas conciliadas','Copay em folha','Pagamentos concluídos'],[
+        'Operar SulAmérica Saúde/Odonto, WTW, dependentes, vigências e continuidade.','Cruzar base das operadoras com ADP e tratar abreviações/datas divergentes.','Separar custo por vida, coparticipação e rateio por CDC/FTE.','Controlar elegibilidade de dependentes e extensões documentadas.'
+      ],[
+        ['Consolidar admissões, desligamentos e dependentes','ADP / People BI','Mensal','Até dia 1','Crítico','Base de movimentação'],
+        ['Enviar movimentação para WTW/operadora','WTW / operadora','Mensal/evento','Conforme corte','Crítico','Protocolo de envio'],
+        ['Conferir inclusões, exclusões e vigências','Base operadora x ADP','Mensal','D+3 envio','Crítico','Relatório de divergências'],
+        ['Validar elegibilidade e idade de dependentes','ADP / documentos','Mensal','Antes da fatura','Alto','Documentos e controle'],
+        ['Tratar nascimento, adoção e alteração familiar','WTW / ADP','Por evento','SLA benefício','Alto','Inclusão confirmada'],
+        ['Tratar continuidade após desligamento ou aposentadoria','WTW / jurídico','Por evento','Antes da exclusão','Crítico','Opção e comunicação'],
+        ['Receber e conferir fatura médica','WTW / operadora','Mensal','Até dia 10','Crítico','Checklist de fatura'],
+        ['Receber e conferir fatura odontológica','Operadora','Mensal','Até dia 10','Crítico','Checklist de fatura'],
+        ['Validar custo por titular, dependente e CNPJ','BI / planilha','Mensal','Antes do pagamento','Crítico','Conciliação nominal'],
+        ['Receber e tratar base de coparticipação','WTW / operadora','Mensal','Antes da folha','Crítico','Base validada'],
+        ['Impedir desconto indevido de desligado/afastado','ADP / People BI','Mensal','Antes da carga','Crítico','Relatório de exceções'],
+        ['Importar copay e conferir descontos em folha','ADP / chamado','Mensal','Antes do cálculo','Crítico','Log e conferência'],
+        ['Ratear custos por CDC/FTE e empresa','SSA / FTE','Mensal','Antes do pagamento','Crítico','Rateio aprovado'],
+        ['Abrir pagamento e acompanhar aprovações','Pipefy / SSA','Mensal','No vencimento','Crítico','Protocolos e comprovante'],
+        ['Conciliar fatura, copay, folha e pagamento','BI / planilha','Mensal','D+3','Crítico','Conciliação fechada'],
+        ['Atualizar indicadores e tratar divergências recorrentes','BI Saúde','Mensal','Até dia 5','Alto','Dashboard']
+      ],49),
+      proc('10','Remuneração, PLR e Variáveis','◇','#7D0041','Anderson','',['Políticas','Metas','Bases aprovadas','Salário','Elegibilidade','Resultados'],['Base validada','Pagamento em folha','Cartas emitidas','Reconciliação concluída'],[
+        'Tratar comissões, DSR, bônus, PLR, VCC, SPIFF, garantias e premiações.','Distinguir comissão de uma ou mais fonoaudiólogas por loja e regras GAS.','Controlar pagamentos de desligados, proporcionais e complementares.','Preservar confidencialidade, aprovação e rastreabilidade dos cálculos.'
+      ],[
+        ['Manter políticas, faixas e regras de remuneração','Políticas / Total Cash','Anual/evento','Antes do ciclo','Crítico','Política aprovada'],
+        ['Receber bases de metas e resultados','Controladoria / gestores','Mensal/anual','Conforme calendário','Crítico','Base aprovada'],
+        ['Validar layout, CPF, matrícula e competência','Excel / People BI','Por base','Antes do cálculo','Crítico','Relatório de consistência'],
+        ['Validar elegibilidade de ativos, afastados e desligados','ADP / regras','Por ciclo','Antes do cálculo','Crítico','Base de elegibilidade'],
+        ['Calcular comissões e percentuais aplicáveis','Planilha / sistema','Mensal','Até dia 20','Crítico','Memória de cálculo'],
+        ['Calcular DSR sobre comissões','Planilha / ADP','Mensal','Antes da carga','Crítico','Memória de DSR'],
+        ['Calcular PLR conforme acordo e proporcionalidade','Planilha / acordo','Anual','Conforme cronograma','Crítico','Memória e acordo'],
+        ['Calcular VCC por business e individual','Planilha / global','Anual/evento','Conforme cronograma','Crítico','Memória aprovada'],
+        ['Calcular bônus, SPIFF, prêmio e garantia','Planilha / política','Por evento','Antes da folha','Crítico','Aprovação e memória'],
+        ['Validar reflexos, incidências e natureza da verba','ADP / jurídico','Por base','Antes da carga','Crítico','Validação da rubrica'],
+        ['Obter aprovações internas e globais','Workflow / e-mail','Por base','Antes do pagamento','Crítico','Aprovações'],
+        ['Gerar cartas, termos e assinaturas','DocuSign / modelos','Por ciclo','Antes do pagamento','Alto','Documentos assinados'],
+        ['Importar ou lançar valores no ADP','ADP','Por ciclo','Antes do cálculo','Crítico','Log da carga'],
+        ['Conferir valores na prévia e outliers','ADP / auditoria','Por ciclo','Antes de fechar','Crítico','Relatório de conferência'],
+        ['Processar desligados e pagamentos complementares','ADP / complementar','Por evento','Próximo ciclo/D+2','Crítico','Folha complementar'],
+        ['Reconciliar base aprovada, folha e pagamento','BI / planilha','Por ciclo','D+3','Crítico','Conciliação'],
+        ['Atualizar indicadores e arquivar evidências','BI / dossiê','Por ciclo','Após pagamento','Alto','Dashboard e arquivo']
+      ],57),
+      proc('11','Projetos, Auditoria e Melhoria','⚙','#003C64','Anderson','Ana',['Business case','Escopo','Riscos','Cronograma','Recursos','Evidências'],['Projeto entregue','Aceite formal','Processo atualizado','Time treinado'],[
+        'Abranger implantação ADP, Ponto Digital, Admissão Digital, incorporações e automações.','Controlar Auditoria 2024/2026, RDC 665, políticas, descrições de cargo e NR-1.','Aplicar projeto padrão de adquiridas com folha paralela, cutover e estabilização.','Garantir dono, backup, contingência, aceite e transferência para operação.'
+      ],[
+        ['Registrar demanda, problema ou oportunidade','Portfólio / backlog','Por demanda','D0','Importante','Demanda registrada'],
+        ['Definir objetivo, escopo, entregáveis e exclusões','Termo de abertura','Por projeto','D+5','Alto','Escopo aprovado'],
+        ['Mapear stakeholders, RACI e responsáveis','RACI','Por projeto','D+5','Alto','RACI aprovado'],
+        ['Levantar AS IS, riscos e requisitos','Workshops / documentos','Por projeto','Fase diagnóstico','Crítico','Diagnóstico'],
+        ['Desenhar TO BE, controles e evidências','SOP / desenho','Por projeto','Fase desenho','Crítico','TO BE validado'],
+        ['Planejar cronograma, marcos e dependências','Plano de projeto','Por projeto','Fase planejamento','Alto','Cronograma'],
+        ['Parametrizar, desenvolver ou configurar solução','ADP / RPA / fornecedor','Por projeto','Conforme cronograma','Alto','Configuração'],
+        ['Preparar bases, de-para e critérios de aceite','Planilhas / layouts','Por projeto','Antes do teste','Crítico','Base homologada'],
+        ['Executar testes unitários, integrados e UAT','Roteiro de testes','Por projeto','Antes do go-live','Crítico','Evidências de teste'],
+        ['Executar folha paralela quando aplicável','ADP / sistema legado','Por implantação','1-2 ciclos','Crítico','Comparativo'],
+        ['Planejar cutover e contingência','Plano de cutover','Por implantação','Antes do go-live','Crítico','Plano aprovado'],
+        ['Treinar equipe, gestores e usuários','Academia / comunicação','Por projeto','Antes do go-live','Alto','Presença/certificação'],
+        ['Executar go-live e acompanhar estabilização','Hypercare / painel','Por projeto','60-90 dias','Crítico','Painel de erros'],
+        ['Obter aceite formal e encerrar projeto','Termo de encerramento','Por projeto','Após estabilização','Alto','Aceite formal'],
+        ['Atualizar processo mestre, indicadores e lições','DP 360 / BI','Por projeto','D+5 encerramento','Alto','Processo revisado']
+      ],44),
+      proc('12','Folha, Encargos e eSocial','▤','#0083CA','Jair','Anderson',['Calendário','Inputs','Ponto','Benefícios','Variáveis','Cadastros'],['Salários pagos','Encargos recolhidos','eSocial fechado','Contábil enviado','Evidências arquivadas'],[
+        'Operar mensal, quinzenal, férias, rescisões, complementares, PLR e 13º.','Aplicar prazo fatal interno, aprovações SSA/Pipefy, BankManager/Finnet e segregação.','Conferir outliers, líquido final, FTE, folhas por área, contabilização e provisões.','Controlar INSS, FGTS Digital, IRRF, DCTFWeb, eSocial e parâmetros por CNPJ.'
+      ],[
+        ['Publicar calendário, cortes e responsáveis da competência','Calendário DP','Mensal','Antes do dia 1','Crítico','Calendário aprovado'],
+        ['Abrir competência e validar parâmetros por empresa','ADP / SSA','Mensal','Dia 1','Crítico','Checklist de abertura'],
+        ['Receber inputs em canal único e controlar versões','Pipefy / pasta','Mensal','Conforme corte','Crítico','Protocolo e base final'],
+        ['Validar admissões, desligamentos e movimentações','ADP / People BI','Mensal','Antes do cálculo','Crítico','Relatório de eventos'],
+        ['Processar quinzenal somente para optantes','ADP','Mensal','Pagamento dia 15','Crítico','Base de optantes'],
+        ['Integrar férias, afastamentos e retornos','ADP / eSocial','Mensal','Antes do cálculo','Crítico','Relatório integrado'],
+        ['Integrar ponto, HE, faltas e banco de horas','ADP Ponto','Mensal','Antes do cálculo','Crítico','Conciliação ponto'],
+        ['Importar benefícios, copay e descontos autorizados','ADP / layouts','Mensal','Conforme calendário','Crítico','Logs das cargas'],
+        ['Importar comissões, PLR, VCC, bônus e garantias','ADP / planilhas','Mensal/evento','Até dia 21','Crítico','Base aprovada e log'],
+        ['Processar consignado, pensão e lançamentos diversos','ADP','Mensal','Antes do cálculo','Crítico','Conferência de descontos'],
+        ['Executar cálculo preliminar da folha','ADP / SSA','Mensal','Conforme calendário','Crítico','Prévia gerada'],
+        ['Conferir outliers, rubricas e variações mensais','Auditoria / recibo','Mensal','Antes da aprovação','Crítico','Relatório de outliers'],
+        ['Validar líquido final e separar folhas por área','ADP / Excel','Mensal','Antes do banco','Crítico','Relatório aprovado'],
+        ['Calcular FTE e composição de custos','People BI / Contábil','Mensal','Antes do contábil','Alto','FTE validado'],
+        ['Obter aprovações SSA, Pipefy e Diretoria','SSA / Pipefy','Mensal','Prazo fatal','Crítico','Aprovações registradas'],
+        ['Gerar arquivos bancários por tipo de pagamento','ADP / CNAB','Mensal/evento','Antes do pagamento','Crítico','Arquivo e totalizadores'],
+        ['Subir arquivos no BankManager/Finnet e validar retorno','BankManager / Finnet','Mensal/evento','Antes do pagamento','Crítico','Protocolo bancário'],
+        ['Efetuar pagamento e disponibilizar holerites','Banco / ADP','Mensal','Último dia útil','Crítico','Comprovante e holerites'],
+        ['Fechar eSocial e validar totalizadores','eSocial','Mensal','Prazo legal/interno','Crítico','Fechamento aceito'],
+        ['Conferir e recolher INSS/DCTFWeb','DCTFWeb','Mensal','Prazo legal','Crítico','DARF e comprovante'],
+        ['Conferir e recolher FGTS Digital','FGTS Digital','Mensal/rescisório','Prazo legal','Crítico','Guia e comprovante'],
+        ['Conferir IRRF e bases tributáveis','ADP / eSocial','Mensal','Prazo legal','Crítico','DARF e conferência'],
+        ['Gerar contabilização, provisões e relatórios gerenciais','SSA / Contábil','Mensal','Após fechamento','Crítico','Interface e aceite'],
+        ['Arquivar evidências e atualizar indicadores','Dossiê / BI','Mensal','D+3 fechamento','Alto','Pasta e dashboard']
+      ],68),
+      proc('13','Lançamento de Fornecedores','¤','#003C64','Ana','Anderson',['Nota Fiscal','Boleto','Contrato','Matriz de fornecedores','Rateio','Aprovação'],['NF lançada','SSA registrado','Pipefy aprovado','Rateio validado','Pagamento liberado','Dossiê arquivado'],[
+        'Operar aproximadamente 45 fornecedores recorrentes por vencimento: dia 01 (Wellhub, Sul América Odonto/AM Médico, Sonova Cuida, Aprendiz, Frutas Copa, CIA Estágio, Sindicatos, Univers, MetLife), dia 05 (WTW, CENESP Estacionamento), dia 10 (ADP BPO, SUATV, Bolo Aniversário), dia 15 (Essence, Repponto, Veloe, ALELO, iFood VR, RB VT, Brasilprev, FGTS/INSS/IRRF, PRAN), dia 20 (SOULAN, Petlove) e Demanda (R&S, Advocacia, Alphacard, Eventos, Folha, Pensão).',
+        'Compromisso operacional: lançar NF em até 24 horas do recebimento, sem exceção.',
+        'Aplicar corretamente o critério de rateio: FTE DA NF, GERAL FTE, MATRIZ FTE, FTE DO PROCESSO ou Demanda.',
+        'Monitorar CENESP Estacionamento (22 vagas contratadas) e Benefício Tempo de Casa (marcos por milestone) como demandas contínuas de benefícios.',
+        'Integrar fluxo NF → SSA → Pipefy → aprovação → conciliação → pagamento com evidência em cada etapa.',
+        'Tratar fornecedores diretos (débito automático) e fornecedores por boleto/NF com controles distintos.'
+      ],[
+        ['Manter matriz de fornecedores por vencimento, alias e rateio','Planilha Fornecedores / SSA','Mensal','Até dia 25 do mês anterior','Crítico','Matriz atualizada e revisada'],
+        ['Receber NF, boleto ou fatura pelo canal oficial','E-mail / Portal fornecedor','Contínuo','Imediato ao recebimento','Crítico','Documento arquivado e etiquetado'],
+        ['Validar CNPJ, competência, valor, natureza e vencimento','SSA / matriz','Por documento','Antes do lançamento','Crítico','Validação registrada em planilha'],
+        ['Classificar critério de rateio (FTE NF, GERAL, MATRIZ, PROCESSO, Demanda)','SSA / matriz','Por documento','Antes do lançamento','Crítico','Rateio identificado e aprovado'],
+        ['Lançar NF ou boleto no SSA em até 24h do recebimento','SSA','Por documento','Máximo 24h','Crítico','Nº do lançamento SSA'],
+        ['Executar rateio no SSA por FTE/CDC e validar contabilização','SSA / FTE','Por lançamento','Antes do envio ao Pipefy','Crítico','Rateio aprovado e conciliado'],
+        ['Importar solicitação para o Pipefy com dados do SSA','Pipefy','Por lançamento','Mesmo dia do rateio','Crítico','Protocolo Pipefy gerado'],
+        ['Garantir aprovação na alçada correta conforme valor e natureza','Pipefy / matriz alçadas','Por lançamento','SLA da alçada','Crítico','Aprovação registrada'],
+        ['Monitorar SLA de aprovação e escalar em caso de atraso','Pipefy / Coordenação','Diário','Até vencimento','Alto','Escalonamento documentado'],
+        ['Monitorar envio da NF/boleto pelo fornecedor no prazo','E-mail / Portal / cobrança ativa','Semanal','Antes do vencimento','Alto','Comunicação com fornecedor'],
+        ['Lançar fornecedores com vencimento dia 01 do mês','SSA / Pipefy','Mensal','Até dia 01','Crítico','Todos lançados e aprovados'],
+        ['Lançar fornecedores com vencimento dia 05 do mês','SSA / Pipefy','Mensal','Até dia 05','Crítico','Todos lançados e aprovados'],
+        ['Lançar fornecedores com vencimento dia 10 do mês','SSA / Pipefy','Mensal','Até dia 10','Crítico','Todos lançados e aprovados'],
+        ['Lançar fornecedores com vencimento dia 15 do mês','SSA / Pipefy','Mensal','Até dia 15','Crítico','Todos lançados e aprovados'],
+        ['Lançar fornecedores com vencimento dia 20 do mês','SSA / Pipefy','Mensal','Até dia 20','Crítico','Todos lançados e aprovados'],
+        ['Tratar demandas sob solicitação (R&S, Advocacia, Alphacard, Eventos, Pensão)','SSA / Pipefy','Por demanda','SLA acordado','Alto','Demanda protocolada e aprovada'],
+        ['Monitorar Benefício Vagas de Estacionamento CENESP (22 vagas)','CENESP / Planilha ocupação','Mensal','Até dia 05','Alto','Espelho de ocupação vs contrato'],
+        ['Monitorar Benefício Tempo de Casa por milestones (1/3/5/10/15/20 anos)','People BI / RH Mensal','Mensal','Até dia 05','Alto','Lista de milestones e entregas registradas'],
+        ['Conciliar boletos, NFs e pagamentos com fatura consolidada','SSA / Financeiro','Mensal','Até dia 25','Crítico','Conciliação fechada e assinada'],
+        ['Arquivar dossiê digital do fornecedor e evidências','Dossiê digital','Por lançamento','D+3 do pagamento','Alto','Dossiê completo com NF, aprovação e comprovante'],
+        ['Atualizar indicadores de SLA, atraso, rejeição e volume','BI / Dashboard fornecedores','Mensal','Até dia 05','Alto','Dashboard mensal publicado']
+      ],52)
+    ];
+
+    const UI_DEFAULTS={
+      headerTitle:'Distribuição das Frentes',headerSignature:'SONOVA · DP',
+      navMap:'Mapa dos processos',navTodos:'Minha To Do',navTraining:'Academia do DP',
+      mapEyebrow:'Gestão à vista',mapTitle:'Mapa de Processos do Departamento Pessoal',mapSubtitle:'Clique em uma frente da roda para abrir o card, executar atividades e acessar o treinamento.',
+      todosEyebrow:'Operação',todosTitle:'To Do do Departamento Pessoal',todosSubtitle:'Acompanhe cada ocorrência, responsável, prazo e checklist operacional.',
+      trainingEyebrow:'Desenvolvimento do time',trainingTitle:'Academia do DP',trainingSubtitle:'Acompanhe quem conhece, pratica, executa com supervisão e está habilitado em cada processo.',
+      wheelHubTitle:'Departamento Pessoal',wheelHubSubtitle:'Mapa de Processos',wheelHelpLead:'Clique em uma frente da roda',wheelHelpBody:'para abrir o card completo. Depois, clique em uma atividade numerada para executar ou aprender.',
+      footerLeft:'DP 360 Sonova · Uso interno',footerSignature:'Anderson Marinho | Igarapé Digital'
+    };
+    const DEFAULT_MEMBER_COLORS={Anderson:'#003C64',Jair:'#0083CA',Eduarda:'#7D0041',Ana:'#6EB4DC',Sabrina:'#7D0041',Jameson:'#003C64'};
+    const DEFAULT_STATE={version:'dp360-sonova-5',updatedAt:new Date().toISOString(),processes:DEFAULT_PROCESSES,todos:[
+      {id:'td-folha-0726',processId:'p12',title:'Folha 07/2026 — Brasil',context:'Cluster Sonova · competência 07/2026',company:'Todas as empresas',cnpj:'Consolidado',competence:'07/2026',assignee:'Jair',dueDate:'2026-07-22',status:'Em andamento',completedSteps:['12-01','12-02','12-03','12-04','12-05','12-06','12-07','12-08','12-09','12-10','12-11'],notes:'Prazo fatal interno para garantir aprovações e pagamento.',createdAt:'2026-07-01'},
+      {id:'td-nr1',processId:'p08',title:'NR-1 — pesquisa psicossocial e plano',context:'Essence · comunicação e coleta Brasil',company:'Sonova Brasil',cnpj:'Todos aplicáveis',competence:'07/2026',assignee:'Jameson',dueDate:'2026-07-31',status:'Em andamento',completedSteps:['08-01','08-12'],notes:'Acompanhar liberação de e-mails, pesquisa e integração ao PGR.',createdAt:'2026-07-01'},
+      {id:'td-ponto',processId:'p11',title:'Implantação ADP Ponto e Banco de Horas',context:'Preparação, parametrização, piloto e treinamento',company:'Sonova Brasil',cnpj:'Escopo do projeto',competence:'09/2026',assignee:'Anderson',dueDate:'2026-09-01',status:'Em andamento',completedSteps:['11-01','11-02','11-03','11-04'],notes:'Condução Sonova com apoio do time.',createdAt:'2026-06-24'}
+    ],trainings:[
+      {id:'tr-adm-edu',processId:'p01',member:'Eduarda',tutor:'Anderson',status:'Prática acompanhada',completedLessons:['01-01','01-02','01-03','01-04','01-05','01-06','01-07','01-08','01-09'],notes:'Evoluir para auditoria pós-admissão.'},
+      {id:'tr-folha-jair',processId:'p12',member:'Jair',tutor:'Anderson',status:'Habilitado',completedLessons:DEFAULT_PROCESSES.find(p=>p.id==='p12').steps.map(s=>s.id),notes:'Responsável principal com backup da coordenação.'}
+    ],team:TEAM,memberColors:{...DEFAULT_MEMBER_COLORS},quickChecks:{},uiText:{...UI_DEFAULTS}};
+
+    let memoryState=null;
+    let state=loadState(),currentView='map',editMode=false,currentProcessId=null,currentTab='flow',expandedStep=null,currentTodoId=null,currentTrainingId=null;
+    function ensureProcessChecklists(x){
+      x.todos=Array.isArray(x.todos)?x.todos:[];
+      if(Number(x.checklistCoverageVersion||0)>=1)return x;
+      const covered=new Set(x.todos.map(t=>t.processId).filter(Boolean));
+      (x.processes||[]).forEach(p=>{
+        if(covered.has(p.id))return;
+        x.todos.push({
+          id:'td-checklist-'+p.id,
+          processId:p.id,
+          title:'Checklist operacional — '+p.name,
+          context:'Checklist-base do processo '+p.code,
+          company:'Sonova Brasil',
+          cnpj:'',
+          competence:'',
+          assignee:p.owner||'',
+          dueDate:'',
+          status:'Não iniciado',
+          completedSteps:[],
+          notes:'Checklist criado para facilitar a execução completa deste processo.',
+          createdAt:today(),
+          checklistBase:true
+        });
+        covered.add(p.id);
+      });
+      x.checklistCoverageVersion=1;
+      return x;
+    }
+    function normalizeBrandColors(x){
+      const allowed=['#0083CA','#003C64','#6EB4DC','#7D0041'],legacy={'#005A64':'#003C64','#8C321E':'#7D0041'};
+      (x.processes||[]).forEach((p,i)=>{
+        const c=String(p.color||'').toUpperCase();
+        p.color=legacy[c]||(allowed.includes(c)?c:allowed[i%allowed.length]);
+        p.backup=String(p.backup||'');
+        p.backup2=String(p.backup2||'');
+        p.coverageMode=p.coverageMode==='all'?'all':'selected';
+        const legacyMembers=[p.owner,p.backup,p.backup2].filter(Boolean);
+        p.assignedMembers=[...new Set((Array.isArray(p.assignedMembers)?p.assignedMembers:legacyMembers).filter(Boolean))];
+        if(p.owner&&!p.assignedMembers.includes(p.owner))p.assignedMembers.unshift(p.owner);
+      });
+      x.version='dp360-sonova-5';
+      x.team=Array.isArray(x.team)?x.team.filter(Boolean):[...TEAM];
+      x.memberColors={...DEFAULT_MEMBER_COLORS,...(x.memberColors||{})};
+      x.quickChecks=x.quickChecks||{};
+      x.uiText={...UI_DEFAULTS,...(x.uiText||{})};
+      return ensureProcessChecklists(x);
+    }
+    function readSavedState(){try{const storage=window.localStorage;return storage?storage.getItem(STORAGE_KEY)||memoryState:memoryState}catch(e){return memoryState}}
+    function writeSavedState(value){memoryState=value;try{const storage=window.localStorage;if(!storage)return false;storage.setItem(STORAGE_KEY,value);return true}catch(e){return false}}
+    function clearSavedState(){memoryState=null;try{const storage=window.localStorage;if(storage)storage.removeItem(STORAGE_KEY)}catch(e){}}
+    function loadState(){try{const raw=readSavedState(),x=raw?JSON.parse(raw):null;if(x&&x.processes)return normalizeBrandColors(x)}catch(e){}return normalizeBrandColors(clone(DEFAULT_STATE))}
+    function saveState(msg='Salvo'){state=normalizeBrandColors(state);state.quickChecks=state.quickChecks||{};state.updatedAt=new Date().toISOString();const persisted=writeSavedState(JSON.stringify(state)),el=document.getElementById('saveStatus');el.textContent=msg+(persisted?'':' · sessão atual')+' · '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});renderAll()}
+    function notify(msg){const n=document.getElementById('notice');n.textContent=msg;n.classList.add('show');clearTimeout(window.__nt);window.__nt=setTimeout(()=>n.classList.remove('show'),2200)}
+    function txt(key){return state.uiText?.[key]??UI_DEFAULTS[key]??''}
+    function processById(id){return state.processes.find(p=>p.id===id)}
+    function coverageMembers(p){if(!p)return[];const selected=p.coverageMode==='all'?[...(state.team||[])]:[...(p.assignedMembers||[])];return[...new Set([p.owner,...selected].filter(Boolean))]}
+    function coverageTeamCount(p){const roster=new Set(state.team||[]);return coverageMembers(p).filter(name=>roster.has(name)).length}
+    function coverageIsAll(p){const roster=[...new Set((state.team||[]).filter(Boolean))];return roster.length>0&&roster.every(name=>coverageMembers(p).includes(name))}
+    function todoProgress(t){const p=processById(t.processId);return p&&p.steps.length?Math.round((t.completedSteps||[]).filter(id=>p.steps.some(s=>s.id===id)).length/p.steps.length*100):0}
+    function trainingProgress(t){const p=processById(t.processId);return p&&p.steps.length?Math.round((t.completedLessons||[]).filter(id=>p.steps.some(s=>s.id===id)).length/p.steps.length*100):0}
+    function quickCompleted(p){state.quickChecks=state.quickChecks||{};return(state.quickChecks[p.id]||[]).filter(id=>p.steps.some(s=>s.id===id))}
+    function quickProgress(p){return p.steps.length?Math.round(quickCompleted(p).length/p.steps.length*100):0}
+    function checkboxValue(value){return typeof value==='boolean'?value:Boolean(value?.checked)}
+    function toggleQuickStep(pid,sid,value){const on=checkboxValue(value);if(value?.closest)value.closest('.step-row')?.classList.toggle('done',on);state.quickChecks=state.quickChecks||{};const list=state.quickChecks[pid]||[];state.quickChecks[pid]=on?[...new Set([...list,sid])]:list.filter(id=>id!==sid);saveState(on?'Atividade concluída':'Atividade reaberta');renderDrawerKeepingPosition(sid)}
+    function isLate(t){return t.dueDate&&t.dueDate<today()&&t.status!=='Concluído'}
+    function processStats(p){const ts=state.todos.filter(t=>t.processId===p.id),open=ts.filter(t=>t.status!=='Concluído'),late=open.filter(isLate),tr=state.trainings.filter(x=>x.processId===p.id),enabled=tr.filter(x=>x.status==='Habilitado'||trainingProgress(x)===100);return{open:open.length,late:late.length,training:enabled.length,totalTraining:tr.length}}
+    function owners(){return [...new Set([...state.team,...state.processes.flatMap(p=>coverageMembers(p)),...state.todos.map(t=>t.assignee)].filter(Boolean))].sort()}
+    function renderFilters(){const f=document.getElementById('ownerFilter'),v=f.value;f.innerHTML='<option value="">Todos os responsáveis</option>'+owners().map(x=>'<option '+(x===v?'selected':'')+'>'+esc(x)+'</option>').join('')}
+    function filteredProcesses(){const q=document.getElementById('search').value.toLowerCase(),owner=document.getElementById('ownerFilter').value,status=document.getElementById('statusFilter').value;return state.processes.filter(p=>{const st=processStats(p),members=coverageMembers(p),hay=[p.code,p.name,...members,p.description,...p.inputs,...p.outputs,...p.particularities,...p.steps.flatMap(s=>[s.title,s.system,s.evidence,s.instruction,s.exceptions])].join(' ').toLowerCase();return(!q||hay.includes(q))&&(!owner||members.includes(owner))&&(!status||(status==='Com atraso'&&st.late)||(status==='Em execução'&&st.open)||(status==='Cobertura insuficiente'&&coverageTeamCount(p)<2)||(status==='Toda a equipe'&&coverageIsAll(p))||(status==='Sem treinamento'&&!st.training))}).sort((a,b)=>a.code.localeCompare(b.code,'pt-BR',{numeric:true}))}
+    function renderMetrics(){const allSteps=state.processes.reduce((n,p)=>n+p.steps.length,0),open=state.todos.filter(t=>t.status!=='Concluído'),late=open.filter(isLate),coverage=state.processes.filter(p=>processStats(p).training>0).length,protectedProcesses=state.processes.filter(p=>coverageTeamCount(p)>=2).length,collective=state.processes.filter(coverageIsAll).length;document.getElementById('metrics').innerHTML=`
+      <div class="metric"><span>Processos mestres</span><strong>${state.processes.length}</strong><small>todos editáveis</small></div>
+      <div class="metric"><span>Atividades mapeadas</span><strong>${allSteps}</strong><small>checklists operacionais</small></div>
+      <div class="metric ${open.length?'warn':'good'}"><span>Execuções abertas</span><strong>${open.length}</strong><small>${state.todos.length} ocorrências no total</small></div>
+      <div class="metric ${late.length?'risk':'good'}"><span>Em atraso</span><strong>${late.length}</strong><small>exigem tratamento</small></div>
+      <div class="metric ${protectedProcesses<state.processes.length?'warn':'good'}"><span>Proteção dos processos</span><strong>${protectedProcesses}/${state.processes.length}</strong><small>${collective} com toda a equipe · ${coverage} com treinamento</small></div>`}
+    function personColor(name){return state.memberColors?.[name]||DEFAULT_MEMBER_COLORS[name]||'#6EB4DC'}
+    function polar(cx,cy,r,deg){const a=(deg-90)*Math.PI/180;return{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)}}
+    function coverageNode(x,y,r,p){
+      x=Number(x);y=Number(y);
+      const members=coverageMembers(p),roster=[...new Set((state.team||[]).filter(Boolean))],count=members.filter(name=>roster.includes(name)).length,total=roster.length;
+      const ratio=total?Math.min(1,count/total):0,ringR=r+6,circ=2*Math.PI*ringR,active=(circ*ratio).toFixed(2),remaining=(circ-circ*ratio).toFixed(2);
+      const mode=p.coverageMode==='all'?'Toda a equipe':'Pessoas selecionadas';
+      const assigned=`Responsável: ${p.owner||'não definido'} · Cobertura ${count}/${total} (${mode}): ${members.join(', ')||'nenhuma pessoa'}`;
+      const main=p.owner?`<circle cx="${x}" cy="${y}" r="${r}" fill="${personColor(p.owner)}" stroke="#fff" stroke-width="3"/>`:`<circle cx="${x}" cy="${y}" r="${r}" fill="#ecebe5" stroke="#aeb5b8" stroke-width="2" stroke-dasharray="4 3"/>`;
+      const ringColor=ratio===1?'#2E7D32':count>=2?'#0083CA':'#7D0041';
+      return`<g class="assigned-node" aria-label="${esc(assigned)}"><title>${esc(assigned)}</title><circle cx="${x}" cy="${y}" r="${ringR}" fill="none" stroke="#DCE8EE" stroke-width="4"/>${ratio?`<circle cx="${x}" cy="${y}" r="${ringR}" fill="none" stroke="${ringColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${active} ${remaining}" transform="rotate(-90 ${x} ${y})"/>`:''}${main}<g class="coverage-badge"><rect x="${x+8}" y="${y+10}" width="30" height="14" rx="7"/><text x="${x+23}" y="${y+17}">${count}/${total}</text></g></g>`;
+    }
+    function labelLines(name){const words=String(name).split(/\s+/),lines=[''];for(const w of words){const last=lines.length-1;if((lines[last]+' '+w).trim().length>23&&lines.length<2)lines.push(w);else lines[last]=(lines[last]+' '+w).trim()}return lines}
+    function renderMap(){
+      const host=document.getElementById('mapView'),all=[...state.processes].sort((a,b)=>a.code.localeCompare(b.code,'pt-BR',{numeric:true})),visible=new Set(filteredProcesses().map(p=>p.id));
+      const CX=500,CY=345,RN=235,RL=314,N=Math.max(1,all.length),totalSteps=all.reduce((n,p)=>n+p.steps.length,0),open=state.todos.filter(t=>t.status!=='Concluído').length;
+      let lines='',nodes='';
+      all.forEach((p,i)=>{const angle=i*(360/N),n=polar(CX,CY,RN,angle),l=polar(CX,CY,RL,angle),st=processStats(p),dim=!visible.has(p.id),cos=Math.cos((angle-90)*Math.PI/180),anchor=Math.abs(cos)<.24?'middle':cos>0?'start':'end',dx=anchor==='start'?15:anchor==='end'?-15:0,parts=labelLines(p.name),labelY=l.y-(parts.length-1)*7;
+        lines+=`<line class="wheel-line ${st.open?'active':''}" x1="${CX}" y1="${CY}" x2="${n.x.toFixed(1)}" y2="${n.y.toFixed(1)}"/>`;
+        nodes+=`<g class="wheel-node ${dim?'dim':''}" role="button" tabindex="0" data-process-id="${esc(p.id)}" aria-label="Abrir processo ${esc(p.code)} ${esc(p.name)}" transform="translate(0,0)">
+          <title>${esc(p.code)} — ${esc(p.name)} · ${p.steps.length} atividades · ${st.open} execuções</title>
+          <circle class="wheel-hit" cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="42"/>
+          ${st.late?`<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="35" fill="none" stroke="#7D0041" stroke-width="3"/>`:st.open?`<circle cx="${n.x.toFixed(1)}" cy="${n.y.toFixed(1)}" r="35" fill="none" stroke="#6EB4DC" stroke-width="2"/>`:''}
+          ${coverageNode(n.x.toFixed(1),n.y.toFixed(1),21,p)}
+          <text x="${(l.x+dx).toFixed(1)}" y="${(labelY-13).toFixed(1)}" text-anchor="${anchor}" class="wheel-code">PROCESSO ${esc(p.code)}</text>
+          <text x="${(l.x+dx).toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="${anchor}" class="wheel-label">${parts.map((line,k)=>`<tspan x="${(l.x+dx).toFixed(1)}" dy="${k?16:0}">${esc(line)}</tspan>`).join('')}</text>
+          <text x="${(l.x+dx).toFixed(1)}" y="${(labelY+parts.length*16+3).toFixed(1)}" text-anchor="${anchor}" class="wheel-count">${p.steps.length} atividades · ${st.open} em execução</text>
+        </g>`;
+      });
+      const counts={};all.forEach(p=>{coverageMembers(p).forEach(name=>counts[name]=(counts[name]||0)+1)});
+      host.innerHTML=`<div class="wheel-stage"><svg viewBox="0 0 1000 690" role="img" aria-label="Roda dos processos do Departamento Pessoal Sonova">${lines}<circle cx="${CX}" cy="${CY}" r="102" fill="#FFFFFF" stroke="#6EB4DC" stroke-width="2"/><circle cx="${CX}" cy="${CY}" r="88" fill="#FFFFFF" stroke="#0083CA" stroke-opacity=".18"/><text x="${CX}" y="${CY-23}" text-anchor="middle" class="wheel-hub-title">${esc(txt('wheelHubTitle'))}</text><text x="${CX}" y="${CY-2}" text-anchor="middle" class="wheel-hub-sub">${esc(txt('wheelHubSubtitle'))}</text><text x="${CX}" y="${CY+20}" text-anchor="middle" class="wheel-hub-kpi">${all.length} PROCESSOS · ${totalSteps} ATIVIDADES</text><text x="${CX}" y="${CY+39}" text-anchor="middle" class="wheel-hub-sub">${open} execuções abertas</text>${nodes}</svg></div><div class="wheel-help"><b>${esc(txt('wheelHelpLead'))}</b> ${esc(txt('wheelHelpBody'))}</div><div class="wheel-legend">${owners().map(o=>`<span class="legend-item"><i style="background:${personColor(o)}"></i>${esc(o)} <b>${counts[o]||0}</b></span>`).join('')}<span class="legend-item"><i style="background:#6EB4DC"></i>em execução</span><span class="legend-item"><i style="background:#7D0041"></i>em atraso</span></div>`;
+      host.querySelectorAll('[data-process-id]').forEach(node=>{
+        const open=()=>openProcess(node.dataset.processId);
+        node.addEventListener('click',open);
+        node.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open()}});
+      });
+    }
+    function filteredTodos(){const q=document.getElementById('search').value.toLowerCase(),owner=document.getElementById('ownerFilter').value;return state.todos.filter(t=>{const p=processById(t.processId),hay=[t.title,t.context,t.company,t.cnpj,t.competence,t.assignee,p?.name].join(' ').toLowerCase();return(!q||hay.includes(q))&&(!owner||t.assignee===owner)})}
+    function renderTodos(){const statuses=['Não iniciado','Em andamento','Aguardando','Concluído'],arr=filteredTodos();document.getElementById('todosView').innerHTML=statuses.map(status=>{const items=arr.filter(t=>(t.status||'Não iniciado')===status);return`<div class="todo-col"><div class="todo-col-head"><b>${status}</b><span>${items.length}</span></div><div class="todo-list">${items.map(t=>{const p=processById(t.processId),pct=todoProgress(t),late=isLate(t);return`<article class="todo-card ${late?'late':''}"><div class="eyebrow">${esc(p?.code||'--')} · ${esc(p?.name||'Sem processo')}</div><h4>${esc(t.title)}</h4><div class="todo-meta"><span class="pill">${esc(t.assignee||'Sem responsável')}</span>${t.competence?`<span class="pill">${esc(t.competence)}</span>`:''}${t.dueDate?`<span class="pill ${late?'late':''}">${late?'Atrasada · ':''}${t.dueDate.split('-').reverse().join('/')}</span>`:''}</div><div class="progress"><i style="width:${pct}%;background:${pct===100?'var(--green)':'var(--blue)'}"></i></div><div class="card-actions"><button onclick="openTodo('${t.id}')">Abrir checklist · ${pct}% →</button><button type="button" class="copy-card" onclick="duplicateFromCard('todo','${t.id}',event)">⧉ Duplicar</button></div></article>`}).join('')||'<div class="empty" style="padding:18px;font-size:10px">Nenhuma execução</div>'}</div></div>`}).join('')}
+    function renderTraining(){const q=document.getElementById('search').value.toLowerCase(),owner=document.getElementById('ownerFilter').value,arr=state.trainings.filter(t=>{const p=processById(t.processId),hay=[t.member,t.tutor,t.status,p?.name,t.notes].join(' ').toLowerCase();return(!q||hay.includes(q))&&(!owner||t.member===owner||t.tutor===owner)});document.getElementById('trainingView').innerHTML=arr.length?arr.map(t=>{const p=processById(t.processId),pct=trainingProgress(t);return`<article class="training-card"><div class="training-top"><span class="avatar" style="background:${esc(p?.color||'#0083ca')}">${initials(t.member)}</span><div><h4>${esc(t.member)} · ${esc(p?.name||'Processo')}</h4><p>Tutor: ${esc(t.tutor||'—')} · ${esc(t.status||'Não iniciado')}</p></div></div><div class="progress"><i style="width:${pct}%;background:${pct===100?'var(--green)':'var(--blue)'}"></i></div><div class="actions"><span class="pill">${pct}% da trilha</span><div class="card-actions"><button onclick="openTraining('${t.id}')">Abrir trilha →</button><button type="button" class="copy-card" onclick="duplicateFromCard('training','${t.id}',event)">⧉ Duplicar</button></div></div></article>`}).join(''):'<div class="empty">Nenhuma trilha encontrada. Abra um processo e inicie o treinamento de um membro.</div>'}
+    function renderInterfaceTexts(){const ids={headerTitle:'headerTitle',headerSignature:'headerSignature',navMap:'navMap',navTodos:'navTodos',navTraining:'navTraining',footerLeft:'footerLeft',footerSignature:'footerSignature'};Object.entries(ids).forEach(([key,id])=>{const el=document.getElementById(id);if(el)el.textContent=txt(key)})}
+    function renderAll(){renderFilters();renderMetrics();renderMap();renderTodos();renderTraining();renderInterfaceTexts();setView(currentView)}
+    function setView(v){currentView=v;document.querySelectorAll('#mainNav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));document.getElementById('mapView').classList.toggle('hidden',v!=='map');document.getElementById('todosView').classList.toggle('hidden',v!=='todos');document.getElementById('trainingView').classList.toggle('hidden',v!=='training');const keys={map:['mapEyebrow','mapTitle','mapSubtitle'],todos:['todosEyebrow','todosTitle','todosSubtitle'],training:['trainingEyebrow','trainingTitle','trainingSubtitle']}[v];document.getElementById('viewEyebrow').textContent=txt(keys[0]);document.getElementById('viewTitle').textContent=txt(keys[1]);document.getElementById('viewSubtitle').textContent=txt(keys[2])}
+    function openProcess(id,tab='flow'){currentProcessId=id;currentTab=tab;currentTodoId=null;currentTrainingId=null;expandedStep=null;const ov=document.getElementById('drawerOverlay');ov.classList.add('process-modal');renderDrawer();ov.classList.add('show')}
+    function closeDrawer(){const ov=document.getElementById('drawerOverlay');ov.classList.remove('show','process-modal');currentProcessId=currentTodoId=currentTrainingId=null}
+    function overlayClose(e){if(e.target.id==='drawerOverlay')closeDrawer()}
+    function drawerTabs(p){return`<div class="drawer-tabs">${[['flow','Fluxo e regras'],['execute','Execuções'],['train','Treinamento'],['config','Configuração']].map(x=>`<button class="${currentTab===x[0]?'active':''}" onclick="currentTab='${x[0]}';renderDrawer()">${x[1]}</button>`).join('')}</div>`}
+    function renderDrawer(){const host=document.getElementById('drawer');if(currentTodoId){renderTodoDrawer(host);return attachCopyButton()}if(currentTrainingId){renderTrainingDrawer(host);return attachCopyButton()}const p=processById(currentProcessId);if(!p)return;let body='';if(currentTab==='flow')body=flowHTML(p);if(currentTab==='execute')body=executionHTML(p);if(currentTab==='train')body=trainingHTML(p);if(currentTab==='config')body=configHTML(p);host.innerHTML=`<div class="drawer-head"><div class="pc-icon" style="background:${esc(p.color)};color:#fff;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:24px">${esc(p.icon)}</div><div class="title"><small>processo ${esc(p.code)} · ${p.steps.length} atividades</small><h2>${esc(p.name)}</h2><p>${esc(p.description)}</p></div><button class="print-head" type="button" onclick="printProcess()" title="Imprimir este processo com todas as atividades">⎙ Imprimir</button><button class="close" onclick="closeDrawer()">×</button></div>${drawerTabs(p)}<div class="drawer-content">${body}</div>`;attachCopyButton()}
+    function renderDrawerKeepingPosition(anchorId=null){
+      const current=document.querySelector('#drawer .drawer-content');
+      const drawerScroll=current?.scrollTop||0;
+      const pageX=window.scrollX||0,pageY=window.scrollY||0;
+      const findAnchor=root=>anchorId&&root?[...root.querySelectorAll('[data-scroll-anchor]')].find(el=>el.dataset.scrollAnchor===String(anchorId)):null;
+      const beforeAnchor=findAnchor(current);
+      const beforeOffset=beforeAnchor&&current?beforeAnchor.getBoundingClientRect().top-current.getBoundingClientRect().top:null;
+      renderDrawer();
+      const restore=()=>{
+        const next=document.querySelector('#drawer .drawer-content');
+        if(next){
+          next.scrollTop=Math.min(drawerScroll,Math.max(0,next.scrollHeight-next.clientHeight));
+          const afterAnchor=findAnchor(next);
+          if(afterAnchor&&beforeOffset!==null){
+            const afterOffset=afterAnchor.getBoundingClientRect().top-next.getBoundingClientRect().top;
+            next.scrollTop=Math.min(Math.max(0,next.scrollTop+afterOffset-beforeOffset),Math.max(0,next.scrollHeight-next.clientHeight));
+          }
+        }
+        window.scrollTo(pageX,pageY);
+      };
+      restore();
+      requestAnimationFrame(()=>{restore();requestAnimationFrame(restore)});
+    }
+    function attachCopyButton(){const head=document.querySelector('#drawer .drawer-head'),close=head?.querySelector('.close');if(!head||!close||head.querySelector('.copy-head'))return;const button=document.createElement('button');button.type='button';button.className='copy-head';button.textContent='⧉ Duplicar';button.title='Criar uma cópia independente deste card';button.onclick=copyCurrentCard;head.insertBefore(button,close)}
+    function copyCurrentCard(event){event?.stopPropagation();if(currentTodoId)return duplicateFromCard('todo',currentTodoId,event);if(currentTrainingId)return duplicateFromCard('training',currentTrainingId,event);if(currentProcessId)return duplicateFromCard('process',currentProcessId,event)}
+    function flowHTML(p){const done=quickCompleted(p).length,pct=quickProgress(p);const stepsHTML=p.steps.map((s,i)=>stepHTML(p,s,i)+insertRowHTML(p.id,i+1)).join('');const firstInsert=p.steps.length?insertRowHTML(p.id,0):'';return`<div class="info-box"><b>Como usar:</b> marque cada atividade concluída diretamente no card. Clique no texto da atividade para abrir o passo a passo. Use os botões <b>+ inserir</b> entre atividades ou tecle <b>N</b> para adicionar rapidamente. <span class="kbd-hint">N</span> nova atividade · <span class="kbd-hint">Esc</span> fechar · <span class="kbd-hint">Ctrl+Enter</span> salvar formulário</div><div class="label">Entradas</div><div class="chips">${p.inputs.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div><div class="section-title"><h3>Particularidades Sonova</h3></div><ul class="part-list">${p.particularities.map(x=>`<li>${esc(x)}</li>`).join('')}</ul><div class="checklist-banner"><span>✓</span><div><h3>Checklist operacional</h3><small>${done} de ${p.steps.length} atividades concluídas · marque ou desmarque a qualquer momento</small></div></div><div class="quick-progress"><div class="progress"><i style="width:${pct}%"></i></div><b>${pct}% concluído</b></div>${firstInsert}${stepsHTML}<div class="label">Saídas</div><div class="chips">${p.outputs.map(x=>`<span class="chip output">${esc(x)}</span>`).join('')}</div><div class="add-step-row"><button class="add-step-btn" onclick="openStepForm('${p.id}')" aria-label="Adicionar atividade ao processo"><strong>+</strong><span>Adicionar atividade ao final</span></button><button type="button" class="btn primary" onclick="openTodoForm('${p.id}')">✓ Criar checklist deste processo</button></div>`}
+    function insertRowHTML(pid,idx){return`<div class="insert-row" aria-hidden="false"><button type="button" class="insert-btn" onclick="openStepForm('${pid}',null,${idx})" tabindex="0" title="Inserir nova atividade nesta posição"><strong>+</strong>inserir atividade aqui</button></div>`}
+    function stepHTML(p,s,i){const open=expandedStep===s.id,done=quickCompleted(p).includes(s.id);return`<div class="step-full" data-scroll-anchor="${esc(s.id)}"><div class="step-row ${done?'done':''}" onclick="expandedStep=expandedStep==='${s.id}'?null:'${s.id}';renderDrawerKeepingPosition('${s.id}')"><label class="quick-check" onclick="event.stopPropagation()" title="Marcar atividade como concluída"><input type="checkbox" ${done?'checked':''} onchange="toggleQuickStep('${p.id}','${s.id}',this)" aria-label="Concluir ${esc(s.title)}"></label><span class="num">${esc(s.code)}</span><div class="main"><h4>${esc(s.title)}</h4><p>${esc(s.system)} · ${esc(s.frequency)} · ${esc(s.sla)}</p></div><i class="crit ${esc(s.criticality)}"></i><div class="row-actions"><button type="button" class="copy-card" onclick="event.stopPropagation();duplicateStep('${p.id}','${s.id}')" title="Duplicar esta atividade">⧉ Duplicar</button><button type="button" class="copy-card" onclick="event.stopPropagation();openStepForm('${p.id}','${s.id}')" title="Editar o texto e os dados desta atividade">✎ Editar</button>${editMode?`<button onclick="event.stopPropagation();moveStep('${p.id}','${s.id}',-1)">↑</button><button onclick="event.stopPropagation();moveStep('${p.id}','${s.id}',1)">↓</button><button onclick="event.stopPropagation();deleteStep('${p.id}','${s.id}')">×</button>`:''}</div></div>${open?`<div class="step-detail"><div class="detail-item"><b>Criticidade</b>${esc(s.criticality)}</div><div class="detail-item"><b>Sistema / fonte</b>${esc(s.system)}</div><div class="detail-item"><b>Prazo / SLA</b>${esc(s.sla)}</div><div class="detail-item"><b>Evidência obrigatória</b>${esc(s.evidence)}</div><div class="detail-item full"><b>▶ Como executar a atividade</b>${esc(s.instruction)}</div><div class="detail-item full"><b>🎓 Como aprender e validar</b>Leia o passo a passo, observe uma execução, simule o caso e realize uma ocorrência acompanhada pelo tutor.</div><div class="detail-item full"><b>⚠ Exceções e validações Sonova</b>${esc(s.exceptions)}</div><div class="detail-item full" style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn primary" onclick="event.stopPropagation();openTodoForm('${p.id}')">Criar checklist deste processo</button><button class="btn" onclick="event.stopPropagation();openTrainingForm('${p.id}')">Iniciar trilha</button></div></div>`:''}</div>`}
+    function executionHTML(p){const arr=state.todos.filter(t=>t.processId===p.id);return`<div class="section-title"><h3>Ocorrências deste processo</h3><button class="btn primary" onclick="openTodoForm('${p.id}')">+ Criar To Do</button></div>${arr.length?arr.map(t=>`<div class="todo-card ${isLate(t)?'late':''}"><div class="eyebrow">${esc(t.status)} · ${todoProgress(t)}%</div><h4>${esc(t.title)}</h4><div class="todo-meta"><span class="pill">${esc(t.assignee||'Sem responsável')}</span><span class="pill">${esc(t.context||'Sem contexto')}</span>${t.dueDate?`<span class="pill ${isLate(t)?'late':''}">${t.dueDate.split('-').reverse().join('/')}</span>`:''}</div><div class="card-actions"><button onclick="openTodo('${t.id}')">Abrir checklist →</button><button type="button" class="copy-card" onclick="duplicateFromCard('todo','${t.id}',event)">⧉ Duplicar</button></div></div>`).join(''):'<div class="empty">Nenhuma execução criada. Use o botão acima para transformar este processo em uma To Do real.</div>'}`}
+    function trainingHTML(p){const arr=state.trainings.filter(t=>t.processId===p.id);return`<div class="section-title"><h3>Habilitação no processo</h3><button class="btn primary" onclick="openTrainingForm('${p.id}')">+ Iniciar trilha</button></div>${arr.length?arr.map(t=>`<div class="training-card"><div class="training-top"><span class="avatar" style="background:${esc(p.color)}">${initials(t.member)}</span><div><h4>${esc(t.member)}</h4><p>${esc(t.status)} · tutor ${esc(t.tutor||'—')}</p></div></div><div class="progress"><i style="width:${trainingProgress(t)}%"></i></div><div class="actions"><span class="pill">${trainingProgress(t)}%</span><div class="card-actions"><button onclick="openTraining('${t.id}')">Abrir trilha →</button><button type="button" class="copy-card" onclick="duplicateFromCard('training','${t.id}',event)">⧉ Duplicar</button></div></div></div>`).join(''):'<div class="empty">Nenhum membro iniciou esta trilha.</div>'}`}
+    function configHTML(p){const members=coverageMembers(p),mode=p.coverageMode==='all'?'Toda a equipe':'Pessoas selecionadas';return`<div class="info-box">O responsável principal responde pelo processo. A equipe de cobertura indica todas as pessoas habilitadas a executar e proteger a continuidade da operação.</div><div class="section-title"><h3>Estrutura do card</h3></div><div class="detail-item"><b>Responsável principal</b>${esc(p.owner||'—')}</div><br><div class="detail-item"><b>Modelo de cobertura</b>${esc(mode)}</div><br><div class="detail-item"><b>Equipe habilitada · ${coverageTeamCount(p)}/${state.team.length}</b>${members.length?members.map(name=>`<span class="chip" style="margin:3px 4px 0 0">${esc(name)}</span>`).join(''):'—'}</div><br><div class="detail-item"><b>Maturidade</b>${p.maturity||0}%</div><div class="progress"><i style="width:${p.maturity||0}%"></i></div><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:18px"><button class="btn primary" onclick="openProcessForm('${p.id}')">Editar processo</button><button class="btn" onclick="openStepForm('${p.id}')">+ Atividade</button><button class="btn" onclick="duplicateProcess('${p.id}')">Duplicar processo</button><button class="btn danger" onclick="deleteProcess('${p.id}')">Excluir processo</button></div>`}
+    function openTodo(id){currentTodoId=id;currentProcessId=null;const ov=document.getElementById('drawerOverlay');ov.classList.remove('process-modal');renderDrawer();ov.classList.add('show')}
+    function renderTodoDrawer(host){const t=state.todos.find(x=>x.id===currentTodoId),p=processById(t?.processId);if(!t||!p)return;const pct=todoProgress(t);host.innerHTML=`<div class="drawer-head"><div class="pc-icon" style="background:${esc(p.color)};color:#fff;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:22px">✓</div><div class="title"><small>execução · processo ${esc(p.code)}</small><h2>${esc(t.title)}</h2><p>${esc(t.context||'')}</p></div><button class="print-head" type="button" onclick="printProcess()" title="Imprimir este checklist">⎙ Imprimir</button><button class="close" onclick="closeDrawer()">×</button></div><div class="drawer-content"><div class="form-grid"><div class="field"><label>Status</label><select onchange="updateTodoStatus('${t.id}',this.value)">${['Não iniciado','Em andamento','Aguardando','Concluído'].map(x=>`<option ${t.status===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Responsável</label><select onchange="updateTodoAssignee('${t.id}',this.value)">${ownerOptions(t.assignee)}</select></div></div><div class="progress" style="margin:15px 0"><i style="width:${pct}%;background:${pct===100?'var(--green)':'var(--blue)'}"></i></div><div class="section-title"><h3>Checklist operacional</h3><small>${pct}% concluído</small></div>${p.steps.map(s=>{const done=(t.completedSteps||[]).includes(s.id);return`<div class="check-row ${done?'done':''}" data-scroll-anchor="${esc(s.id)}"><label class="check-row-main"><input type="checkbox" ${done?'checked':''} onchange="toggleTodoStep('${t.id}','${s.id}',this)"><span class="step-code">${esc(s.code)}</span><span class="check-text">${esc(s.title)}<small>${esc(s.system)} · evidência: ${esc(s.evidence)}</small></span></label><div class="check-actions"><button type="button" class="copy-card" onclick="duplicateStep('${p.id}','${s.id}')" title="Duplicar esta atividade no processo e no checklist">⧉ Duplicar</button><button type="button" class="copy-card" onclick="openStepForm('${p.id}','${s.id}')" title="Editar esta atividade em todos os checklists do processo">✎ Editar</button></div></div>`}).join('')}<div class="section-title"><h3>Contexto e observações</h3></div><div class="info-box">${esc(t.company||'')} ${t.cnpj?'· '+esc(t.cnpj):''} ${t.competence?'· '+esc(t.competence):''}<br>${esc(t.notes||'Sem observações.')}</div><div style="display:flex;gap:7px"><button class="btn primary" onclick="openTodoForm(null,'${t.id}')">Editar ocorrência</button><button class="btn danger" onclick="deleteTodo('${t.id}')">Excluir</button></div></div>`}
+    function updateTodoStatus(id,v){const t=state.todos.find(x=>x.id===id);if(t){t.status=v;saveState('Status atualizado');renderDrawer()}}
+    function updateTodoAssignee(id,v){const t=state.todos.find(x=>x.id===id);if(t){t.assignee=v;saveState('Responsável atualizado');renderDrawer()}}
+    function toggleTodoStep(tid,sid,value){const on=checkboxValue(value),t=state.todos.find(x=>x.id===tid);if(!t)return;if(value?.closest)value.closest('.check-row')?.classList.toggle('done',on);t.completedSteps=t.completedSteps||[];if(on&&!t.completedSteps.includes(sid))t.completedSteps.push(sid);if(!on)t.completedSteps=t.completedSteps.filter(x=>x!==sid);if(todoProgress(t)===100)t.status='Concluído';else if(t.status==='Concluído')t.status='Em andamento';saveState('Checklist atualizado');renderDrawerKeepingPosition(sid)}
+    function openTraining(id){currentTrainingId=id;currentProcessId=null;const ov=document.getElementById('drawerOverlay');ov.classList.remove('process-modal');renderDrawer();ov.classList.add('show')}
+    function renderTrainingDrawer(host){const t=state.trainings.find(x=>x.id===currentTrainingId),p=processById(t?.processId);if(!t||!p)return;const pct=trainingProgress(t);host.innerHTML=`<div class="drawer-head"><div class="pc-icon" style="background:${esc(p.color)};color:#fff;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:22px">◈</div><div class="title"><small>trilha de aprendizagem · processo ${esc(p.code)}</small><h2>${esc(t.member)} — ${esc(p.name)}</h2><p>Tutor: ${esc(t.tutor||'—')} · ${esc(t.status)}</p></div><button class="print-head" type="button" onclick="printProcess()" title="Imprimir esta trilha">⎙ Imprimir</button><button class="close" onclick="closeDrawer()">×</button></div><div class="drawer-content"><div class="info-box">A trilha usa as mesmas atividades do processo mestre. Marque uma aula somente após explicação, observação ou prática validada pelo tutor.</div><div class="progress" style="margin:15px 0"><i style="width:${pct}%;background:${pct===100?'var(--green)':'var(--blue)'}"></i></div><div class="section-title"><h3>Conteúdo e prática</h3><small>${pct}% concluído</small></div>${p.steps.map(s=>{const done=(t.completedLessons||[]).includes(s.id);return`<label class="check-row ${done?'done':''}" data-scroll-anchor="${esc(s.id)}"><input type="checkbox" ${done?'checked':''} onchange="toggleTrainingStep('${t.id}','${s.id}',this)"><span class="step-code">${esc(s.code)}</span><span class="check-text">${esc(s.title)}<small>${esc(s.instruction)}</small></span></label>`}).join('')}<div class="section-title"><h3>Avaliação</h3></div><div class="info-box">${esc(t.notes||'Sem observações do tutor.')}</div><div style="display:flex;gap:7px"><button class="btn primary" onclick="openTrainingForm(null,'${t.id}')">Editar trilha</button><button class="btn danger" onclick="deleteTraining('${t.id}')">Excluir</button></div></div>`}
+    function toggleTrainingStep(tid,sid,value){const on=checkboxValue(value),t=state.trainings.find(x=>x.id===tid);if(!t)return;if(value?.closest)value.closest('.check-row')?.classList.toggle('done',on);t.completedLessons=t.completedLessons||[];if(on&&!t.completedLessons.includes(sid))t.completedLessons.push(sid);if(!on)t.completedLessons=t.completedLessons.filter(x=>x!==sid);const pct=trainingProgress(t);t.status=pct===100?'Habilitado':pct>60?'Prática acompanhada':pct>0?'Em treinamento':'Não iniciado';saveState('Trilha atualizada');renderDrawerKeepingPosition(sid)}
+    function ownerOptions(sel=''){const roster=[...new Set([...(state.team||[]),sel].filter(Boolean))].sort();return'<option value="">— selecionar —</option>'+roster.map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('')}
+    function processOptions(sel=''){return state.processes.sort((a,b)=>a.code.localeCompare(b.code,'pt-BR',{numeric:true})).map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${esc(p.code)} — ${esc(p.name)}</option>`).join('')}
+    function showForm(title,body,onSave,label='Salvar'){
+      document.getElementById('formHost').innerHTML=`<div class="form-overlay" id="formOverlay"><div class="modal"><div class="modal-head"><h3>${esc(title)}</h3><button type="button" onclick="closeForm()" aria-label="Fechar">×</button></div><form id="modalForm"><div class="modal-body">${body}</div><div class="modal-actions"><span style="flex:1;font-size:10px;color:var(--muted)">Dica: <span class="kbd-hint">Ctrl+Enter</span> para salvar · <span class="kbd-hint">Esc</span> para cancelar</span><button type="button" class="btn" onclick="closeForm()">Cancelar</button><button class="btn primary" type="submit">${esc(label)}</button></div></form></div></div>`;
+      const form=document.getElementById('modalForm');
+      const colorInput=form.querySelector('input[name="color"]');
+      if(colorInput){const selected=String(colorInput.value||'#0083CA').toUpperCase(),select=document.createElement('select');select.name='color';select.innerHTML=[...new Set(COLORS)].map(c=>`<option value="${c}" ${c===selected?'selected':''}>${c}</option>`).join('');colorInput.replaceWith(select)}
+      form.onsubmit=e=>{e.preventDefault();onSave(new FormData(e.currentTarget))};
+      form.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();form.requestSubmit?form.requestSubmit():form.dispatchEvent(new Event('submit',{cancelable:true}))}});
+      requestAnimationFrame(()=>{
+        const target=form.querySelector('[data-autofocus]')||form.querySelector('input:not([type="hidden"]):not([type="color"]),textarea,select');
+        if(target){target.focus();if(target.select&&target.type!=='color'&&target.tagName==='INPUT')try{target.select()}catch(e){}}
+      });
+    }
+    function closeForm(){document.getElementById('formHost').innerHTML=''}
+    function openUITextForm(){
+      const input=(key,label,full=false)=>`<div class="field ${full?'full':''}"><label>${esc(label)}</label><input name="${key}" value="${esc(txt(key))}"></div>`;
+      const area=(key,label)=>`<div class="field full"><label>${esc(label)}</label><textarea name="${key}">${esc(txt(key))}</textarea></div>`;
+      showForm('Editar textos da tela',`<div class="text-edit-note">Os textos de processos, entradas, saídas, particularidades e atividades continuam sendo editados dentro de cada card. Aqui você altera os textos institucionais da interface.</div><div class="form-grid">
+        ${input('headerTitle','Título da faixa azul',true)}${input('headerSignature','Assinatura à direita',true)}
+        ${input('navMap','Menu · Mapa')}${input('navTodos','Menu · To Do')}${input('navTraining','Menu · Academia')}
+        ${input('mapEyebrow','Mapa · categoria')}${input('mapTitle','Mapa · título',true)}${area('mapSubtitle','Mapa · texto de apoio')}
+        ${input('todosEyebrow','To Do · categoria')}${input('todosTitle','To Do · título',true)}${area('todosSubtitle','To Do · texto de apoio')}
+        ${input('trainingEyebrow','Academia · categoria')}${input('trainingTitle','Academia · título',true)}${area('trainingSubtitle','Academia · texto de apoio')}
+        ${input('wheelHubTitle','Centro da roda · título')}${input('wheelHubSubtitle','Centro da roda · subtítulo')}${input('wheelHelpLead','Ajuda da roda · destaque',true)}${area('wheelHelpBody','Ajuda da roda · complemento')}
+        ${input('footerLeft','Rodapé · texto à esquerda',true)}${input('footerSignature','Rodapé · assinatura',true)}
+      </div>`,fd=>{state.uiText={...UI_DEFAULTS,...state.uiText,...Object.fromEntries(fd.entries())};closeForm();saveState('Textos atualizados');notify('Textos da interface atualizados')},'Salvar textos')
+    }
+    function teamColorOptions(selected='#6EB4DC'){return[...new Set(COLORS)].map(color=>`<option value="${color}" ${String(selected).toUpperCase()===color?'selected':''}>${color}</option>`).join('')}
+    function teamRowHTML(name='',color='#6EB4DC',original=''){return`<div class="team-member-row"><input type="hidden" name="originalName" value="${esc(original)}"><div class="field"><label>Nome do membro</label><input name="memberName" required value="${esc(name)}" placeholder="Nome"></div><div class="field"><label>Cor Sonova</label><select name="memberColor">${teamColorOptions(color)}</select></div><button type="button" class="btn danger team-remove" onclick="this.closest('.team-member-row').remove()" title="Remover da equipe">×</button></div>`}
+    function appendTeamRow(){document.getElementById('teamRows')?.insertAdjacentHTML('beforeend',teamRowHTML())}
+    function openTeamForm(){
+      const rows=(state.team||[]).map(name=>teamRowHTML(name,personColor(name),name)).join('');
+      showForm('Painel da equipe de RH',`<div class="text-edit-note">Edite nomes e cores, inclua novos membros ou remova pessoas da equipe atual. Ao renomear, as atribuições existentes são atualizadas; a remoção não apaga o histórico já registrado.</div><div class="team-list" id="teamRows">${rows}</div><div class="add-step-row"><button type="button" class="add-step-btn" onclick="appendTeamRow()"><strong>+</strong><span>Adicionar membro</span></button></div>`,fd=>{
+        const names=fd.getAll('memberName').map(x=>String(x).trim()).filter(Boolean),originals=fd.getAll('originalName').map(x=>String(x).trim()),colors=fd.getAll('memberColor');
+        if(new Set(names.map(x=>x.toLocaleLowerCase('pt-BR'))).size!==names.length){notify('Há nomes repetidos na equipe');return}
+        const renameMap=new Map();names.forEach((name,i)=>{if(originals[i]&&originals[i]!==name)renameMap.set(originals[i],name)});
+        const rename=value=>renameMap.get(value)||value;
+        state.processes.forEach(p=>{p.owner=rename(p.owner);p.assignedMembers=[...new Set((p.assignedMembers||[]).map(rename).filter(name=>names.includes(name)||name===p.owner))];const backups=p.assignedMembers.filter(name=>name!==p.owner);p.backup=backups[0]||'';p.backup2=backups[1]||''});
+        state.todos.forEach(t=>t.assignee=rename(t.assignee));
+        state.trainings.forEach(t=>{t.member=rename(t.member);t.tutor=rename(t.tutor)});
+        state.team=names;
+        state.memberColors={};names.forEach((name,i)=>state.memberColors[name]=colors[i]||'#6EB4DC');
+        closeForm();saveState('Equipe de RH atualizada');notify('Membros e atribuições atualizados')
+      },'Salvar equipe')
+    }
+    function openTodoForm(processId=null,id=null){const t=id?state.todos.find(x=>x.id===id):null,sel=processId||t?.processId||state.processes[0]?.id;showForm(t?'Editar ocorrência':'Nova execução',`<div class="form-grid"><div class="field full"><label>Processo</label><select name="processId" required>${processOptions(sel)}</select></div><div class="field full"><label>Título da ocorrência</label><input name="title" required value="${esc(t?.title||'')}"></div><div class="field full"><label>Contexto / colaborador / projeto</label><input name="context" value="${esc(t?.context||'')}"></div><div class="field"><label>Empresa</label><input name="company" value="${esc(t?.company||'')}"></div><div class="field"><label>CNPJ / estabelecimento</label><input name="cnpj" value="${esc(t?.cnpj||'')}"></div><div class="field"><label>Competência</label><input name="competence" value="${esc(t?.competence||'')}"></div><div class="field"><label>Responsável</label><select name="assignee">${ownerOptions(t?.assignee||'')}</select></div><div class="field"><label>Prazo</label><input type="date" name="dueDate" value="${esc(t?.dueDate||addDays(7))}"></div><div class="field"><label>Status</label><select name="status">${['Não iniciado','Em andamento','Aguardando','Concluído'].map(x=>`<option ${t?.status===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field full"><label>Observações</label><textarea name="notes">${esc(t?.notes||'')}</textarea></div></div>`,fd=>{const obj=Object.fromEntries(fd.entries());if(t)Object.assign(t,obj);else state.todos.push({id:'td-'+uid(),...obj,completedSteps:[],createdAt:today()});closeForm();saveState('Execução salva');notify('To Do criada a partir do processo mestre');if(t){currentTodoId=t.id;renderDrawer()}else{setView('todos')}},t?'Salvar alterações':'Criar checklist')}
+    function openTrainingForm(processId=null,id=null){const t=id?state.trainings.find(x=>x.id===id):null,sel=processId||t?.processId||state.processes[0]?.id;showForm(t?'Editar trilha':'Iniciar trilha',`<div class="form-grid"><div class="field full"><label>Processo</label><select name="processId" required>${processOptions(sel)}</select></div><div class="field"><label>Membro</label><select name="member" required>${ownerOptions(t?.member||'')}</select></div><div class="field"><label>Tutor</label><select name="tutor">${ownerOptions(t?.tutor||'Anderson')}</select></div><div class="field full"><label>Status</label><select name="status">${['Não iniciado','Em treinamento','Prática acompanhada','Habilitado','Reciclagem'].map(x=>`<option ${t?.status===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field full"><label>Observações do tutor</label><textarea name="notes">${esc(t?.notes||'')}</textarea></div></div>`,fd=>{const obj=Object.fromEntries(fd.entries());if(t)Object.assign(t,obj);else state.trainings.push({id:'tr-'+uid(),...obj,completedLessons:[]});closeForm();saveState('Trilha salva');notify('Trilha de aprendizagem iniciada');if(t){currentTrainingId=t.id;renderDrawer()}else setView('training')},t?'Salvar alterações':'Iniciar treinamento')}
+    function coveragePickerHTML(p){const selected=new Set(p?.assignedMembers||[p?.owner,p?.backup,p?.backup2].filter(Boolean));return(state.team||[]).length?`<div class="coverage-picker">${state.team.map(name=>`<label class="coverage-option"><input type="checkbox" name="assignedMembers" value="${esc(name)}" ${selected.has(name)?'checked':''}><span>${esc(name)}</span></label>`).join('')}</div>`:'<div class="empty" style="padding:15px">Cadastre os membros no painel Equipe de RH.</div>'}
+    function toggleCoverageFields(mode){document.getElementById('selectedCoverageField')?.classList.toggle('hidden',mode==='all');document.getElementById('allCoverageSummary')?.classList.toggle('hidden',mode!=='all')}
+    function openProcessForm(id=null){
+      const p=id?processById(id):null,mode=p?.coverageMode==='all'?'all':'selected';
+      showForm(p?'Editar processo':'Novo processo',`<div class="form-grid"><div class="field"><label>Código</label><input name="code" required value="${esc(p?.code||String(state.processes.length+1).padStart(2,'0'))}"></div><div class="field"><label>Ícone</label><input name="icon" value="${esc(p?.icon||'□')}"></div><div class="field full"><label>Nome</label><input name="name" required value="${esc(p?.name||'')}"></div><div class="field"><label>Responsável principal</label><select name="owner">${ownerOptions(p?.owner||'')}</select></div><div class="field"><label>Modelo de cobertura</label><select name="coverageMode" onchange="toggleCoverageFields(this.value)"><option value="selected" ${mode==='selected'?'selected':''}>Pessoas selecionadas</option><option value="all" ${mode==='all'?'selected':''}>Toda a equipe</option></select></div><div class="field full ${mode==='all'?'hidden':''}" id="selectedCoverageField"><label>Pessoas habilitadas / backups</label>${coveragePickerHTML(p)}<small>O responsável principal é incluído automaticamente, mesmo que não seja marcado abaixo.</small></div><div class="field full ${mode==='all'?'':'hidden'}" id="allCoverageSummary"><label>Cobertura coletiva</label><div class="coverage-summary"><b>Toda a equipe atual e futura</b><br>${(state.team||[]).map(esc).join(' · ')||'Nenhum membro cadastrado'}</div></div><div class="field"><label>Cor</label><input type="color" name="color" value="${esc(p?.color||'#0083CA')}"></div><div class="field"><label>Maturidade %</label><input type="number" min="0" max="100" name="maturity" value="${p?.maturity||0}"></div><div class="field full"><label>Descrição</label><textarea name="description">${esc(p?.description||'')}</textarea></div><div class="field full"><label>Entradas — uma por linha</label><textarea name="inputs">${esc((p?.inputs||[]).join('\n'))}</textarea></div><div class="field full"><label>Saídas — uma por linha</label><textarea name="outputs">${esc((p?.outputs||[]).join('\n'))}</textarea></div><div class="field full"><label>Particularidades Sonova — uma por linha</label><textarea name="particularities">${esc((p?.particularities||[]).join('\n'))}</textarea></div></div>`,fd=>{
+        const o=Object.fromEntries(fd.entries()),arr=n=>String(o[n]||'').split(/\n/).map(x=>x.trim()).filter(Boolean),assigned=[...new Set(fd.getAll('assignedMembers').map(x=>String(x).trim()).filter(Boolean))];
+        if(o.owner&&!assigned.includes(o.owner))assigned.unshift(o.owner);
+        const backups=assigned.filter(name=>name!==o.owner),data={code:o.code,name:o.name,icon:o.icon,color:o.color,owner:o.owner,coverageMode:o.coverageMode==='all'?'all':'selected',assignedMembers:assigned,backup:backups[0]||'',backup2:backups[1]||'',maturity:Number(o.maturity)||0,description:o.description,inputs:arr('inputs'),outputs:arr('outputs'),particularities:arr('particularities')};
+        if(p)Object.assign(p,data);else state.processes.push({id:'p-'+uid(),...data,steps:[]});
+        closeForm();saveState('Processo salvo');if(p){currentProcessId=p.id;renderDrawer()}
+      },p?'Salvar processo':'Criar processo')
+    }
+    function openStepForm(pid,sid=null,insertAt=null){const p=processById(pid),s=p?.steps.find(x=>x.id===sid);if(!p)return;const isEdit=!!s;const posBanner=insertAt!==null&&!isEdit?`<div class="text-edit-note" style="margin-bottom:12px">Nova atividade será inserida na <b>posição ${insertAt+1}</b> de ${p.steps.length+1}. Os códigos das atividades seguintes serão renumerados automaticamente.</div>`:'';showForm(isEdit?'Editar atividade':'Nova atividade',posBanner+`<div class="form-grid"><div class="field full"><label>Atividade <span style="color:#7D0041">*</span></label><input name="title" data-autofocus required value="${esc(s?.title||'')}" placeholder="Ex.: Validar empresa, CNPJ, filial e centro de custo"></div><div class="field"><label>Sistema / fonte</label><input name="system" value="${esc(s?.system||'')}" placeholder="Ex.: ADP / People BI"></div><div class="field"><label>Frequência</label><input name="frequency" value="${esc(s?.frequency||'Por evento')}"></div><div class="field"><label>SLA / prazo</label><input name="sla" value="${esc(s?.sla||'Conforme calendário')}"></div><div class="field"><label>Criticidade</label><select name="criticality">${['Crítico','Alto','Importante','Apoio'].map(x=>`<option ${(s?.criticality||'Importante')===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field full"><label>Evidência obrigatória</label><input name="evidence" value="${esc(s?.evidence||'')}" placeholder="Ex.: Relatório aprovado / dossiê arquivado"></div><div class="field full"><label>Como executar / aprender</label><textarea name="instruction" placeholder="Passo a passo detalhado para operar e para treinar quem está aprendendo">${esc(s?.instruction||'')}</textarea></div><div class="field full"><label>Exceções e validações Sonova</label><textarea name="exceptions" placeholder="Regras específicas, CCT, CNPJ, estabilidade, exceções conhecidas">${esc(s?.exceptions||'')}</textarea></div><div class="field full"><label>Código <small style="font-weight:400;color:var(--muted);font-size:10px">(gerado automaticamente — só edite se souber o padrão)</small></label><input name="code" required value="${esc(s?.code||p.code+'.'+String((insertAt!==null?insertAt+1:p.steps.length+1)).padStart(2,'0'))}"></div></div>`,fd=>{const o=Object.fromEntries(fd.entries());if(s){Object.assign(s,o);renumber(p);saveState('Atividade salva');currentProcessId=p.id;closeForm();renderDrawerKeepingPosition(sid)}else{const newStep={id:p.code+'-'+uid(),...o};if(insertAt!==null&&insertAt>=0&&insertAt<=p.steps.length){p.steps.splice(insertAt,0,newStep)}else{p.steps.push(newStep)}renumber(p);saveState('Atividade adicionada');currentProcessId=p.id;closeForm();renderDrawerKeepingPosition(newStep.id);notify('Atividade adicionada')}},isEdit?'Salvar atividade':'Adicionar atividade')}
+    function renumber(p){p.steps.forEach((s,i)=>{s.code=p.code+'.'+String(i+1).padStart(2,'0')})}
+    function duplicateStep(pid,sid){const p=processById(pid),i=p?.steps.findIndex(s=>s.id===sid);if(!p||i<0)return;const copy=clone(p.steps[i]);copy.id=p.code+'-'+uid();copy.title+=' (cópia)';p.steps.splice(i+1,0,copy);renumber(p);saveState('Atividade copiada');currentProcessId=p.id;renderDrawerKeepingPosition(sid);notify('Cópia da atividade criada sem alterar sua posição')}
+    function moveStep(pid,sid,delta){const p=processById(pid),i=p.steps.findIndex(x=>x.id===sid),j=i+delta;if(i<0||j<0||j>=p.steps.length)return;[p.steps[i],p.steps[j]]=[p.steps[j],p.steps[i]];renumber(p);saveState('Fluxo reordenado');renderDrawerKeepingPosition(sid)}
+    function deleteStep(pid,sid){if(!confirm('Excluir esta atividade do processo mestre?'))return;const p=processById(pid);p.steps=p.steps.filter(s=>s.id!==sid);renumber(p);saveState('Atividade excluída');renderDrawerKeepingPosition()}
+    function duplicateFromCard(type,id,event){event?.preventDefault();event?.stopPropagation();try{if(type==='process')return duplicateProcess(id);if(type==='todo')return duplicateTodo(id);if(type==='training')return duplicateTraining(id);notify('Tipo de card não reconhecido')}catch(error){console.error(error);notify('Não foi possível duplicar este card')}}
+    function duplicateProcess(id){const source=processById(id);if(!source){notify('Processo não encontrado');return}const p=clone(source);p.id='p-'+uid();p.code=String(Math.max(0,...state.processes.map(x=>Number(x.code)||0))+1).padStart(2,'0');p.name+=' (cópia)';p.steps.forEach(s=>s.id=p.code+'-'+uid());renumber(p);state.processes.push(p);state.quickChecks[p.id]=[];saveState('Processo duplicado');openProcess(p.id,'config');notify('Processo duplicado com checklist zerado')}
+    function duplicateTodo(id){const source=state.todos.find(t=>t.id===id);if(!source){notify('Execução não encontrada');return}const copy=clone(source);copy.id='td-'+uid();copy.title+=' (cópia)';copy.status='Não iniciado';copy.completedSteps=[];copy.createdAt=today();state.todos.push(copy);saveState('Execução copiada');openTodo(copy.id);notify('Cópia criada com checklist zerado')}
+    function duplicateTraining(id){const source=state.trainings.find(t=>t.id===id);if(!source){notify('Trilha não encontrada');return}const copy=clone(source);copy.id='tr-'+uid();copy.status='Não iniciado';copy.completedLessons=[];copy.notes=(copy.notes?copy.notes+' · ':'')+'Cópia da trilha';state.trainings.push(copy);saveState('Trilha copiada');openTraining(copy.id);notify('Cópia da trilha criada com checklist zerado')}
+    function deleteProcess(id){if(!confirm('Excluir o processo e manter apenas os históricos já exportados?'))return;state.processes=state.processes.filter(p=>p.id!==id);state.todos=state.todos.filter(t=>t.processId!==id);state.trainings=state.trainings.filter(t=>t.processId!==id);closeDrawer();saveState('Processo excluído')}
+    function deleteTodo(id){if(!confirm('Excluir esta ocorrência?'))return;state.todos=state.todos.filter(t=>t.id!==id);closeDrawer();saveState('Ocorrência excluída')}
+    function deleteTraining(id){if(!confirm('Excluir esta trilha?'))return;state.trainings=state.trainings.filter(t=>t.id!==id);closeDrawer();saveState('Trilha excluída')}
+    function exportState(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DP_360_Sonova_'+today()+'.json';a.click();URL.revokeObjectURL(a.href);notify('Base completa exportada')}
+    function printMap(){
+      closeForm();closeDrawer();setView('map');
+      document.body.classList.remove('print-mode-process');document.body.classList.add('print-mode-map');
+      setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('print-mode-map'),400)},250);
+    }
+    function printProcess(){
+      document.body.classList.remove('print-mode-map');document.body.classList.add('print-mode-process');
+      if(currentProcessId&&currentTab!=='flow'){currentTab='flow';renderDrawer()}
+      if(currentProcessId){const p=processById(currentProcessId);if(p)p.steps.forEach(s=>{expandedStep=null});}
+      setTimeout(()=>{window.print();setTimeout(()=>document.body.classList.remove('print-mode-process'),400)},250);
+    }
+    function guessProcess(text=''){const n=text.toLowerCase();const rules=[['p01',['admiss','onboarding','carta oferta']],['p02',['férias','ferias','afast','atestado','licença']],['p03',['ponto','jornada','banco de horas','rep']],['p04',['cadastro','transfer','movimenta','salário','salario','cargo','centro de custo']],['p05',['atendimento','chamado','askhr','faq']],['p06',['benef','vr',' va ','vt','ifood','alelo','wellhub','petlove','previd']],['p07',['rescis','deslig','demissão','demissao','offboarding']],['p08',['sst','aso','pgr','pcmso','nr-1','nr1','cipa','epi']],['p09',['saúde','saude','odonto','copay','coparticip','sulamerica','sulamérica','wtw']],['p10',['comiss','plr','vcc','bônus','bonus','premia','remuneração']],['p11',['projeto','implant','integra','incorpora','auditoria','melhoria','rpa']],['p12',['folha','encargo','esocial','e-social','fgts','inss','dctf','irrf','contábil','contabil','quinzenal']],['p13',['nota fiscal','nf ','fornecedor','ssa','pipefy','rateio fte','boleto','cenesp','estacionamento','tempo de casa','fatura']]];return(rules.find(r=>r[1].some(k=>n.includes(k)))||['p11'])[0]}
+    document.getElementById('importFile').onchange=e=>{
+      const f=e.target.files[0];if(!f)return;
+      const rd=new FileReader();
+      rd.onload=()=>{
+        try{
+          const x=JSON.parse(rd.result);
+          if(x.processes&&x.todos&&(x.version||'').startsWith('dp360-sonova')){
+            const diff=computeDiff(state,x);
+            if(diffIsEmpty(diff)){notify('Arquivo idêntico ao estado atual · nada a importar');return}
+            openImportDiffModal(diff,x);
+            return;
+          }
+          let imported=[];
+          if(Array.isArray(x.actions))imported=x.actions.map(a=>({id:'legacy-'+(a.id||uid()),processId:guessProcess([a.program,a.title,a.description,a.source].join(' ')),title:a.title||'Ação importada',context:[a.source,a.program].filter(Boolean).join(' · '),company:'',cnpj:'',competence:'',assignee:a.owner||'',dueDate:String(a.end||a.endPlan||'').slice(0,10),status:String(a.status||'Não iniciado').includes('Conclu')?'Concluído':String(a.status||'').includes('andamento')?'Em andamento':String(a.status||'').includes('Aguard')?'Aguardando':'Não iniciado',completedSteps:[],notes:a.description||a.notes||'',createdAt:today()}));
+          if(x.activityData){Object.values(x.activityData).flat().forEach(a=>imported.push({id:'legacy-'+(a.id||uid()),processId:guessProcess(a.text+' '+a.obs),title:(a.text||'Ação importada').trim(),context:'Gerenciador de Atividades',company:'',cnpj:'',competence:'',assignee:a.responsavel||'',dueDate:String(a.fim||'').slice(0,10),status:String(a.status||'').toLowerCase().includes('conclu')?'Concluído':'Não iniciado',completedSteps:[],notes:a.obs||'',createdAt:today()}))}
+          if(imported.length){const seen=new Set(state.todos.map(t=>t.id));state.todos.push(...imported.filter(t=>!seen.has(t.id)));saveState(imported.length+' ações importadas');notify(imported.length+' ações convertidas em To Dos');setView('todos')}
+          else throw new Error('Formato não reconhecido');
+        }catch(err){console.error(err);notify('Arquivo não reconhecido. Use exportação DP 360 ou JSON legado.')}
+      };
+      rd.readAsText(f);e.target.value='';
+    }
+
+    // ==================== SISTEMA DE DIFF DA IMPORTAÇÃO ====================
+    const PROCESS_FIELDS=['name','code','icon','color','owner','coverageMode','description','maturity'];
+    const PROCESS_ARRAY_FIELDS=['assignedMembers','inputs','outputs','particularities'];
+    const STEP_FIELDS=['title','system','frequency','sla','criticality','evidence','instruction','exceptions'];
+    const TODO_FIELDS=['title','context','company','cnpj','competence','assignee','dueDate','status','notes','processId'];
+    const TODO_ARRAY_FIELDS=['completedSteps'];
+    const TRAINING_FIELDS=['member','tutor','status','notes','processId'];
+    const TRAINING_ARRAY_FIELDS=['completedLessons'];
+
+    function eq(a,b){if(a===b)return true;if(a==null&&b==null)return true;if(Array.isArray(a)&&Array.isArray(b))return a.length===b.length&&a.every((v,i)=>eq(v,b[i]));if(typeof a==='object'&&typeof b==='object'&&a&&b){const ka=Object.keys(a),kb=Object.keys(b);return ka.length===kb.length&&ka.every(k=>eq(a[k],b[k]))}return String(a||'')===String(b||'')}
+
+    function diffFields(cur,inc,fields,arrayFields=[]){
+      const changes=[];
+      fields.forEach(f=>{if(!eq(cur[f],inc[f]))changes.push({field:f,before:cur[f],after:inc[f]})});
+      arrayFields.forEach(f=>{if(!eq(cur[f]||[],inc[f]||[]))changes.push({field:f,before:cur[f]||[],after:inc[f]||[],isArray:true})});
+      return changes;
+    }
+
+    function computeDiff(cur,inc){
+      const diff={processes:{added:[],removed:[],modified:[]},steps:{added:[],removed:[],modified:[]},todos:{added:[],removed:[],modified:[]},trainings:{added:[],removed:[],modified:[]},team:null};
+      const curProcMap=new Map((cur.processes||[]).map(p=>[p.id,p]));
+      const incProcMap=new Map((inc.processes||[]).map(p=>[p.id,p]));
+
+      incProcMap.forEach((incP,id)=>{
+        const curP=curProcMap.get(id);
+        if(!curP){diff.processes.added.push(incP);(incP.steps||[]).forEach(s=>diff.steps.added.push({processId:id,processName:incP.name,step:s}))}
+        else{
+          const changes=diffFields(curP,incP,PROCESS_FIELDS,PROCESS_ARRAY_FIELDS);
+          if(changes.length)diff.processes.modified.push({id,name:incP.name,curName:curP.name,changes});
+          const curStepMap=new Map((curP.steps||[]).map(s=>[s.id,s]));
+          const incStepMap=new Map((incP.steps||[]).map(s=>[s.id,s]));
+          incStepMap.forEach((incS,sid)=>{
+            const curS=curStepMap.get(sid);
+            if(!curS)diff.steps.added.push({processId:id,processName:incP.name,step:incS});
+            else{const stepChanges=diffFields(curS,incS,STEP_FIELDS);if(stepChanges.length)diff.steps.modified.push({processId:id,processName:incP.name,stepId:sid,stepCode:incS.code,stepTitle:incS.title,curTitle:curS.title,changes:stepChanges})}
+          });
+          curStepMap.forEach((curS,sid)=>{if(!incStepMap.has(sid))diff.steps.removed.push({processId:id,processName:incP.name,stepId:sid,step:curS})});
+        }
+      });
+      curProcMap.forEach((curP,id)=>{if(!incProcMap.has(id))diff.processes.removed.push(curP)});
+
+      const curTodoMap=new Map((cur.todos||[]).map(t=>[t.id,t]));
+      const incTodoMap=new Map((inc.todos||[]).map(t=>[t.id,t]));
+      incTodoMap.forEach((incT,id)=>{
+        const curT=curTodoMap.get(id);
+        if(!curT)diff.todos.added.push(incT);
+        else{const changes=diffFields(curT,incT,TODO_FIELDS,TODO_ARRAY_FIELDS);if(changes.length)diff.todos.modified.push({id,title:incT.title,curTitle:curT.title,changes})}
+      });
+      curTodoMap.forEach((curT,id)=>{if(!incTodoMap.has(id))diff.todos.removed.push(curT)});
+
+      const curTrMap=new Map((cur.trainings||[]).map(t=>[t.id,t]));
+      const incTrMap=new Map((inc.trainings||[]).map(t=>[t.id,t]));
+      incTrMap.forEach((incT,id)=>{
+        const curT=curTrMap.get(id);
+        if(!curT)diff.trainings.added.push(incT);
+        else{const changes=diffFields(curT,incT,TRAINING_FIELDS,TRAINING_ARRAY_FIELDS);if(changes.length)diff.trainings.modified.push({id,member:incT.member,changes})}
+      });
+      curTrMap.forEach((curT,id)=>{if(!incTrMap.has(id))diff.trainings.removed.push(curT)});
+
+      const curTeam=[...(cur.team||[])].sort(),incTeam=[...(inc.team||[])].sort();
+      if(!eq(curTeam,incTeam))diff.team={before:curTeam,after:incTeam};
+      return diff;
+    }
+
+    function diffIsEmpty(d){return !d.processes.added.length&&!d.processes.removed.length&&!d.processes.modified.length&&!d.steps.added.length&&!d.steps.removed.length&&!d.steps.modified.length&&!d.todos.added.length&&!d.todos.removed.length&&!d.todos.modified.length&&!d.trainings.added.length&&!d.trainings.removed.length&&!d.trainings.modified.length&&!d.team}
+
+    function fmtVal(v){if(v==null||v==='')return '<em style="color:var(--muted)">vazio</em>';if(Array.isArray(v))return v.length?v.map(x=>esc(String(x))).join(' · '):'<em style="color:var(--muted)">vazio</em>';return esc(String(v))}
+
+    function fieldChangesHTML(changes){return changes.map(c=>`<div><b>${esc(c.field)}:</b> <span class="before">${fmtVal(c.before)}</span> → <span class="after">${fmtVal(c.after)}</span></div>`).join('')}
+
+    function openImportDiffModal(diff,incoming){
+      const totalChanges=diff.processes.added.length+diff.processes.removed.length+diff.processes.modified.length+diff.steps.added.length+diff.steps.removed.length+diff.steps.modified.length+diff.todos.added.length+diff.todos.removed.length+diff.todos.modified.length+diff.trainings.added.length+diff.trainings.removed.length+diff.trainings.modified.length+(diff.team?1:0);
+      const stepsAddedByProcess={};diff.steps.added.forEach(s=>{(stepsAddedByProcess[s.processName]=stepsAddedByProcess[s.processName]||[]).push(s)});
+      const stepsModByProcess={};diff.steps.modified.forEach(s=>{(stepsModByProcess[s.processName]=stepsModByProcess[s.processName]||[]).push(s)});
+      const stepsRemByProcess={};diff.steps.removed.forEach(s=>{(stepsRemByProcess[s.processName]=stepsRemByProcess[s.processName]||[]).push(s)});
+
+      const procSection=(diff.processes.added.length||diff.processes.removed.length||diff.processes.modified.length)?`
+        <div class="diff-group" data-group="processes">
+          <div class="diff-group-head" onclick="toggleDiffGroup(this)">
+            <input type="checkbox" data-group-check="processes" checked onclick="event.stopPropagation();toggleGroupChecks(this)">
+            <span>Processos · ${diff.processes.added.length+diff.processes.removed.length+diff.processes.modified.length} mudanças</span>
+            <span class="toggle-caret">▼</span>
+          </div>
+          <div class="diff-list">
+            ${diff.processes.added.map((p,i)=>`<label class="diff-item"><input type="checkbox" data-diff="proc-add-${i}" checked><div class="diff-item-body"><span class="diff-tag new">Novo</span><b>${esc(p.code)} — ${esc(p.name)}</b> (${(p.steps||[]).length} atividades, dono ${esc(p.owner||'—')})</div></label>`).join('')}
+            ${diff.processes.modified.map((p,i)=>`<label class="diff-item"><input type="checkbox" data-diff="proc-mod-${i}" checked><div class="diff-item-body"><span class="diff-tag mod">Alterado</span><b>${esc(p.curName)}</b>${p.name!==p.curName?` → ${esc(p.name)}`:''}<div class="diff-fields">${fieldChangesHTML(p.changes)}</div></div></label>`).join('')}
+            ${diff.processes.removed.map((p,i)=>`<label class="diff-item"><input type="checkbox" data-diff="proc-del-${i}"><div class="diff-item-body"><span class="diff-tag del">Removido no arquivo</span><b>${esc(p.code)} — ${esc(p.name)}</b> · marcar apaga do seu estado atual</div></label>`).join('')}
+          </div>
+        </div>`:'';
+
+      const stepsSection=(diff.steps.added.length||diff.steps.removed.length||diff.steps.modified.length)?`
+        <div class="diff-group" data-group="steps">
+          <div class="diff-group-head" onclick="toggleDiffGroup(this)">
+            <input type="checkbox" data-group-check="steps" checked onclick="event.stopPropagation();toggleGroupChecks(this)">
+            <span>Atividades · ${diff.steps.added.length+diff.steps.removed.length+diff.steps.modified.length} mudanças em ${new Set([...Object.keys(stepsAddedByProcess),...Object.keys(stepsModByProcess),...Object.keys(stepsRemByProcess)]).size} processos</span>
+            <span class="toggle-caret">▼</span>
+          </div>
+          <div class="diff-list">
+            ${diff.steps.added.map((s,i)=>`<label class="diff-item"><input type="checkbox" data-diff="step-add-${i}" checked><div class="diff-item-body"><span class="diff-tag new">Nova</span><small style="color:var(--muted)">${esc(s.processName)}</small> · <b>${esc(s.step.code)}</b> ${esc(s.step.title)}</div></label>`).join('')}
+            ${diff.steps.modified.map((s,i)=>`<label class="diff-item"><input type="checkbox" data-diff="step-mod-${i}" checked><div class="diff-item-body"><span class="diff-tag mod">Alterada</span><small style="color:var(--muted)">${esc(s.processName)}</small> · <b>${esc(s.stepCode)}</b> ${esc(s.curTitle)}<div class="diff-fields">${fieldChangesHTML(s.changes)}</div></div></label>`).join('')}
+            ${diff.steps.removed.map((s,i)=>`<label class="diff-item"><input type="checkbox" data-diff="step-del-${i}"><div class="diff-item-body"><span class="diff-tag del">Removida no arquivo</span><small style="color:var(--muted)">${esc(s.processName)}</small> · <b>${esc(s.step.code)}</b> ${esc(s.step.title)}</div></label>`).join('')}
+          </div>
+        </div>`:'';
+
+      const todoSection=(diff.todos.added.length||diff.todos.removed.length||diff.todos.modified.length)?`
+        <div class="diff-group" data-group="todos">
+          <div class="diff-group-head" onclick="toggleDiffGroup(this)">
+            <input type="checkbox" data-group-check="todos" checked onclick="event.stopPropagation();toggleGroupChecks(this)">
+            <span>To Dos / execuções · ${diff.todos.added.length+diff.todos.removed.length+diff.todos.modified.length} mudanças</span>
+            <span class="toggle-caret">▼</span>
+          </div>
+          <div class="diff-list">
+            ${diff.todos.added.map((t,i)=>`<label class="diff-item"><input type="checkbox" data-diff="todo-add-${i}" checked><div class="diff-item-body"><span class="diff-tag new">Nova</span><b>${esc(t.title)}</b> · ${esc(t.assignee||'sem responsável')} · ${esc(t.status||'')}</div></label>`).join('')}
+            ${diff.todos.modified.map((t,i)=>`<label class="diff-item"><input type="checkbox" data-diff="todo-mod-${i}" checked><div class="diff-item-body"><span class="diff-tag mod">Alterada</span><b>${esc(t.curTitle)}</b><div class="diff-fields">${fieldChangesHTML(t.changes)}</div></div></label>`).join('')}
+            ${diff.todos.removed.map((t,i)=>`<label class="diff-item"><input type="checkbox" data-diff="todo-del-${i}"><div class="diff-item-body"><span class="diff-tag del">Removida no arquivo</span><b>${esc(t.title)}</b></div></label>`).join('')}
+          </div>
+        </div>`:'';
+
+      const trainingSection=(diff.trainings.added.length||diff.trainings.removed.length||diff.trainings.modified.length)?`
+        <div class="diff-group" data-group="trainings">
+          <div class="diff-group-head" onclick="toggleDiffGroup(this)">
+            <input type="checkbox" data-group-check="trainings" checked onclick="event.stopPropagation();toggleGroupChecks(this)">
+            <span>Trilhas de treinamento · ${diff.trainings.added.length+diff.trainings.removed.length+diff.trainings.modified.length} mudanças</span>
+            <span class="toggle-caret">▼</span>
+          </div>
+          <div class="diff-list">
+            ${diff.trainings.added.map((t,i)=>`<label class="diff-item"><input type="checkbox" data-diff="tr-add-${i}" checked><div class="diff-item-body"><span class="diff-tag new">Nova</span><b>${esc(t.member)}</b> · ${esc(t.status||'')}</div></label>`).join('')}
+            ${diff.trainings.modified.map((t,i)=>`<label class="diff-item"><input type="checkbox" data-diff="tr-mod-${i}" checked><div class="diff-item-body"><span class="diff-tag mod">Alterada</span><b>${esc(t.member)}</b><div class="diff-fields">${fieldChangesHTML(t.changes)}</div></div></label>`).join('')}
+            ${diff.trainings.removed.map((t,i)=>`<label class="diff-item"><input type="checkbox" data-diff="tr-del-${i}"><div class="diff-item-body"><span class="diff-tag del">Removida no arquivo</span><b>${esc(t.member)}</b></div></label>`).join('')}
+          </div>
+        </div>`:'';
+
+      const teamSection=diff.team?`
+        <div class="diff-group" data-group="team">
+          <div class="diff-group-head" onclick="toggleDiffGroup(this)">
+            <input type="checkbox" data-group-check="team" onclick="event.stopPropagation();toggleGroupChecks(this)">
+            <span>Equipe · lista de membros mudou</span>
+            <span class="toggle-caret">▼</span>
+          </div>
+          <div class="diff-list">
+            <label class="diff-item"><input type="checkbox" data-diff="team-change"><div class="diff-item-body"><span class="diff-tag mod">Alterado</span>Time atual: ${esc(diff.team.before.join(', '))}<br>Time no arquivo: ${esc(diff.team.after.join(', '))}<br><small style="color:var(--muted)">Marcar sobrescreve a equipe local pela do arquivo</small></div></label>
+          </div>
+        </div>`:'';
+
+      const html=`<div class="form-overlay" id="formOverlay"><div class="diff-modal">
+        <div class="modal-head"><h3>Revisar mudanças da importação</h3><button type="button" onclick="closeForm()" aria-label="Fechar">×</button></div>
+        <div class="diff-summary">
+          <div><b>Seu estado atual</b><strong>${state.processes.length}</strong>processos · ${state.processes.reduce((n,p)=>n+p.steps.length,0)} atividades</div>
+          <div><b>Base importada</b><strong>${(incoming.processes||[]).length}</strong>processos · ${(incoming.processes||[]).reduce((n,p)=>n+(p.steps||[]).length,0)} atividades</div>
+          <div><b>Mudanças detectadas</b><strong>${totalChanges}</strong>total de itens</div>
+          <div><b>Origem</b>${esc(incoming.updatedAt?new Date(incoming.updatedAt).toLocaleString('pt-BR'):'desconhecida')}</div>
+        </div>
+        <div class="diff-body" id="diffBody">
+          ${procSection}${stepsSection}${todoSection}${trainingSection}${teamSection}
+          ${!procSection&&!stepsSection&&!todoSection&&!trainingSection&&!teamSection?'<div class="diff-empty">Nenhuma diferença encontrada</div>':''}
+        </div>
+        <div class="modal-actions">
+          <span class="diff-counter" id="diffCounter">— seleções marcadas</span>
+          <button type="button" class="btn" onclick="markAllDiffs(true)">Marcar tudo</button>
+          <button type="button" class="btn" onclick="markAllDiffs(false)">Desmarcar tudo</button>
+          <button type="button" class="btn" onclick="closeForm()">Cancelar</button>
+          <button type="button" class="btn primary" onclick="applySelectedDiff()">Aplicar selecionadas</button>
+        </div>
+      </div></div>`;
+      document.getElementById('formHost').innerHTML=html;
+      window.__diffData={diff,incoming};
+      document.getElementById('diffBody').addEventListener('change',updateDiffCounter);
+      updateDiffCounter();
+    }
+
+    function toggleDiffGroup(head){head.parentElement.classList.toggle('collapsed')}
+    function toggleGroupChecks(check){const list=check.closest('.diff-group').querySelector('.diff-list');list.querySelectorAll('input[type="checkbox"][data-diff]').forEach(cb=>cb.checked=check.checked);updateDiffCounter()}
+    function markAllDiffs(on){document.querySelectorAll('#diffBody input[type="checkbox"]').forEach(cb=>cb.checked=on);updateDiffCounter()}
+    function updateDiffCounter(){const el=document.getElementById('diffCounter');if(!el)return;const n=document.querySelectorAll('#diffBody input[type="checkbox"][data-diff]:checked').length;const total=document.querySelectorAll('#diffBody input[type="checkbox"][data-diff]').length;el.textContent=`${n} de ${total} mudanças marcadas para aplicar`}
+
+    function isSelected(key){const cb=document.querySelector(`#diffBody input[data-diff="${key}"]`);return cb&&cb.checked}
+
+    function applySelectedDiff(){
+      const {diff,incoming}=window.__diffData||{};
+      if(!diff||!incoming){notify('Nada para aplicar');return}
+      let applied=0;
+
+      // Processos: novos
+      diff.processes.added.forEach((p,i)=>{if(isSelected(`proc-add-${i}`)){if(!state.processes.some(x=>x.id===p.id)){state.processes.push(clone(p));applied++}}});
+      // Processos: modificados (aplica apenas os campos que estão no diff)
+      diff.processes.modified.forEach((p,i)=>{if(isSelected(`proc-mod-${i}`)){const target=state.processes.find(x=>x.id===p.id);if(target){p.changes.forEach(c=>{target[c.field]=clone(c.after)});applied++}}});
+      // Processos: removidos (só apaga quando explicitamente marcado)
+      diff.processes.removed.forEach((p,i)=>{if(isSelected(`proc-del-${i}`)){state.processes=state.processes.filter(x=>x.id!==p.id);state.todos=state.todos.filter(t=>t.processId!==p.id);state.trainings=state.trainings.filter(t=>t.processId!==p.id);applied++}});
+
+      // Atividades: novas
+      diff.steps.added.forEach((s,i)=>{if(isSelected(`step-add-${i}`)){const p=state.processes.find(x=>x.id===s.processId);if(p&&!p.steps.some(st=>st.id===s.step.id)){p.steps.push(clone(s.step));renumber(p);applied++}}});
+      // Atividades: modificadas
+      diff.steps.modified.forEach((s,i)=>{if(isSelected(`step-mod-${i}`)){const p=state.processes.find(x=>x.id===s.processId);const step=p?.steps.find(x=>x.id===s.stepId);if(step){s.changes.forEach(c=>{step[c.field]=clone(c.after)});applied++}}});
+      // Atividades: removidas
+      diff.steps.removed.forEach((s,i)=>{if(isSelected(`step-del-${i}`)){const p=state.processes.find(x=>x.id===s.processId);if(p){p.steps=p.steps.filter(x=>x.id!==s.stepId);renumber(p);applied++}}});
+
+      // To Dos: novas
+      diff.todos.added.forEach((t,i)=>{if(isSelected(`todo-add-${i}`)){if(!state.todos.some(x=>x.id===t.id)){state.todos.push(clone(t));applied++}}});
+      // To Dos: modificadas
+      diff.todos.modified.forEach((t,i)=>{if(isSelected(`todo-mod-${i}`)){const target=state.todos.find(x=>x.id===t.id);if(target){t.changes.forEach(c=>{target[c.field]=clone(c.after)});applied++}}});
+      // To Dos: removidas
+      diff.todos.removed.forEach((t,i)=>{if(isSelected(`todo-del-${i}`)){state.todos=state.todos.filter(x=>x.id!==t.id);applied++}});
+
+      // Trilhas: novas
+      diff.trainings.added.forEach((t,i)=>{if(isSelected(`tr-add-${i}`)){if(!state.trainings.some(x=>x.id===t.id)){state.trainings.push(clone(t));applied++}}});
+      // Trilhas: modificadas
+      diff.trainings.modified.forEach((t,i)=>{if(isSelected(`tr-mod-${i}`)){const target=state.trainings.find(x=>x.id===t.id);if(target){t.changes.forEach(c=>{target[c.field]=clone(c.after)});applied++}}});
+      // Trilhas: removidas
+      diff.trainings.removed.forEach((t,i)=>{if(isSelected(`tr-del-${i}`)){state.trainings=state.trainings.filter(x=>x.id!==t.id);applied++}});
+
+      // Equipe
+      if(diff.team&&isSelected('team-change')){state.team=[...diff.team.after];applied++}
+
+      closeForm();
+      if(applied){saveState(`${applied} mudanças aplicadas via importação`);notify(`${applied} mudanças aplicadas com sucesso`)}
+      else notify('Nenhuma mudança foi marcada');
+      window.__diffData=null;
+    }
+    // ================ FIM SISTEMA DE DIFF ================
+    function freshResetState(){const fresh=normalizeBrandColors(clone(DEFAULT_STATE));fresh.quickChecks={};fresh.todos.forEach(t=>{t.completedSteps=[];t.status='Não iniciado'});fresh.trainings.forEach(t=>{t.completedLessons=[];t.status='Não iniciado'});return fresh}
+    function resetState(){if(!confirm('Resetar tudo? Serão removidas cópias, edições e marcações. Todos os checkboxes dos processos, To Dos e treinamentos ficarão desmarcados.'))return;clearSavedState();document.querySelectorAll('input[type="checkbox"]').forEach(input=>input.checked=false);document.querySelectorAll('.done').forEach(el=>el.classList.remove('done'));state=freshResetState();currentView='map';editMode=false;currentProcessId=currentTodoId=currentTrainingId=expandedStep=null;currentTab='flow';closeForm();closeDrawer();document.getElementById('search').value='';document.getElementById('ownerFilter').value='';document.getElementById('statusFilter').value='';const edit=document.getElementById('editToggle');edit.classList.remove('active');edit.textContent='Modo edição';document.getElementById('addProcessBtn').classList.add('hidden');document.getElementById('editUITextBtn').classList.add('hidden');saveState('Tudo restaurado e desmarcado');setView('map');notify('Todos os cards e checklists foram restaurados e desmarcados')}
+    document.querySelectorAll('#mainNav button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+    document.getElementById('editToggle').onclick=function(){editMode=!editMode;this.classList.toggle('active',editMode);this.textContent=editMode?'Edição ativa':'Modo edição';document.getElementById('addProcessBtn').classList.toggle('hidden',!editMode);document.getElementById('editUITextBtn').classList.toggle('hidden',!editMode);renderAll();if(currentProcessId)renderDrawer();notify(editMode?'Textos e estrutura liberados para edição':'Modo operação ativado')};
+    ['search','ownerFilter','statusFilter'].forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',renderAll));
+    document.getElementById('clearFilters').onclick=()=>{document.getElementById('search').value='';document.getElementById('ownerFilter').value='';document.getElementById('statusFilter').value='';renderAll()};
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape'){if(document.getElementById('formHost').innerHTML)closeForm();else closeDrawer();return}
+      const inField=e.target&&(e.target.matches('input,textarea,select')||e.target.isContentEditable);
+      if(inField)return;
+      if(document.getElementById('formHost').innerHTML)return;
+      if((e.key==='n'||e.key==='N')&&currentProcessId&&currentTab==='flow'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();openStepForm(currentProcessId)}
+      if((e.key==='p'||e.key==='P')&&(e.ctrlKey||e.metaKey)&&currentProcessId){/* Ctrl+P segue comportamento normal do browser */}
+    });
+    renderAll();setView('map');
+  </script>
+</body>
+</html>
