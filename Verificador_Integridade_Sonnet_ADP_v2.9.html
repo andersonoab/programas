@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verificador de Integridade — Sonnet x ADP | Sonova do Brasil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script>
+if(typeof XLSX==='undefined'){ document.write('<scr'+'ipt src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/scr'+'ipt>'); }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --p:#0083CA;      /* Sonova primary */
+  --dk:#003C64;     /* dark blue */
+  --md:#005A64;     /* teal */
+  --lt:#6EB4DC;     /* light blue */
+  --ac:#7D0041;     /* wine accent */
+  --ac2:#8C321E;    /* brick accent */
+  --tx:#333333;
+  --tx2:#646464;
+  --bd:#CCCCCC;
+  --bg:#FFFFFF;
+  --soft:#F5F7F9;
+  --hdr:#E8F3FA;
+  --ok:#2E7D32;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--tx);font-family:'Roboto',Arial,sans-serif;font-weight:300;font-size:14px;line-height:1.5}
+h1,h2,h3,h4{font-family:'Rufina',Georgia,serif;font-weight:700;color:var(--dk)}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+
+/* ---------- topbar ---------- */
+.topbar{background:var(--p);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.topbar h1{color:#fff;font-size:20px;line-height:1.2}
+.topbar .sub{font-size:12px;font-weight:300;opacity:.92;letter-spacing:.02em}
+.topbar .ver{font-size:12px;font-weight:400;border:1px solid rgba(255,255,255,.5);padding:4px 10px;border-radius:3px}
+
+.wrap{max-width:1440px;margin:0 auto;padding:20px 24px 60px}
+
+/* ---------- cards ---------- */
+.card{background:#fff;border:1px solid var(--bd);border-radius:4px;padding:18px;margin-bottom:18px}
+.card>h2{font-size:16px;margin-bottom:4px}
+.card>.hint{color:var(--tx2);font-size:12px;margin-bottom:14px}
+
+/* ---------- dropzones ---------- */
+.dz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.dz{border:1px dashed var(--bd);border-radius:4px;padding:16px;background:var(--soft);transition:border-color .15s,background .15s;cursor:pointer;position:relative}
+.dz:hover,.dz.over{border-color:var(--p);background:#fff}
+.dz.loaded{border-style:solid;border-color:var(--p);background:#fff}
+.dz .tag{display:inline-block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:var(--dk);padding:2px 7px;border-radius:2px;margin-bottom:8px}
+.dz.loaded .tag{background:var(--p)}
+.dz h3{font-size:14px;margin-bottom:4px}
+.dz p{font-size:12px;color:var(--tx2)}
+.dz .st{margin-top:10px;font-size:12px;font-weight:400;color:var(--tx2)}
+.dz.loaded .st{color:var(--ok)}
+.dz input[type=file]{display:none}
+
+/* ---------- config ---------- */
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.fld label{display:block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--tx2);margin-bottom:5px}
+.fld input[type=text],.fld input[type=number],.fld select{width:100%;border:1px solid var(--bd);border-radius:3px;padding:7px 9px;color:var(--tx);background:#fff}
+.fld input:focus,.fld select:focus{outline:2px solid var(--lt);outline-offset:0;border-color:var(--p)}
+.chk{display:flex;align-items:flex-start;gap:8px;font-size:13px;padding-top:18px}
+.chk input{margin-top:3px}
+
+/* ---------- buttons ---------- */
+.btn{border:none;border-radius:3px;padding:9px 18px;color:#fff;cursor:pointer;font-weight:400;letter-spacing:.01em}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-go{background:var(--ok)}
+.btn-p{background:var(--p)}
+.btn-s{background:var(--lt)}
+.btn-a{background:#8A8A8A}
+.btn-d{background:var(--ac)}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn:focus-visible{outline:2px solid var(--dk);outline-offset:2px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+
+/* ---------- kpi ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpi{border:1px solid var(--bd);border-left:4px solid var(--p);border-radius:3px;padding:12px 14px;background:#fff}
+.kpi .n{font-family:'Rufina',Georgia,serif;font-size:26px;font-weight:700;color:var(--dk);line-height:1.1}
+.kpi .l{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--tx2);margin-top:4px}
+.kpi.crit{border-left-color:var(--ac)}
+.kpi.alto{border-left-color:var(--ac2)}
+.kpi.med{border-left-color:var(--md)}
+.kpi.ok{border-left-color:var(--ok)}
+.kpi.info{border-left-color:#8A8A8A}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--bd);margin-bottom:0}
+.tab{background:transparent;border:1px solid transparent;border-bottom:none;padding:9px 15px;cursor:pointer;color:var(--tx2);font-size:13px;border-radius:3px 3px 0 0}
+.tab:hover{color:var(--dk)}
+.tab.on{background:#fff;border-color:var(--bd);color:var(--dk);font-weight:500;margin-bottom:-1px}
+.tab .cnt{display:inline-block;background:var(--hdr);color:var(--dk);border-radius:9px;padding:0 7px;font-size:11px;margin-left:6px}
+.tab.on .cnt{background:var(--p);color:#fff}
+.pane{display:none;border:1px solid var(--bd);border-top:none;padding:18px;background:#fff}
+.pane.on{display:block}
+
+/* ---------- tables ---------- */
+.tbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tbar input[type=text]{border:1px solid var(--bd);border-radius:3px;padding:6px 9px;min-width:240px}
+.tbar select{border:1px solid var(--bd);border-radius:3px;padding:6px 9px}
+.tbar .meta{margin-left:auto;font-size:12px;color:var(--tx2)}
+.tscroll{overflow:auto;max-height:620px;border:1px solid var(--bd);border-radius:3px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+thead th{position:sticky;top:0;background:var(--hdr);color:var(--dk);text-align:left;padding:9px 10px;font-weight:500;white-space:nowrap;cursor:pointer;border-bottom:1px solid var(--bd);z-index:2}
+thead th:hover{background:#DCEDF8}
+tbody td{padding:7px 10px;border-bottom:1px solid #EDEDED;vertical-align:top}
+tbody tr:nth-child(even){background:#FAFCFD}
+tbody tr:hover{background:#F0F7FC}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.mono{font-family:'Roboto Mono',Consolas,monospace;white-space:nowrap}
+.empty{padding:26px;text-align:center;color:var(--tx2);font-size:13px}
+
+/* ---------- badges ---------- */
+.b{display:inline-block;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:2px;color:#fff;white-space:nowrap}
+.b-CRITICO{background:var(--ac)}
+.b-ALTO{background:var(--ac2)}
+.b-MEDIO{background:var(--md)}
+.b-INFO{background:#8A8A8A}
+.b-OK{background:var(--ok)}
+.b-ALTA{background:var(--ok)}
+.b-MEDIA{background:var(--md)}
+.b-BAIXA{background:var(--ac2)}
+.b-NENHUMA{background:#8A8A8A}
+
+.diffv{display:block}
+.diffv .k{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--tx2)}
+.diffv .a{color:var(--ac)}
+.diffv .s{color:var(--dk)}
+
+.note{border-left:3px solid var(--lt);background:var(--soft);padding:10px 14px;font-size:12.5px;color:var(--tx2);margin:12px 0}
+.note strong{color:var(--dk);font-weight:500}
+.err{border-left-color:var(--ac);background:#FBF2F6;color:var(--ac)}
+
+.maprow{display:grid;grid-template-columns:1.1fr 1.4fr auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid #EFEFEF}
+.maprow span{font-size:12.5px}
+.maprow select{width:100%;border:1px solid var(--bd);border-radius:3px;padding:5px 7px;font-size:12.5px}
+.mapok{font-size:11px;color:var(--ok)}
+.mapmiss{font-size:11px;color:var(--ac)}
+details>summary{cursor:pointer;color:var(--p);font-size:13px;padding:4px 0;user-select:none}
+details>summary:hover{color:var(--dk)}
+
+.chartbox{height:220px;position:relative}
+
+/* ---------- comparativo lado a lado ---------- */
+.parwrap{display:flex;flex-direction:column;gap:14px}
+.par{border:1px solid var(--bd);border-radius:4px;overflow:hidden}
+.par.grave{border-color:var(--ac)}
+.par-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;background:var(--hdr);border-bottom:1px solid var(--bd)}
+.par-h .pid{font-family:'Roboto Mono',Consolas,monospace;font-size:12px;color:var(--tx2)}
+.par-h .pnm{font-family:'Rufina',Georgia,serif;font-size:14px;font-weight:700;color:var(--dk)}
+.par-h .pr{margin-left:auto;display:flex;gap:8px;align-items:center}
+.par table{font-size:12px}
+.par thead th{background:#F7FAFC;font-size:10.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--tx2);cursor:default;padding:6px 9px}
+.par tbody td{padding:7px 9px;border-bottom:none;border-top:1px solid #EDEDED}
+.par tbody tr:nth-child(even){background:transparent}
+.par tbody tr:hover{background:transparent}
+.src{width:104px;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#fff;white-space:nowrap}
+.src-adp{background:var(--ac2)}
+.src-son{background:var(--dk)}
+.srcsub{display:block;font-size:9px;letter-spacing:0;text-transform:none;opacity:.85;font-weight:300;margin-top:1px}
+.par td.dif{background:#FBF0F5;color:var(--ac);font-weight:500}
+.par td.war{background:#F4F8FA;color:var(--md)}
+.par td.eq{color:var(--tx)}
+.par td.foco,.par th.foco{box-shadow:inset 2px 0 0 var(--p),inset -2px 0 0 var(--p)}
+.par th.foco{color:var(--dk);font-weight:500}
+.legend label{display:inline-flex;align-items:center;gap:5px;cursor:pointer;user-select:none}
+.legend label input{margin:0;cursor:pointer}
+.legend label:hover{color:var(--dk)}
+.par .arrowcell{text-align:center;color:var(--ac);font-weight:500}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--tx2);margin-bottom:12px;align-items:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+/* ---------- dashboard ---------- */
+.dashgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.dbox{border:1px solid var(--bd);border-radius:4px;padding:14px}
+.dbox h4{font-size:13px;margin-bottom:4px}
+.dbox .dh{font-size:11.5px;color:var(--tx2);margin-bottom:10px}
+.dbox .cvbox{height:210px;position:relative}
+.dbox.wide{grid-column:1/-1}
+.bars{display:flex;flex-direction:column;gap:7px}
+.barrow{display:grid;grid-template-columns:190px 1fr 62px;gap:9px;align-items:center;font-size:12px}
+.barrow .track{background:#EEF3F7;border-radius:2px;height:14px;overflow:hidden}
+.barrow .fill{height:100%;background:var(--p)}
+.barrow .fill.low{background:var(--ac)}
+.barrow .fill.mid{background:var(--ac2)}
+.barrow .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--tx2)}
+.mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px}
+.mini .m{border:1px solid var(--bd);border-radius:3px;padding:9px 11px}
+.mini .m b{display:block;font-family:'Rufina',Georgia,serif;font-size:19px;color:var(--dk)}
+.mini .m span{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--tx2)}
+.mini .m.warn b{color:var(--ac)}
+.ovl{position:fixed;inset:0;background:rgba(0,26,45,.55);display:none;align-items:flex-start;justify-content:center;z-index:900;padding:28px 16px;overflow:auto}
+.ovl.on{display:flex}
+.sheet{background:#fff;border-radius:5px;max-width:1180px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.sheet-h{background:var(--p);color:#fff;padding:14px 20px;border-radius:5px 5px 0 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:2}
+.sheet-h h3{color:#fff;font-size:17px;margin:0}
+.sheet-h .sid{font-family:'Roboto Mono',Consolas,monospace;font-size:12px;opacity:.92}
+.sheet-h .sx{margin-left:auto;display:flex;gap:8px}
+.sheet-h button{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:3px;padding:5px 12px;cursor:pointer;font-size:12px}
+.sheet-h button:hover{background:rgba(255,255,255,.28)}
+.sheet-b{padding:18px 20px 24px}
+.sheet-b h4{font-size:13px;margin:18px 0 8px;color:var(--dk)}
+.sheet-b h4:first-child{margin-top:0}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:9px;margin-bottom:6px}
+.kv .i{border:1px solid var(--bd);border-radius:3px;padding:8px 10px}
+.kv .i span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--tx2)}
+.kv .i b{font-weight:500;font-size:12.5px}
+.dblhint{font-size:11.5px;color:var(--tx2);margin-bottom:10px}
+.dblhint b{color:var(--dk);font-weight:500}
+tbody tr{cursor:default}
+tbody tr.pick{cursor:pointer}
+footer{border-top:1px solid var(--bd);margin-top:30px;padding-top:14px;font-size:11.5px;color:var(--tx2)}
+.money-off{font-size:0!important;letter-spacing:0}
+.money-off::before{content:'oculto';font-size:11px;font-weight:300;color:#8A8A8A;letter-spacing:.04em;font-style:italic}
+.par td.money-off::before{font-size:10px}
+.swsal{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx);cursor:pointer;user-select:none;
+  border:1px solid var(--bd);border-radius:3px;padding:6px 11px;background:#fff}
+.swsal:hover{border-color:var(--p)}
+.swsal input{margin:0;cursor:pointer}
+.swsal.on{border-color:var(--ac);color:var(--ac);background:#FBF2F6}
+#printHead .pv{font-size:9.5px;color:#7D0041;margin-top:3px;font-weight:500}
+#printHead{display:none}
+@media print{
+  @page{size:A4 landscape;margin:9mm}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{background:#fff;font-size:10px}
+  .topbar,.tabs,.tbar,.legend,.btnrow,.ovl,footer,.dz-grid,#mapCard,.dashgrid canvas{display:none!important}
+  .card{display:none!important}
+  .wrap{max-width:none;padding:0}
+  #printHead{display:block!important;border-bottom:2px solid #0083CA;padding-bottom:7px;margin-bottom:11px}
+  #printHead h1{font-size:14px;color:#003C64;margin:0}
+  #printHead .ph{font-size:9.5px;color:#646464;margin-top:3px}
+  #printHead .pf{font-size:9.5px;color:#333;margin-top:4px}
+  #printHead .pf b{color:#003C64}
+  .pane{display:none!important;border:none!important;padding:0!important}
+  body.pr-aba .pane.on{display:block!important}
+  body.pr-tudo .pane{display:block!important;page-break-before:always}
+  body.pr-tudo #out .card{display:block!important;border:none!important;padding:0!important}
+  body.pr-tudo .kpis{display:grid!important}
+  .note{page-break-inside:avoid}
+  .par{page-break-inside:avoid;break-inside:avoid;margin-bottom:6px;border:1px solid #AAA!important}
+  .par>div{overflow:visible!important}
+  .par table{font-size:9px}
+  .par thead th{font-size:8px;padding:3px 5px}
+  .par tbody td{padding:4px 5px}
+  .par-h{padding:5px 8px}
+  .par-h .pnm{font-size:11px}
+  .par-h .pid{font-size:8.5px}
+  .src{width:74px;font-size:8px}
+  .srcsub{font-size:7px}
+  .b{font-size:8px;padding:1px 5px}
+  .tscroll{max-height:none!important;overflow:visible!important;border:1px solid #CCC}
+  table{font-size:9px}
+  thead th{position:static!important;padding:4px 6px;font-size:8.5px}
+  tbody td{padding:3px 6px}
+  tbody tr{page-break-inside:avoid}
+  .mini .m b{font-size:14px}
+  .kpi .n{font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Verificador de Integridade de Dados — Sonnet x ADP</h1>
+    <div class="sub">Sonova do Brasil · Departamento Pessoal · Auditoria de cadastro e remuneração</div>
+  </div>
+  <div class="ver">v2.9</div>
+</div>
+
+<div class="wrap">
+
+  <div id="printHead">
+    <h1 id="phTit"></h1>
+    <div class="ph" id="phSub"></div>
+    <div class="pf" id="phFil"></div>
+    <div class="pv" id="phVis"></div>
+  </div>
+
+
+  <!-- ============ 1. ARQUIVOS ============ -->
+  <div class="card">
+    <h2>1. Arquivos</h2>
+    <div class="hint">Arraste ou clique. Aceita .xlsx, .xlsm, .xls, .csv e .txt. O CSV do ADP é lido em Latin-1 com separador ponto e vírgula automaticamente.</div>
+    <div class="dz-grid">
+      <label class="dz" id="dzEC">
+        <span class="tag">Sonnet · EC</span>
+        <h3>Employee Export (EC)</h3>
+        <p>Cadastro: nascimento, admissão, chefia, e-mail, functional area.</p>
+        <div class="st">Nenhum arquivo carregado</div>
+        <input type="file" id="fEC" accept=".xlsx,.xlsm,.xls,.csv,.txt">
+      </label>
+      <label class="dz" id="dzMON">
+        <span class="tag">Sonnet · Monthly</span>
+        <h3>Compensation Monthly</h3>
+        <p>Base Amount Pro-Rated, cargo, functional area. Pode ser substituído pelo Kaizen.</p>
+        <div class="st">Nenhum arquivo carregado</div>
+        <input type="file" id="fMON" accept=".xlsx,.xlsm,.xls,.csv,.txt">
+      </label>
+      <label class="dz" id="dzKZN">
+        <span class="tag">Sonnet · Kaizen</span>
+        <h3>Kaizen (Base Pay)</h3>
+        <p>Alternativa ao Monthly. Pay components resolvidos pelo rótulo, não pela posição.</p>
+        <div class="st">Nenhum arquivo carregado</div>
+        <input type="file" id="fKZN" accept=".xlsx,.xlsm,.xls,.csv,.txt">
+      </label>
+      <label class="dz" id="dzADP">
+        <span class="tag">ADP</span>
+        <h3>Extração ADP</h3>
+        <p>Base legal brasileira: matrícula, salário mensal, chefia imediata.</p>
+        <div class="st">Nenhum arquivo carregado</div>
+        <input type="file" id="fADP" accept=".xlsx,.xlsm,.xls,.csv,.txt">
+      </label>
+    </div>
+    <div id="loadErr"></div>
+  </div>
+
+  <!-- ============ 2. MAPEAMENTO ============ -->
+  <div class="card" id="mapCard" style="display:none">
+    <h2>2. Mapeamento de colunas</h2>
+    <div class="hint">Detectado automaticamente pelo nome do cabeçalho. Ajuste se a extração mudar de layout — a escolha fica gravada para as próximas execuções.</div>
+    <details open><summary>Sonnet · EC</summary><div id="mapEC"></div></details>
+    <details><summary>Sonnet · Monthly</summary><div id="mapMONR"></div></details>
+    <details><summary>Sonnet · Kaizen</summary><div id="mapKZN"></div></details>
+    <details><summary>ADP</summary><div id="mapADP"></div></details>
+  </div>
+
+  <!-- ============ 3. REGRAS ============ -->
+  <div class="card">
+    <h2>3. Regras de comparação</h2>
+    <div class="hint">Validado nesta base: Base Amount Pro-Rated dividido por 13 resulta em valor inteiro em 9 de 9 registros; por 12 não fecha em nenhum.</div>
+    <div class="cfg">
+      <div class="fld">
+        <label for="cMult">Multiplicador salarial (13º)</label>
+        <input type="number" id="cMult" value="13" step="0.5" min="1">
+      </div>
+      <div class="fld">
+        <label for="cTolAbs">Tolerância salarial (R$)</label>
+        <input type="number" id="cTolAbs" value="1" step="0.01" min="0">
+      </div>
+      <div class="fld">
+        <label for="cTolPct">Tolerância salarial (%)</label>
+        <input type="number" id="cTolPct" value="0" step="0.1" min="0">
+      </div>
+      <div class="fld">
+        <label for="cSim">Similaridade mínima de cargo</label>
+        <input type="number" id="cSim" value="0.80" step="0.05" min="0" max="1">
+      </div>
+      <div class="fld">
+        <label for="cMask">Salário mascarado até (R$)</label>
+        <input type="number" id="cMask" value="1" step="0.01" min="0">
+      </div>
+      <div class="fld chk"><input type="checkbox" id="cAtivos" checked><label for="cAtivos" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--tx)">Considerar apenas ativos no Sonnet</label></div>
+      <div class="fld chk"><input type="checkbox" id="cDeslig" checked><label for="cDeslig" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--tx)">Excluir desligados no ADP</label></div>
+      <div class="fld chk"><input type="checkbox" id="cVazio"><label for="cVazio" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--tx)">Tratar campo vazio como divergência</label></div>
+      <div class="fld" style="grid-column:span 2">
+        <label for="cForaFolha">Employment Type que não entra na folha ADP</label>
+        <input type="text" id="cForaFolha" placeholder="ex: Intern, Apprentice, Contingent Worker, Expatriate">
+      </div>
+      <div class="fld">
+        <label for="cFonteRem">Fonte de remuneração</label>
+        <select id="cFonteRem">
+          <option value="auto">Automático — usa o que estiver carregado</option>
+          <option value="mon">Somente Monthly</option>
+          <option value="kzn">Somente Kaizen</option>
+          <option value="monkzn">Monthly com precedência, Kaizen completa</option>
+          <option value="kznmon">Kaizen com precedência, Monthly completa</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label for="cExigeMon">Exigir remuneração no Sonnet</label>
+        <select id="cExigeMon">
+          <option value="auto">Automático — detecta a cobertura</option>
+          <option value="sempre">Exigir para todo colaborador do EC</option>
+          <option value="nunca">Não cobrar</option>
+        </select>
+      </div>
+    </div>
+    <h2 style="font-size:15px;margin:22px 0 4px">Correção salarial em massa no Sonnet</h2>
+    <div class="hint">O salário do ADP é a referência. Gera a aba PayComponentRecurringImportTemp já preenchida, com o valor anual (mensal do ADP multiplicado pelo 13º) repetido nos dois códigos de pay component.</div>
+    <div class="cfg">
+      <div class="fld"><label for="cVigencia">Event Date (vigência)</label><input type="date" id="cVigencia"></div>
+      <div class="fld"><label for="cMoeda">Currency</label><input type="text" id="cMoeda" value="BRL"></div>
+      <div class="fld"><label for="cFreq">Frequency</label><select id="cFreq"><option>ANN</option><option>MON</option></select></div>
+      <div class="fld"><label for="cPC100">Pay Component — Base Salary 100%</label><input type="text" id="cPC100" value="1000"></div>
+      <div class="fld"><label for="cPCPro">Pay Component — Base Salary Pro-Rated</label><input type="text" id="cPCPro" value="3000"></div>
+      <div class="fld"><label for="cEscopo">Linhas a gerar</label><select id="cEscopo">
+        <option value="dif">Apenas divergências confirmadas</option>
+        <option value="difsem">Divergências e quem não tem remuneração no Sonnet</option>
+        <option value="todos">Todos com salário no ADP</option></select></div>
+    </div>
+
+    <div class="btnrow">
+      <button class="btn btn-go" id="btnRun" disabled>Executar auditoria</button>
+      <button class="btn btn-p" id="btnXls" disabled>Baixar relatório Excel (8 abas)</button>
+      <button class="btn btn-s" id="btnMd" disabled>Copiar resumo em Markdown</button>
+      <label class="swsal" id="swSalL"><input type="checkbox" id="swSal">Ocultar salários</label>
+      <button class="btn btn-a" id="btnPrintAba" disabled>Imprimir aba atual</button>
+      <button class="btn btn-a" id="btnPrint" disabled>Imprimir relatório completo</button>
+      <button class="btn btn-d" id="btnReset">Limpar tudo</button>
+      <span id="runInfo" style="font-size:12px;color:var(--tx2)"></span>
+    </div>
+  </div>
+
+  <!-- ============ 4. RESULTADO ============ -->
+  <div id="out" style="display:none">
+    <div class="card">
+      <h2>Painel de integridade</h2>
+      <div class="hint" id="runStamp"></div>
+      <div class="kpis" id="kpis"></div>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+    <div id="panes"></div>
+  </div>
+
+  <div class="ovl" id="ovl"><div class="sheet">
+    <div class="sheet-h">
+      <h3 id="ovlNome"></h3><span class="sid" id="ovlId"></span>
+      <span class="sx"><button id="ovlMd">Copiar ficha</button><button id="ovlX">Fechar</button></span>
+    </div>
+    <div class="sheet-b" id="ovlBody"></div>
+  </div></div>
+
+  <footer>
+    Ferramenta interna de auditoria. Processamento 100% local no navegador — nenhum dado é transmitido. Histórico de execuções gravado apenas nesta máquina/navegador.
+    <br>Anderson Souza · Sonova do Brasil
+  </footer>
+</div>
+
+<script>
+/* ==========================================================================
+   ESTADO
+   ========================================================================== */
+var DATA = { EC:null, MONR:null, KZN:null, MON:null, ADP:null };
+var MAP  = { EC:{}, MONR:{}, KZN:{}, ADP:{},
+             MON:{id:'id',status:'status',first:'first',last:'last',farea:'farea',pos:'pos',
+                  prorated:'prorated',base100:'base100',fte:'fte',cur:'cur',hire:'hire',etype:'etype'} };
+var RES  = null;
+var CHART = null;
+var CH = {};
+var SUPORTA_ESTILO = false;
+
+var LS_MAP  = 'cruz_sonnet_adp_map_v1';
+var LS_CFG  = 'cruz_sonnet_adp_cfg_v1';
+var LS_HIST = 'cruz_sonnet_adp_hist_v1';
+var MEM = {};
+
+function lsGet(k){ try{ var v=localStorage.getItem(k); return v!=null?v:(MEM[k]||null);}catch(e){ return MEM[k]||null; } }
+function lsSet(k,v){ MEM[k]=v; try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ delete MEM[k]; try{ localStorage.removeItem(k); }catch(e){} }
+
+/* ==========================================================================
+   DICIONÁRIO DE CAMPOS
+   ========================================================================== */
+var FIELDS = {
+  EC: [
+    {k:'id',      lbl:'Sonova ID',                 req:true,  al:['sonova id','sonovaid','id sonova','employee id']},
+    {k:'status',  lbl:'Employee Status',           req:false, al:['employee status','employee status (picklist label)','status']},
+    {k:'first',   lbl:'First Name',                req:false, al:['first name','nome']},
+    {k:'last',    lbl:'Last Name',                 req:false, al:['last name','sobrenome']},
+    {k:'dob',     lbl:'Date Of Birth',             req:true,  al:['date of birth','dob','data de nascimento','birth date']},
+    {k:'hire',    lbl:'Employment Details Hire Date', req:true, al:['employment details hire date','hire date','data de admissao']},
+    {k:'mgr',     lbl:'Line Manager',              req:true,  al:['line manager','manager','gestor']},
+    {k:'mgrid',   lbl:'Manager User Sys ID',       req:true,  al:['manager user sys id','manager user sysid','manager id']},
+    {k:'mail',    lbl:'AD Email Address',          req:true,  al:['business  active directory information email address','business active directory information email address','email address','e-mail','email']},
+    {k:'farea',   lbl:'Functional Area',           req:true,  al:['functional area','functional area (functional area id)']},
+    {k:'pos',     lbl:'Position Name',             req:false, al:['position name','cargo']},
+    {k:'etype',   lbl:'Employment Type (legacy)',  req:true,  al:['employment details employment type (legacy)','employment type (legacy)','employment details employment type','employment type']},
+    {k:'gcid',    lbl:'Group Company ID',          req:false, al:['group company id','group company']}
+  ],
+  MONR: [
+    {k:'id',      lbl:'Sonova ID',                 req:true,  al:['sonova id','sonovaid','id sonova']},
+    {k:'status',  lbl:'Employee Status',           req:false, al:['employee status (picklist label)','employee status','status']},
+    {k:'first',   lbl:'First Name',                req:false, al:['first name']},
+    {k:'last',    lbl:'Last Name',                 req:false, al:['last name']},
+    {k:'farea',   lbl:'Functional Area ID',        req:true,  al:['functional area (functional area id)','functional area id','functional area']},
+    {k:'pos',     lbl:'Position Name',             req:true,  al:['position name','cargo']},
+    {k:'prorated',lbl:'Base Amount Pro-Rated',     req:true,  al:['base amount pro-rated','base amount prorated','base amount pro rated']},
+    {k:'base100', lbl:'Base Salary 100%',          req:false, al:['base salary 100%','base salary 100']},
+    {k:'fte',     lbl:'FTE',                       req:false, al:['fte']},
+    {k:'cur',     lbl:'Currency',                  req:false, al:['currency','moeda']},
+    {k:'hire',    lbl:'Hire Date',                 req:false, al:['hire date','employment details hire date']},
+    {k:'etype',   lbl:'Employment Type (legacy)',   req:false, al:['employment type (legacy) (picklist label)','employment type (legacy)','employment type']}
+  ],
+  MON: [
+    {k:'id',lbl:'id',req:true,al:['id']},{k:'status',lbl:'status',req:false,al:['status']},
+    {k:'first',lbl:'first',req:false,al:['first']},{k:'last',lbl:'last',req:false,al:['last']},
+    {k:'farea',lbl:'farea',req:false,al:['farea']},{k:'pos',lbl:'pos',req:false,al:['pos']},
+    {k:'prorated',lbl:'prorated',req:false,al:['prorated']},{k:'base100',lbl:'base100',req:false,al:['base100']},
+    {k:'fte',lbl:'fte',req:false,al:['fte']},{k:'cur',lbl:'cur',req:false,al:['cur']},
+    {k:'hire',lbl:'hire',req:false,al:['hire']},{k:'etype',lbl:'etype',req:false,al:['etype']}
+  ],
+  KZN: [
+    {k:'id',      lbl:'Sonova ID',                 req:true,  al:['sonova id','sonovaid','id sonova']},
+    {k:'first',   lbl:'First Name',                req:false, al:['first name']},
+    {k:'last',    lbl:'Last Name',                 req:false, al:['last name']},
+    {k:'etype',   lbl:'Employment Type',           req:false, al:['employment type (picklist label)','employment type','employment type (legacy) (picklist label)']},
+    {k:'farea',   lbl:'Functional Area ID',        req:true,  al:['functional area (functional area id)','functional area id','functional area']},
+    {k:'pos',     lbl:'Position Title',            req:true,  al:['position title','position name','role name','cargo']},
+    {k:'prorated',lbl:'Amount — Base Salary Pro-Rated', req:true, al:['amount (3)','base amount pro-rated','amount']},
+    {k:'base100', lbl:'Amount — Base Salary 100%', req:false, al:['amount','base salary 100%']},
+    {k:'fte',     lbl:'FTE',                       req:false, al:['fte']},
+    {k:'cur',     lbl:'Currency',                  req:false, al:['currency','moeda']},
+    {k:'hire',    lbl:'Effective Start Date (Base Pay)', req:false, al:['effective start date (base pay)','effective start date','hire date']},
+    {k:'status',  lbl:'Employee Status',           req:false, al:['employee status (picklist label)','employee status','status']},
+    {k:'gcid',    lbl:'Group Company ID',          req:false, al:['group company id','group company']}
+  ],
+  ADP: [
+    {k:'id',      lbl:'ID SONOVA',                 req:true,  al:['id sonova','sonova id','id_sonova']},
+    {k:'matr',    lbl:'Matrícula',                 req:false, al:['matricula','matrícula']},
+    {k:'filial',  lbl:'Código - Filial',           req:false, al:['codigo - filial','código - filial','filial','cod filial']},
+    {k:'nome',    lbl:'Nome Empregado',            req:false, al:['nome empregado','nome do empregado','nome']},
+    {k:'cpf',     lbl:'CPF Empregado',             req:false, al:['cpf empregado','cpf']},
+    {k:'dob',     lbl:'Data de Nascimento',        req:true,  al:['data de nascimento','data nascimento','nascimento']},
+    {k:'hire',    lbl:'Data da Admissão',          req:true,  al:['data da admissao','data da admissão','data de admissao','admissao']},
+    {k:'mail',    lbl:'E-Mail',                    req:true,  al:['e-mail','email','e mail']},
+    {k:'farea',   lbl:'Centro de custo Suíça/Novo',req:true,  al:['centro de custo suica/novo','centro de custo suíça/novo','centro de custo suica novo','centro de custo suiça']},
+    {k:'sal',     lbl:'Salário Mensal',            req:true,  al:['salario mensal','salário mensal','salario']},
+    {k:'func',    lbl:'Função - Nome',             req:true,  al:['funcao - nome','função - nome','funcao nome','cargo']},
+    {k:'chefe',   lbl:'Chefia Imediata - Nome',    req:true,  al:['chefia imediata - nome','chefia imediata nome','chefia imediata']},
+    {k:'chefeM',  lbl:'Chefia Imediata - Matrícula',req:false,al:['chefia imediata - matricula','chefia imediata - matrícula']},
+    {k:'chefeE',  lbl:'Chefia Imediata - Cód Estab',req:false,al:['chefia imediata - cod estab','chefia imediata - cód estab']},
+    {k:'sit',     lbl:'Situação do Empregado',     req:false, al:['situacao do empregado','situação do empregado','situacao']},
+    {k:'demis',   lbl:'Data de Desligamento',      req:false, al:['data de desligamento','data desligamento']},
+    {k:'vinculo', lbl:'Vínculo Empregatício - Nome',req:false, al:['vinculo empregaticio - nome','vínculo empregatício - nome','vinculo empregaticio']},
+    {k:'categ',   lbl:'Categoria Profissional - Nome',req:false,al:['categoria profissional - nome','categoria profissional']},
+    {k:'cnpj',    lbl:'CNPJ',                      req:false, al:['cnpj']}
+  ]
+};
+
+/* ==========================================================================
+   NORMALIZADORES
+   ========================================================================== */
+function p2(n){ return (n<10?'0':'')+n; }
+function stripAcc(s){ return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function normHdr(s){ return stripAcc(String(s||'')).toLowerCase().replace(/\s+/g,' ').trim(); }
+
+function normDate(v){
+  if(v===null||v===undefined||v==='') return '';
+  if(v instanceof Date && !isNaN(v)) return v.getUTCFullYear()+'-'+p2(v.getUTCMonth()+1)+'-'+p2(v.getUTCDate());
+  if(typeof v==='number'){
+    if(v>1 && v<80000 && typeof XLSX!=='undefined' && XLSX.SSF){
+      var d=XLSX.SSF.parse_date_code(v);
+      if(d && d.y) return d.y+'-'+p2(d.m)+'-'+p2(d.d);
+    }
+    return String(v);
+  }
+  var s=String(v).trim();
+  if(!s) return '';
+  var m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(m){ var y=+m[3]; if(y<100) y+=(y<50?2000:1900); return y+'-'+p2(+m[2])+'-'+p2(+m[1]); }
+  m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return m[1]+'-'+p2(+m[2])+'-'+p2(+m[3]);
+  return s;
+}
+function fmtDateBR(iso){
+  if(!iso) return '';
+  var m=String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? m[3]+'/'+m[2]+'/'+m[1] : String(iso);
+}
+function normMoney(v){
+  if(v===null||v===undefined||v==='') return null;
+  if(typeof v==='number') return isNaN(v)?null:v;
+  var s=String(v).trim().replace(/R\$/gi,'').replace(/[\s\u00A0]/g,'');
+  if(!s) return null;
+  var neg=/^\(.*\)$/.test(s); if(neg) s=s.slice(1,-1);
+  if(/,\d{1,2}$/.test(s))       s=s.replace(/\./g,'').replace(',','.');
+  else if(/\.\d{1,2}$/.test(s)) s=s.replace(/,/g,'');
+  else                          s=s.replace(/[.,]/g,'');
+  var n=parseFloat(s);
+  if(isNaN(n)) return null;
+  return neg?-n:n;
+}
+function fmtMoney(n){
+  if(n===null||n===undefined||isNaN(n)) return '';
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function normId(v){
+  if(v===null||v===undefined) return '';
+  var s=String(v).trim();
+  if(/^\d+\.0+$/.test(s)) s=s.split('.')[0];
+  return s.replace(/^0+(?=\d)/,'');
+}
+function normMail(v){ return String(v||'').trim().toLowerCase(); }
+function normFArea(v){
+  var s=stripAcc(String(v||'')).toUpperCase().trim();
+  if(!s) return '';
+  var m=s.match(/^([A-Z]{2,5}\s?\d{2,5})/);
+  if(m) return m[1].replace(/\s/g,'');
+  return s.split('-')[0].trim();
+}
+function normTxt(v){
+  return stripAcc(String(v||'')).toUpperCase().replace(/[().,;:\/\\]/g,' ').replace(/\s+/g,' ').trim();
+}
+var STOP={'DA':1,'DE':1,'DO':1,'DAS':1,'DOS':1,'E':1,'DI':1,'DEL':1,'JUNIOR':1,'JR':1,'FILHO':1,'NETO':1,'SOBRINHO':1,'SEGUNDO':1,'NETA':1,'FILHA':1};
+function nameTokens(v){
+  var t=normTxt(v);
+  if(!t) return [];
+  return t.split(' ').filter(function(x){ return x.length>1 && !STOP[x]; });
+}
+function tokenKey(v){ return nameTokens(v).slice().sort().join(' '); }
+function tokensMatch(a,b){
+  if(!a.length||!b.length) return false;
+  var A={},i;
+  for(i=0;i<a.length;i++) A[a[i]]=1;
+  var inter=0,B={};
+  for(i=0;i<b.length;i++){ B[b[i]]=1; if(A[b[i]]) inter++; }
+  var na=Object.keys(A).length, nb=Object.keys(B).length;
+  return inter===Math.min(na,nb) && inter>=2;
+}
+function lev(a,b){
+  if(a===b) return 0;
+  var m=a.length,n=b.length;
+  if(!m) return n; if(!n) return m;
+  var prev=new Array(n+1),cur=new Array(n+1),i,j;
+  for(j=0;j<=n;j++) prev[j]=j;
+  for(i=1;i<=m;i++){
+    cur[0]=i;
+    for(j=1;j<=n;j++){
+      cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a.charAt(i-1)===b.charAt(j-1)?0:1));
+    }
+    for(j=0;j<=n;j++) prev[j]=cur[j];
+  }
+  return prev[n];
+}
+function simRatio(a,b){
+  a=normTxt(a); b=normTxt(b);
+  if(!a&&!b) return 1;
+  if(!a||!b) return 0;
+  if(a===b) return 1;
+  var d=lev(a,b), mx=Math.max(a.length,b.length);
+  var charSim=1-d/mx;
+  var ta=nameTokens(a), tb=nameTokens(b), A={},inter=0,i;
+  for(i=0;i<ta.length;i++) A[ta[i]]=1;
+  var seen={};
+  for(i=0;i<tb.length;i++){ if(A[tb[i]] && !seen[tb[i]]){ inter++; seen[tb[i]]=1; } }
+  var tokSim = (ta.length+tb.length) ? (2*inter)/(ta.length+tb.length) : 0;
+  return Math.max(charSim,tokSim);
+}
+
+/* ==========================================================================
+   LEITURA DE ARQUIVOS
+   ========================================================================== */
+function decodeBuf(buf){
+  var bytes=new Uint8Array(buf);
+  var txt;
+  try{ txt=new TextDecoder('utf-8',{fatal:false}).decode(bytes); }catch(e){ txt=null; }
+  if(txt===null || txt.indexOf('\uFFFD')>=0){
+    try{ txt=new TextDecoder('windows-1252').decode(bytes); }
+    catch(e2){ txt=''; for(var i=0;i<bytes.length;i++) txt+=String.fromCharCode(bytes[i]); }
+  }
+  return txt.replace(/^\uFEFF/,'');
+}
+function detectSep(line){
+  var c={';':0,',':0,'\t':0,'|':0},i,inQ=false;
+  for(i=0;i<line.length;i++){
+    var ch=line.charAt(i);
+    if(ch==='"') inQ=!inQ;
+    else if(!inQ && c[ch]!==undefined) c[ch]++;
+  }
+  var best=';',bv=-1;
+  for(var k in c){ if(c[k]>bv){ bv=c[k]; best=k; } }
+  return bv>0?best:';';
+}
+function parseCSV(txt){
+  var sep=detectSep(txt.split(/\r?\n/)[0]||'');
+  var rows=[],row=[],cur='',inQ=false,i=0,n=txt.length;
+  while(i<n){
+    var ch=txt.charAt(i);
+    if(inQ){
+      if(ch==='"'){ if(txt.charAt(i+1)==='"'){ cur+='"'; i++; } else inQ=false; }
+      else cur+=ch;
+    }else{
+      if(ch==='"') inQ=true;
+      else if(ch===sep){ row.push(cur); cur=''; }
+      else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else if(ch==='\r'){ /* skip */ }
+      else cur+=ch;
+    }
+    i++;
+  }
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function aoaToObjs(aoa){
+  if(!aoa || !aoa.length) return {cols:[],rows:[]};
+  var hi=0,i,j;
+  for(i=0;i<Math.min(aoa.length,15);i++){
+    var filled=0;
+    for(j=0;j<aoa[i].length;j++){ var v=aoa[i][j]; if(v!==null&&v!==undefined&&String(v).trim()!=='') filled++; }
+    if(filled>=3){ hi=i; break; }
+  }
+  var hdr=aoa[hi].map(function(h,ix){ var s=String(h===null||h===undefined?'':h).trim(); return s||('COL'+(ix+1)); });
+  var seen={},cols=hdr.map(function(h){ if(seen[h]){ seen[h]++; return h+'_'+seen[h]; } seen[h]=1; return h; });
+  var rows=[];
+  for(i=hi+1;i<aoa.length;i++){
+    var r=aoa[i]; if(!r) continue;
+    var any=false,o={};
+    for(j=0;j<cols.length;j++){
+      var val=r[j]; if(val===undefined) val='';
+      if(val!==null && String(val).trim()!=='') any=true;
+      o[cols[j]]=val;
+    }
+    if(any) rows.push(o);
+  }
+  return {cols:cols,rows:rows};
+}
+function readFile(file){
+  return new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onerror=function(){ rej(new Error('Falha ao ler '+file.name)); };
+    fr.onload=function(){
+      try{
+        var ext=(file.name.split('.').pop()||'').toLowerCase();
+        var aoa;
+        if(ext==='csv'||ext==='txt'){
+          aoa=parseCSV(decodeBuf(fr.result));
+        }else{
+          if(typeof XLSX==='undefined') throw new Error('Biblioteca de leitura de Excel indisponível. Verifique a conexão de rede e recarregue a página.');
+          var wb=XLSX.read(new Uint8Array(fr.result),{type:'array',raw:true});
+          var ws=wb.Sheets[wb.SheetNames[0]];
+          aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:''});
+        }
+        var d=aoaToObjs(aoa);
+        d.name=file.name; d.size=file.size;
+        res(d);
+      }catch(e){ rej(e); }
+    };
+    fr.readAsArrayBuffer(file);
+  });
+}
+
+/* ==========================================================================
+   MAPEAMENTO AUTOMÁTICO
+   ========================================================================== */
+function detectarPayComponents(d){
+  if(!d) return {};
+  var pares={},i;
+  d.cols.forEach(function(c){
+    var n=normHdr(c);
+    var m=n.match(/^pay component \(label\)(?:\s*\((\d+)\))?$/);
+    if(!m) return;
+    var suf=m[1]?(' ('+m[1]+')'):'';
+    var alvo=normHdr('amount'+suf);
+    var colAmt='';
+    for(i=0;i<d.cols.length;i++){ if(normHdr(d.cols[i])===alvo){ colAmt=d.cols[i]; break; } }
+    if(!colAmt) return;
+    var cont={},j;
+    for(j=0;j<d.rows.length && j<200;j++){
+      var v=String(d.rows[j][c]===undefined?'':d.rows[j][c]).trim();
+      if(v) cont[v]=(cont[v]||0)+1;
+    }
+    var melhor='',qtd=0;
+    Object.keys(cont).forEach(function(k){ if(cont[k]>qtd){ qtd=cont[k]; melhor=k; } });
+    if(melhor) pares[normTxt(melhor)]=colAmt;
+  });
+  return pares;
+}
+function autoMap(which){
+  var d=DATA[which]; if(!d) return;
+  var saved={};
+  try{ saved=(JSON.parse(lsGet(LS_MAP)||'{}')[which])||{}; }catch(e){}
+  var normCols=d.cols.map(function(c){ return normHdr(c); });
+  var m={};
+  FIELDS[which].forEach(function(f){
+    if(saved[f.k] && d.cols.indexOf(saved[f.k])>=0){ m[f.k]=saved[f.k]; return; }
+    var found='',i,j;
+    for(j=0;j<f.al.length && !found;j++){
+      var target=normHdr(f.al[j]);
+      for(i=0;i<normCols.length;i++){ if(normCols[i]===target){ found=d.cols[i]; break; } }
+    }
+    if(!found){
+      for(j=0;j<f.al.length && !found;j++){
+        var t2=normHdr(f.al[j]);
+        for(i=0;i<normCols.length;i++){ if(normCols[i].indexOf(t2)>=0 || t2.indexOf(normCols[i])>=0){ found=d.cols[i]; break; } }
+      }
+    }
+    m[f.k]=found||'';
+  });
+  if(which==='KZN'){
+    var pc=detectarPayComponents(d);
+    var achaPC=function(alvo){ var ks=Object.keys(pc),i2; for(i2=0;i2<ks.length;i2++){ if(ks[i2]===normTxt(alvo)) return pc[ks[i2]]; } return ''; };
+    var cPro=achaPC('Base Salary Pro-Rated'), c100=achaPC('Base Salary 100%');
+    if(cPro && !(saved.prorated&&d.cols.indexOf(saved.prorated)>=0)) m.prorated=cPro;
+    if(c100 && !(saved.base100 &&d.cols.indexOf(saved.base100)>=0))  m.base100=c100;
+    d._pc=pc;
+  }
+  MAP[which]=m;
+}
+function saveMap(){
+  var all={};
+  try{ all=JSON.parse(lsGet(LS_MAP)||'{}'); }catch(e){}
+  all.EC=MAP.EC; all.MONR=MAP.MONR; all.KZN=MAP.KZN; all.ADP=MAP.ADP;
+  lsSet(LS_MAP,JSON.stringify(all));
+}
+function renderMap(){
+  ['EC','MONR','KZN','ADP'].forEach(function(w){
+    var box=document.getElementById('map'+w);
+    if(!DATA[w]){ box.innerHTML='<div class="empty">Arquivo não carregado.</div>'; return; }
+    var h='';
+    FIELDS[w].forEach(function(f){
+      var sel=MAP[w][f.k]||'';
+      var opts='<option value="">— não mapeado —</option>';
+      DATA[w].cols.forEach(function(c){ opts+='<option value="'+esc(c)+'"'+(c===sel?' selected':'')+'>'+esc(c)+'</option>'; });
+      var st = sel ? '<span class="mapok">ok</span>' : (f.req?'<span class="mapmiss">obrigatório</span>':'<span style="font-size:11px;color:#8A8A8A">opcional</span>');
+      h+='<div class="maprow"><span>'+esc(f.lbl)+(f.req?' *':'')+'</span><select data-w="'+w+'" data-k="'+f.k+'">'+opts+'</select>'+st+'</div>';
+    });
+    box.innerHTML=h;
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#mapCard select'),function(s){
+    s.addEventListener('change',function(){
+      MAP[this.dataset.w][this.dataset.k]=this.value;
+      saveMap(); renderMap(); checkReady();
+    });
+  });
+}
+function G(row,which,key){
+  var c=MAP[which][key];
+  if(!c) return '';
+  var v=row[c];
+  return (v===null||v===undefined)?'':v;
+}
+
+/* ==========================================================================
+   MOTOR DE AUDITORIA
+   ========================================================================== */
+function normalizarRem(rows,which,rotulo){
+  var out=[];
+  (rows||[]).forEach(function(r){
+    var id=normId(G(r,which,'id'));
+    if(!id) return;
+    out.push({id:id,status:G(r,which,'status'),first:G(r,which,'first'),last:G(r,which,'last'),
+      farea:G(r,which,'farea'),pos:G(r,which,'pos'),prorated:G(r,which,'prorated'),
+      base100:G(r,which,'base100'),fte:G(r,which,'fte'),cur:G(r,which,'cur'),
+      hire:G(r,which,'hire'),etype:G(r,which,'etype'),_src:rotulo});
+  });
+  return out;
+}
+function montarRemuneracao(){
+  var f=(document.getElementById('cFonteRem')||{}).value||'auto';
+  var temM=!!(DATA.MONR&&MAP.MONR.id), temK=!!(DATA.KZN&&MAP.KZN.id);
+  if(f==='auto') f = (temM&&temK)?'monkzn':(temK?'kzn':'mon');
+  var A=[],B=[];
+  if(f==='mon')          { A=temM?normalizarRem(DATA.MONR.rows,'MONR','Monthly'):[]; }
+  else if(f==='kzn')     { A=temK?normalizarRem(DATA.KZN.rows,'KZN','Kaizen'):[]; }
+  else if(f==='monkzn')  { A=temM?normalizarRem(DATA.MONR.rows,'MONR','Monthly'):[]; B=temK?normalizarRem(DATA.KZN.rows,'KZN','Kaizen'):[]; }
+  else                   { A=temK?normalizarRem(DATA.KZN.rows,'KZN','Kaizen'):[]; B=temM?normalizarRem(DATA.MONR.rows,'MONR','Monthly'):[]; }
+  var vis={},rows=[];
+  A.forEach(function(r){ if(vis[r.id]) return; vis[r.id]=1; rows.push(r); });
+  var compl=0;
+  B.forEach(function(r){ if(vis[r.id]) return; vis[r.id]=1; rows.push(r); compl++; });
+  DATA.MON = rows.length ? {cols:['id','status','first','last','farea','pos','prorated','base100','fte','cur','hire','etype','_src'],
+                            rows:rows,name:'remuneração consolidada',_fonte:f,_compl:compl} : null;
+  return DATA.MON;
+}
+function cfg(){
+  return {
+    mult:parseFloat(document.getElementById('cMult').value)||13,
+    tolAbs:parseFloat(document.getElementById('cTolAbs').value)||0,
+    tolPct:parseFloat(document.getElementById('cTolPct').value)||0,
+    sim:parseFloat(document.getElementById('cSim').value)||0.8,
+    mask:parseFloat(document.getElementById('cMask').value)||0,
+    ativos:document.getElementById('cAtivos').checked,
+    deslig:document.getElementById('cDeslig').checked,
+    vazio:document.getElementById('cVazio').checked,
+    exigeMon:document.getElementById('cExigeMon').value,
+    fonteRem:document.getElementById('cFonteRem').value||'auto',
+    vigencia:document.getElementById('cVigencia').value||'',
+    moeda:document.getElementById('cMoeda').value||'BRL',
+    freq:document.getElementById('cFreq').value||'ANN',
+    pc100:document.getElementById('cPC100').value||'1000',
+    pcPro:document.getElementById('cPCPro').value||'3000',
+    escopo:document.getElementById('cEscopo').value||'dif',
+    foraFolhaTxt:document.getElementById('cForaFolha').value||'',
+    foraFolha:(document.getElementById('cForaFolha').value||'').split(/[;,]/).map(function(x){return normTxt(x);}).filter(function(x){return x;})
+  };
+}
+function saveCfg(){
+  var c=cfg(); lsSet(LS_CFG,JSON.stringify(c));
+}
+function loadCfg(){
+  try{
+    var c=JSON.parse(lsGet(LS_CFG)||'null'); if(!c) return;
+    document.getElementById('cMult').value=c.mult;
+    document.getElementById('cTolAbs').value=c.tolAbs;
+    document.getElementById('cTolPct').value=c.tolPct;
+    document.getElementById('cSim').value=c.sim;
+    document.getElementById('cMask').value=c.mask;
+    document.getElementById('cAtivos').checked=!!c.ativos;
+    document.getElementById('cDeslig').checked=!!c.deslig;
+    document.getElementById('cVazio').checked=!!c.vazio;
+    document.getElementById('cForaFolha').value=c.foraFolhaTxt||'';
+    if(c.vigencia) document.getElementById('cVigencia').value=c.vigencia;
+    if(c.moeda) document.getElementById('cMoeda').value=c.moeda;
+    if(c.freq) document.getElementById('cFreq').value=c.freq;
+    if(c.pc100) document.getElementById('cPC100').value=c.pc100;
+    if(c.pcPro) document.getElementById('cPCPro').value=c.pcPro;
+    if(c.escopo) document.getElementById('cEscopo').value=c.escopo;
+    if(c.fonteRem) document.getElementById('cFonteRem').value=c.fonteRem;
+    document.getElementById('cExigeMon').value=(c.exigeMon==='sempre'||c.exigeMon==='nunca'||c.exigeMon==='auto')?c.exigeMon:'auto';
+  }catch(e){}
+}
+
+function isAtivoSonnet(row,w){
+  var s=normTxt(G(row,w,'status'));
+  if(!s) return true;
+  return s.indexOf('ACTIVE')>=0 || s.indexOf('ATIVO')>=0;
+}
+function isDesligadoADP(row){
+  var dem=normDate(G(row,'ADP','demis'));
+  if(dem) return true;
+  var s=normTxt(G(row,'ADP','sit'));
+  return s.indexOf('DEMITID')>=0 || s.indexOf('RESCIS')>=0 || s.indexOf('DESLIG')>=0;
+}
+
+/* --- resolução do ID Sonova da chefia (cascata) --- */
+function buildResolvers(adpRows,ecRows){
+  var byMatrFil={}, byMatr={}, byNome={}, mgrDir={}, empDir={};
+  adpRows.forEach(function(r){
+    var id=normId(G(r,'ADP','id')); if(!id) return;
+    var mt=normId(G(r,'ADP','matr')), fl=normId(G(r,'ADP','filial'));
+    if(mt&&fl) byMatrFil[mt+'|'+fl]=id;
+    if(mt){ if(byMatr[mt]===undefined) byMatr[mt]=id; else if(byMatr[mt]!==id) byMatr[mt]='AMBIGUO'; }
+    var nk=tokenKey(G(r,'ADP','nome'));
+    if(nk){ if(byNome[nk]===undefined) byNome[nk]=id; else if(byNome[nk]!==id) byNome[nk]='AMBIGUO'; }
+  });
+  ecRows.forEach(function(r){
+    var mk=tokenKey(G(r,'EC','mgr')), mid=normId(G(r,'EC','mgrid'));
+    if(mk&&mid){ if(mgrDir[mk]===undefined) mgrDir[mk]=mid; else if(mgrDir[mk]!==mid) mgrDir[mk]='AMBIGUO'; }
+    var ek=tokenKey(String(G(r,'EC','first'))+' '+String(G(r,'EC','last'))), eid=normId(G(r,'EC','id'));
+    if(ek&&eid){ if(empDir[ek]===undefined) empDir[ek]=eid; else if(empDir[ek]!==eid) empDir[ek]='AMBIGUO'; }
+  });
+  return {byMatrFil:byMatrFil,byMatr:byMatr,byNome:byNome,mgrDir:mgrDir,empDir:empDir};
+}
+function fuzzyDir(dir,tokens){
+  var keys=Object.keys(dir),hit=null,hits=0;
+  for(var i=0;i<keys.length;i++){
+    if(tokensMatch(tokens,keys[i].split(' '))){ hits++; hit=dir[keys[i]]; }
+  }
+  if(hits===1 && hit!=='AMBIGUO') return hit;
+  return null;
+}
+function resolveChefe(adpRow,R){
+  var nome=G(adpRow,'ADP','chefe');
+  var mt=normId(G(adpRow,'ADP','chefeM')), fl=normId(G(adpRow,'ADP','chefeE'));
+  if(!nome && !mt) return {id:'',via:'—',conf:'NENHUMA'};
+  var v;
+  if(mt&&fl){ v=R.byMatrFil[mt+'|'+fl]; if(v&&v!=='AMBIGUO') return {id:v,via:'Matrícula + estabelecimento (ADP)',conf:'ALTA'}; }
+  if(mt){ v=R.byMatr[mt]; if(v&&v!=='AMBIGUO') return {id:v,via:'Matrícula (ADP)',conf:'ALTA'}; }
+  var tk=nameTokens(nome), key=tk.slice().sort().join(' ');
+  v=R.byNome[key]; if(v&&v!=='AMBIGUO') return {id:v,via:'Nome exato na base ADP',conf:'ALTA'};
+  v=R.mgrDir[key]; if(v&&v!=='AMBIGUO') return {id:v,via:'Diretório de gestores do Sonnet',conf:'ALTA'};
+  v=R.empDir[key]; if(v&&v!=='AMBIGUO') return {id:v,via:'Nome exato no Sonnet',conf:'ALTA'};
+  v=fuzzyDir(R.byNome,tk);  if(v) return {id:v,via:'Nome aproximado na base ADP',conf:'MEDIA'};
+  v=fuzzyDir(R.mgrDir,tk);  if(v) return {id:v,via:'Diretório de gestores do Sonnet (aproximado)',conf:'MEDIA'};
+  v=fuzzyDir(R.empDir,tk);  if(v) return {id:v,via:'Nome aproximado no Sonnet',conf:'MEDIA'};
+  return {id:'',via:'Não resolvido',conf:'NENHUMA'};
+}
+
+function cmpDate(a,b){ return normDate(a)===normDate(b); }
+
+function runAudit(){
+  var c=cfg(); saveCfg();
+  montarRemuneracao();
+  var ecAll  = DATA.EC  ? DATA.EC.rows.slice()  : [];
+  var monAll = DATA.MON ? DATA.MON.rows.slice() : [];
+  var fonteRem = DATA.MON ? DATA.MON._fonte : '';
+  var adpAll = DATA.ADP ? DATA.ADP.rows.slice() : [];
+
+  var excl={ecInativo:0,monInativo:0,adpDeslig:0,semId:0};
+  var ec=[],mon=[],adp=[];
+  ecAll.forEach(function(r){
+    if(!normId(G(r,'EC','id'))){ excl.semId++; return; }
+    if(c.ativos && !isAtivoSonnet(r,'EC')){ excl.ecInativo++; return; }
+    ec.push(r);
+  });
+  monAll.forEach(function(r){
+    if(!normId(G(r,'MON','id'))){ excl.semId++; return; }
+    if(c.ativos && !isAtivoSonnet(r,'MON')){ excl.monInativo++; return; }
+    mon.push(r);
+  });
+  adpAll.forEach(function(r){
+    if(!normId(G(r,'ADP','id'))){ excl.semId++; return; }
+    if(c.deslig && isDesligadoADP(r)){ excl.adpDeslig++; return; }
+    adp.push(r);
+  });
+
+  var R=buildResolvers(adp,ec);
+
+  var ecIdx={},monIdx={},adpIdx={};
+  ec.forEach(function(r){ ecIdx[normId(G(r,'EC','id'))]=r; });
+  mon.forEach(function(r){ monIdx[normId(G(r,'MON','id'))]=r; });
+  adp.forEach(function(r){ adpIdx[normId(G(r,'ADP','id'))]=r; });
+
+  var covEcMon = ec.length ? (ec.filter(function(e){ return monIdx[normId(G(e,'EC','id'))]; }).length/ec.length) : 0;
+  var exigeMon = (c.exigeMon==='sempre') ? true : (c.exigeMon==='nunca' ? false : (mon.length>0 && covEcMon>=0.5));
+
+  var divs=[], chefia=[], adpToSonnet=[], sonnetToAdp=[];
+
+  function pushDiv(id,nome,bloco,campo,sev,vAdp,vSon,obs){
+    divs.push({id:id,nome:nome,bloco:bloco,campo:campo,sev:sev,adp:vAdp,sonnet:vSon,obs:obs||''});
+  }
+
+  /* ---------- SENTIDO 1: ADP -> SONNET ---------- */
+  adp.forEach(function(a){
+    var id=normId(G(a,'ADP','id'));
+    var nome=String(G(a,'ADP','nome')||'');
+    var e=ecIdx[id], m=monIdx[id];
+    var rec={id:id,nome:nome,cnpj:String(G(a,'ADP','cnpj')||''),matr:normId(G(a,'ADP','matr')),
+             ec:e?'Sim':'Não',mon:m?'Sim':'Não',divs:0,sev:'OK',detalhe:''};
+
+    if(!e && !m){
+      rec.sev='CRITICO'; rec.detalhe='Registro não localizado em nenhum arquivo do Sonnet';
+      pushDiv(id,nome,'Cadastro','Existência no Sonnet','CRITICO','Presente no ADP','Ausente no Sonnet','Verificar se o colaborador foi criado no Sonnet ou se o ID Sonova do ADP está incorreto');
+    }
+
+    /* ----- bloco cadastro (EC) ----- */
+    if(e){
+      var aD=normDate(G(a,'ADP','dob')), eD=normDate(G(e,'EC','dob'));
+      if(aD||eD){
+        if(!aD||!eD){ if(c.vazio) pushDiv(id,nome,'Cadastro','Data de nascimento','INFO',fmtDateBR(aD),fmtDateBR(eD),'Campo vazio em uma das bases'); }
+        else if(aD!==eD) pushDiv(id,nome,'Cadastro','Data de nascimento','ALTO',fmtDateBR(aD),fmtDateBR(eD),'');
+      }
+      var aH=normDate(G(a,'ADP','hire')), eH=normDate(G(e,'EC','hire'));
+      if(aH||eH){
+        if(!aH||!eH){ if(c.vazio) pushDiv(id,nome,'Cadastro','Data de admissão','INFO',fmtDateBR(aH),fmtDateBR(eH),'Campo vazio em uma das bases'); }
+        else if(aH!==eH) pushDiv(id,nome,'Cadastro','Data de admissão','CRITICO',fmtDateBR(aH),fmtDateBR(eH),'Impacta férias, 13º, aviso prévio e eSocial');
+      }
+      var aM=normMail(G(a,'ADP','mail')), eM=normMail(G(e,'EC','mail'));
+      if(aM||eM){
+        if(!aM||!eM){ if(c.vazio||!aM) pushDiv(id,nome,'Cadastro','E-mail','INFO',aM,eM,aM?'E-mail ausente no Sonnet':'E-mail ausente no ADP'); }
+        else if(aM!==eM) pushDiv(id,nome,'Cadastro','E-mail','ALTO',aM,eM,'');
+      }
+      var aF=normFArea(G(a,'ADP','farea')), eF=normFArea(G(e,'EC','farea'));
+      if(!aF && eF) pushDiv(id,nome,'Cadastro','Functional Area','INFO','(vazio)',eF,'Centro de custo Suíça não preenchido no ADP');
+      else if(aF && !eF) pushDiv(id,nome,'Cadastro','Functional Area','INFO',aF,'(vazio)','Functional Area não preenchida no Sonnet');
+      else if(aF && eF && aF!==eF) pushDiv(id,nome,'Cadastro','Functional Area','MEDIO',aF,eF,'');
+
+      /* cargo pelo EC quando nao ha linha no Monthly */
+      if(!monIdx[id]){
+        var aPe=String(G(a,'ADP','func')||''), ePe=String(G(e,'EC','pos')||'');
+        if(aPe&&ePe){
+          var se=simRatio(aPe,ePe);
+          if(se<1 && se>=c.sim) pushDiv(id,nome,'Cadastro','Cargo / Função','INFO',aPe,ePe,'Equivalente por similaridade ('+(se*100).toFixed(0)+'%) — comparado contra o EC');
+          else if(se<c.sim)     pushDiv(id,nome,'Cadastro','Cargo / Função','MEDIO',aPe,ePe,'Similaridade '+(se*100).toFixed(0)+'% — comparado contra o EC');
+        }
+      }
+
+      /* chefia */
+      var rc=resolveChefe(a,R);
+      var eMgrId=normId(G(e,'EC','mgrid'));
+      var st;
+      if(!rc.id) st='NAO RESOLVIDO';
+      else if(!eMgrId) st='SEM GESTOR NO SONNET';
+      else st = (rc.id===eMgrId) ? 'OK' : 'DIVERGENTE';
+      chefia.push({id:id,nome:nome,chefeAdp:String(G(a,'ADP','chefe')||''),matr:normId(G(a,'ADP','chefeM')),
+                   estab:normId(G(a,'ADP','chefeE')),idResolv:rc.id,via:rc.via,conf:rc.conf,
+                   chefeSonnet:String(G(e,'EC','mgr')||''),idSonnet:eMgrId,status:st});
+      if(st==='DIVERGENTE') pushDiv(id,nome,'Cadastro','Chefia imediata (ID Sonova)','CRITICO',rc.id+' · '+String(G(a,'ADP','chefe')||''),eMgrId+' · '+String(G(e,'EC','mgr')||''),'ID resolvido via: '+rc.via);
+      else if(st==='NAO RESOLVIDO' && String(G(a,'ADP','chefe')||'')) pushDiv(id,nome,'Cadastro','Chefia imediata (ID Sonova)','MEDIO',String(G(a,'ADP','chefe')||''),eMgrId+' · '+String(G(e,'EC','mgr')||''),'Não foi possível resolver o ID Sonova do gestor a partir do ADP');
+    }
+
+    /* ----- bloco remuneração (Monthly) ----- */
+    if(m){
+      var aFA=normFArea(G(a,'ADP','farea')), mFA=normFArea(G(m,'MON','farea'));
+      if(aFA && mFA && aFA!==mFA) pushDiv(id,nome,'Remuneração','Functional Area','MEDIO',aFA,mFA,'');
+      else if(!aFA && mFA) pushDiv(id,nome,'Remuneração','Functional Area','INFO','(vazio)',mFA,'Centro de custo Suíça não preenchido no ADP');
+
+      var aP=String(G(a,'ADP','func')||''), mP=String(G(m,'MON','pos')||'');
+      if(aP&&mP){
+        var s=simRatio(aP,mP);
+        if(s<1 && s>=c.sim) pushDiv(id,nome,'Remuneração','Cargo / Função','INFO',aP,mP,'Equivalente por similaridade ('+(s*100).toFixed(0)+'%)');
+        else if(s<c.sim)    pushDiv(id,nome,'Remuneração','Cargo / Função','MEDIO',aP,mP,'Similaridade '+(s*100).toFixed(0)+'%');
+      }
+
+      var sal=normMoney(G(a,'ADP','sal')), pro=normMoney(G(m,'MON','prorated'));
+      if(sal!==null && sal<=c.mask){
+        pushDiv(id,nome,'Remuneração','Salário','INFO','R$ '+fmtMoney(sal),'R$ '+fmtMoney(pro),'Salário mascarado no ADP — comparação não aplicável');
+      }else if(sal!==null && pro!==null){
+        var esp=sal*c.mult, dif=pro-esp, tol=Math.max(c.tolAbs,Math.abs(esp)*c.tolPct/100);
+        if(Math.abs(dif)>tol){
+          pushDiv(id,nome,'Remuneração','Salário anual (mensal x '+c.mult+')','CRITICO','R$ '+fmtMoney(sal)+' x '+c.mult+' = R$ '+fmtMoney(esp),'R$ '+fmtMoney(pro),
+            'Diferença R$ '+fmtMoney(dif)+' · mensal implícito no Sonnet R$ '+fmtMoney(pro/c.mult));
+        }
+      }else if(sal===null && pro!==null){
+        pushDiv(id,nome,'Remuneração','Salário','ALTO','(vazio)','R$ '+fmtMoney(pro),'Salário mensal ausente no ADP');
+      }else if(sal!==null && pro===null){
+        pushDiv(id,nome,'Remuneração','Salário','ALTO','R$ '+fmtMoney(sal),'(vazio)','Base Amount Pro-Rated ausente no Sonnet');
+      }
+    }
+    adpToSonnet.push(rec);
+  });
+
+  /* ---------- SENTIDO 2: SONNET -> ADP ---------- */
+  var vistos={};
+  ec.forEach(function(e){
+    var id=normId(G(e,'EC','id'));
+    vistos[id]=1;
+    var nome=(String(G(e,'EC','first')||'')+' '+String(G(e,'EC','last')||'')).trim();
+    var a=adpIdx[id], m=monIdx[id];
+    var et=String(G(e,'EC','etype')||'');
+    var fora = et && c.foraFolha.indexOf(normTxt(et))>=0;
+    var rec={id:id,nome:nome,origem:'EC',adp:a?'Sim':'Não',mon:m?'Sim':'Não',etype:et||'(não informado)',
+             status:String(G(e,'EC','status')||''),farea:normFArea(G(e,'EC','farea')),
+             admissao:fmtDateBR(normDate(G(e,'EC','hire'))),sev:a?'OK':(fora?'INFO':'CRITICO'),
+             detalhe:a?'':(fora?'Ausência esperada: vínculo fora da folha':'Ativo no Sonnet e ausente no ADP')};
+    if(!a){
+      if(fora) pushDiv(id,nome,'Cadastro','Existência no ADP','INFO','Ausente no ADP','Presente no Sonnet (EC)',
+        'Employment Type "'+et+'" consta na lista de vínculos que não são processados na folha ADP. Ausência esperada, sem ação na folha.');
+      else pushDiv(id,nome,'Cadastro','Existência no ADP','CRITICO','Ausente no ADP','Presente no Sonnet (EC)',
+        'Employment Type no Sonnet: '+(et||'não informado')+'. Antes de abrir chamado, confirmar se é admissão pendente, cessão, CNPJ fora deste arquivo ou vínculo que não entra na folha.');
+    }
+    sonnetToAdp.push(rec);
+  });
+  mon.forEach(function(m){
+    var id=normId(G(m,'MON','id'));
+    var nome=(String(G(m,'MON','first')||'')+' '+String(G(m,'MON','last')||'')).trim();
+    var a=adpIdx[id];
+    if(!vistos[id]){
+      var etM=String(G(m,'MON','etype')||'');
+      var foraM = etM && c.foraFolha.indexOf(normTxt(etM))>=0;
+      sonnetToAdp.push({id:id,nome:nome,origem:'Monthly',adp:a?'Sim':'Não',mon:'Sim',etype:etM||'(não informado)',
+        status:String(G(m,'MON','status')||''),farea:normFArea(G(m,'MON','farea')),
+        admissao:fmtDateBR(normDate(G(m,'MON','hire'))),sev:a?'OK':(foraM?'INFO':'CRITICO'),
+        detalhe:a?'Presente no Monthly e ausente no EC':(foraM?'Ausência esperada: vínculo fora da folha':'Ausente no ADP e no EC')});
+      if(!a) pushDiv(id,nome,'Remuneração','Existência no ADP',foraM?'INFO':'CRITICO','Ausente no ADP','Presente no Sonnet (Monthly)',
+        'Employment Type no Sonnet: '+(etM||'não informado')+(foraM?'. Vínculo fora da folha, ausência esperada.':'. Registro de remuneração sem contraparte na folha.'));
+    }else{
+      var i,found=-1;
+      for(i=0;i<sonnetToAdp.length;i++){ if(sonnetToAdp[i].id===id){ found=i; break; } }
+      if(found>=0) sonnetToAdp[found].mon='Sim';
+    }
+  });
+  if(exigeMon) ec.forEach(function(e){
+    var id=normId(G(e,'EC','id'));
+    if(!monIdx[id]){
+      var nome=(String(G(e,'EC','first')||'')+' '+String(G(e,'EC','last')||'')).trim();
+      pushDiv(id,nome,'Remuneração','Existência na remuneração','MEDIO','—','Ausente na base de remuneração','Sem esse registro não existe salário Sonnet para confrontar com o ADP');
+    }
+  });
+
+
+
+  /* ---------- correção salarial em massa: ADP é a referência ---------- */
+  var impBase=[];
+  adp.forEach(function(a){
+    var id=normId(G(a,'ADP','id'));
+    var e=ecIdx[id], m2=monIdx[id];
+    if(!e && !m2) return;
+    var sal=normMoney(G(a,'ADP','sal'));
+    if(sal===null || sal<=c.mask) return;
+    var anual=sal*c.mult;
+    var fte=m2?normMoney(G(m2,'MON','fte')):null;
+    if(fte===null||isNaN(fte)||fte<=0) fte=1;
+    var v100=(fte<1)?(anual/fte):anual;
+    var pro=m2?normMoney(G(m2,'MON','prorated')):null;
+    var b100=m2?normMoney(G(m2,'MON','base100')):null;
+    var tol=Math.max(c.tolAbs,Math.abs(anual)*c.tolPct/100);
+    var dif = (pro===null) ? null : (pro-anual);
+    var semSonnet = (pro===null);
+    var divergente = semSonnet ? false : (Math.abs(dif)>tol);
+    var nomeSon=e?((String(G(e,'EC','first')||'')+' '+String(G(e,'EC','last')||'')).trim())
+               :(m2?((String(G(m2,'MON','first')||'')+' '+String(G(m2,'MON','last')||'')).trim()):'');
+    impBase.push({id:id,nome:nomeSon||String(G(a,'ADP','nome')||''),cnpj:String(G(a,'ADP','cnpj')||''),
+      matr:normId(G(a,'ADP','matr')),mensal:sal,mult:c.mult,anual:anual,fte:fte,v100:v100,vpro:anual,
+      sonPro:pro,son100:b100,dif:dif,divergente:divergente,semSonnet:semSonnet,
+      motivo: semSonnet ? 'Sem remuneração no Sonnet' : (divergente?'Salário divergente':'Conferindo')});
+  });
+  var impSel = impBase.filter(function(x){
+    if(c.escopo==='todos')  return true;
+    if(c.escopo==='difsem') return x.divergente || x.semSonnet;
+    return x.divergente;
+  });
+  var impRows=[];
+  impSel.forEach(function(x){
+    impRows.push({A:'',valor:x.v100, moeda:c.moeda, data:c.vigencia, freq:c.freq, pc:c.pc100, seq:'', uid:x.id, op:'',
+                  _nome:x.nome,_comp:'Base Salary 100%',_mensal:x.mensal,_fte:x.fte});
+    impRows.push({A:'',valor:x.vpro, moeda:c.moeda, data:c.vigencia, freq:c.freq, pc:c.pcPro, seq:'', uid:x.id, op:'',
+                  _nome:x.nome,_comp:'Base Salary Pro-Rated',_mensal:x.mensal,_fte:x.fte});
+  });
+
+  /* ---------- reconciliação secundária de órfãos (detecta ID Sonova errado) ---------- */
+  var recon=[];
+  var orfADP=adp.filter(function(a){ var i2=normId(G(a,'ADP','id')); return !ecIdx[i2]&&!monIdx[i2]; });
+  var orfSON=[];
+  ec.forEach(function(e){
+    var i2=normId(G(e,'EC','id'));
+    if(!adpIdx[i2]) orfSON.push({w:'EC',id:i2,nome:(String(G(e,'EC','first')||'')+' '+String(G(e,'EC','last')||'')).trim(),dob:normDate(G(e,'EC','dob')),usado:false});
+  });
+  mon.forEach(function(m2){
+    var i2=normId(G(m2,'MON','id'));
+    if(!adpIdx[i2]&&!ecIdx[i2]) orfSON.push({w:'Monthly',id:i2,nome:(String(G(m2,'MON','first')||'')+' '+String(G(m2,'MON','last')||'')).trim(),dob:'',usado:false});
+  });
+  orfADP.forEach(function(a){
+    var idA=normId(G(a,'ADP','id')), nmA=String(G(a,'ADP','nome')||''), dbA=normDate(G(a,'ADP','dob'));
+    var tkA=nameTokens(nmA), best=null, bsc=0, bev='';
+    orfSON.forEach(function(o){
+      if(o.usado) return;
+      var tkO=nameTokens(o.nome), nm=tokensMatch(tkA,tkO);
+      var comum=tkO.filter(function(t){ return tkA.indexOf(t)>=0; }).length;
+      var sc=0, ev='';
+      if(nm && dbA && o.dob && dbA===o.dob){ sc=4; ev='nome completo e data de nascimento'; }
+      else if(dbA && o.dob && dbA===o.dob && comum>=1){ sc=3; ev='data de nascimento e '+comum+' termo(s) do nome'; }
+      else if(nm && (!dbA||!o.dob)){ sc=2; ev='nome completo (sem data de nascimento para confirmar)'; }
+      if(sc>bsc){ bsc=sc; best=o; bev=ev; }
+    });
+    if(best && bsc>=2){
+      best.usado=true;
+      var cf = bsc>=4?'ALTA':(bsc===3?'MEDIA':'BAIXA');
+      recon.push({idAdp:idA,nomeAdp:nmA,dobAdp:fmtDateBR(dbA),idSon:best.id,nomeSon:best.nome,dobSon:fmtDateBR(best.dob),
+                  origem:best.w,evidencia:bev,conf:cf});
+      pushDiv(idA,nmA,'Cadastro','ID Sonova divergente','CRITICO',
+              idA+' · '+nmA, best.id+' · '+best.nome,
+              'Mesma pessoa reconhecida por '+bev+'. Um dos dois sistemas está com o ID Sonova errado — o cruzamento por chave falha enquanto isso não for alinhado.');
+    }
+  });
+
+  /* anexa a reconciliação às divergências de existência e evita linha duplicada no plano */
+  var reconIds={};
+  recon.forEach(function(r){ reconIds[r.idAdp]=r; reconIds[r.idSon]=r; });
+  divs.forEach(function(d){
+    if((d.campo==='Existência no ADP'||d.campo==='Existência no Sonnet') && reconIds[d.id]){
+      var rr=reconIds[d.id];
+      d.obs='Não é ausência: mesma pessoa localizada com outro ID Sonova ('+rr.idAdp+' no ADP contra '+rr.idSon+' no Sonnet). Ver a linha de ID Sonova divergente.';
+    }
+  });
+
+  /* contagem por registro ADP */
+  var cnt={};
+  divs.forEach(function(d){ cnt[d.id]=(cnt[d.id]||0)+1; });
+  var ordem={CRITICO:4,ALTO:3,MEDIO:2,INFO:1,OK:0};
+  var maxSev={};
+  divs.forEach(function(d){ if(!maxSev[d.id] || ordem[d.sev]>ordem[maxSev[d.id]]) maxSev[d.id]=d.sev; });
+  adpToSonnet.forEach(function(r){ r.divs=cnt[r.id]||0; r.sev=maxSev[r.id]||'OK'; });
+  sonnetToAdp.forEach(function(r){ r.divs=cnt[r.id]||0; if(maxSev[r.id]) r.sev=maxSev[r.id]; });
+
+  var sevCount={CRITICO:0,ALTO:0,MEDIO:0,INFO:0};
+  divs.forEach(function(d){ sevCount[d.sev]=(sevCount[d.sev]||0)+1; });
+
+  /* ---------- comparativo lado a lado ---------- */
+  var divSev={};
+  divs.forEach(function(d){
+    var kk=d.id+'||'+d.campo;
+    if(!divSev[kk] || ordem[d.sev]>ordem[divSev[kk]]) divSev[kk]=d.sev;
+  });
+  function flag(id,campos){
+    var best='';
+    campos.forEach(function(cp){
+      var v=divSev[id+'||'+cp];
+      if(v && (!best || ordem[v]>ordem[best])) best=v;
+    });
+    if(!best) return 'eq';
+    return (best==='INFO')?'war':'dif';
+  }
+  var pares=[];
+  adp.forEach(function(a){
+    var id=normId(G(a,'ADP','id'));
+    var e=ecIdx[id], m=monIdx[id];
+    if(!e && !m) return;
+    var rc=resolveChefe(a,R);
+    var sal=normMoney(G(a,'ADP','sal'));
+    var pro=m?normMoney(G(m,'MON','prorated')):null;
+    var sonPos = m?String(G(m,'MON','pos')||'') : (e?String(G(e,'EC','pos')||''):'');
+    var sonFA  = e?normFArea(G(e,'EC','farea')) : (m?normFArea(G(m,'MON','farea')):'');
+    var cells=[
+      {k:'dob',   lbl:'Nascimento',      adp:fmtDateBR(normDate(G(a,'ADP','dob'))),  son:e?fmtDateBR(normDate(G(e,'EC','dob'))):'',  st:flag(id,['Data de nascimento'])},
+      {k:'hire',  lbl:'Admissão',        adp:fmtDateBR(normDate(G(a,'ADP','hire'))), son:e?fmtDateBR(normDate(G(e,'EC','hire'))):'', st:flag(id,['Data de admissão'])},
+      {k:'mail',  lbl:'E-mail',          adp:String(G(a,'ADP','mail')||''),          son:e?String(G(e,'EC','mail')||''):'',          st:flag(id,['E-mail'])},
+      {k:'farea', lbl:'Functional Area', adp:normFArea(G(a,'ADP','farea')),          son:sonFA,                                      st:flag(id,['Functional Area'])},
+      {k:'pos',   lbl:'Cargo',           adp:String(G(a,'ADP','func')||''),          son:sonPos,                                     st:flag(id,['Cargo / Função'])},
+      {k:'chefe', lbl:'Chefia (ID)',     adp:(rc.id||'?')+' · '+String(G(a,'ADP','chefe')||''), son:e?(normId(G(e,'EC','mgrid'))+' · '+String(G(e,'EC','mgr')||'')):'', st:flag(id,['Chefia imediata (ID Sonova)'])},
+      {k:'salm',  lbl:'Salário mensal',  adp:sal!==null?fmtMoney(sal):'',            son:pro!==null?fmtMoney(pro/c.mult):'',         st:flag(id,['Salário','Salário anual (mensal x '+c.mult+')'])},
+      {k:'sala',  lbl:'Salário x'+c.mult,adp:sal!==null?fmtMoney(sal*c.mult):'',     son:pro!==null?fmtMoney(pro):'',                st:flag(id,['Salário','Salário anual (mensal x '+c.mult+')'])}
+    ];
+    if(sal!==null && sal<=c.mask){
+      cells[6].st='war'; cells[7].st='war';
+      cells[6].adp=cells[6].adp+' (mascarado)';
+    }
+    var nd=cells.filter(function(x){return x.st==='dif';}).length;
+    var nw=cells.filter(function(x){return x.st==='war';}).length;
+    pares.push({id:id,nomeAdp:String(G(a,'ADP','nome')||''),
+                nomeSon:e?((String(G(e,'EC','first')||'')+' '+String(G(e,'EC','last')||'')).trim()):(m?((String(G(m,'MON','first')||'')+' '+String(G(m,'MON','last')||'')).trim()):''),
+                cnpj:String(G(a,'ADP','cnpj')||''), matr:normId(G(a,'ADP','matr')),
+                etypeSon:e?String(G(e,'EC','etype')||''):(m?String(G(m,'MON','etype')||''):''),
+                vincAdp:String(G(a,'ADP','vinculo')||''),
+                cells:cells,nd:nd,nw:nw,sev:maxSev[id]||'OK',noEC:!e,noMON:!m,
+                comp:(e&&m)?'EC + Monthly':(e?'somente EC':'somente Monthly')});
+  });
+
+  /* ---------- plano de correção no ADP (Sonnet é a fonte da verdade) ---------- */
+  var PMAP={
+    'Data de nascimento':{campo:'Data de Nascimento',local:'Cadastro do empregado > Dados pessoais',obs:'Alteração cadastral simples. Se já houve envio, gera retificação do S-2200.'},
+    'Data de admissão':{campo:'Data da Admissão',local:'Cadastro do empregado > Dados contratuais',obs:'Alta criticidade: recalcula férias, 13º, aviso prévio e exige retificação do evento S-2200 no eSocial.'},
+    'E-mail':{campo:'E-Mail',local:'Cadastro do empregado > Contato',obs:'Padronizar pelo endereço do Active Directory.'},
+    'Functional Area':{campo:'Centro de custo Suíça/Novo',local:'Cadastro do empregado > Centro de custo / rateio',obs:'Impacta rateio contábil e relatórios do grupo.'},
+    'Chefia imediata (ID Sonova)':{campo:'Chefia Imediata (matrícula e estabelecimento)',local:'Cadastro do empregado > Hierarquia / chefia imediata',obs:'Corrigir pela matrícula e estabelecimento do gestor no ADP, não pelo nome.'},
+    'Cargo / Função':{campo:'Função - Nome',local:'Cadastro do empregado > Função',obs:'Se a função não existir no ADP, criar no cadastro de funções antes de vincular.'},
+    'Salário':{campo:'Base Salary (Pay Component Recurring)',local:'Sonnet > Compensation > Pay Component Recurring (importação)',obs:'O salário do ADP é a referência. Corrigir no Sonnet pela aba PayComponentRecurringImportTemp, com o valor anual igual ao mensal do ADP multiplicado por '+c.mult+'.'},
+    'Existência no ADP':{campo:'Cadastro do empregado (inclusão)',local:'Admissão / importação de admitidos',obs:'Confirmar se a admissão está pendente ou se o colaborador pertence a CNPJ fora deste arquivo.'},
+    'ID Sonova divergente':{campo:'ID SONOVA',local:'Cadastro do empregado > Identificação',obs:'Confirmar qual ID é o correto antes de alterar. O Sonnet é a referência, mas um ID trocado no Sonnet contamina todos os relatórios do grupo.'},
+    'Existência na remuneração':{campo:'Registro de remuneração (Monthly ou Kaizen)',local:'Sonnet > Compensation',obs:'Colaborador ativo no EC sem linha de remuneração. Sem esse dado não há salário Sonnet para dividir por '+c.mult+' e comparar com o ADP.'},
+    'Existência no Sonnet':{campo:'ID SONOVA',local:'Cadastro do empregado > Identificação',obs:'Sonnet é a fonte da verdade: validar o ID Sonova gravado no ADP ou solicitar a criação do registro no Sonnet.'}
+  };
+  var PRIO={CRITICO:'1 - Imediata',ALTO:'2 - Alta',MEDIO:'3 - Média',INFO:'4 - Baixa'};
+  var plano=[];
+  divs.forEach(function(d){
+    if(String(d.obs).indexOf('mascarado')>=0) return;
+    if((d.campo==='Existência no ADP'||d.campo==='Existência no Sonnet') && reconIds[d.id]) return;
+    var base=d.campo.indexOf('Salário')===0?'Salário':d.campo;
+    var mp=PMAP[base]||{campo:d.campo,local:'Cadastro do empregado',obs:''};
+    var acao;
+    if(base==='ID Sonova divergente')   acao='Alinhar o ID Sonova entre os sistemas — mesma pessoa com dois IDs';
+    else if(base==='Existência na remuneração') acao='Solicitar a inclusão da remuneração no Sonnet';
+    else if(base==='Existência no ADP') acao=(d.sev==='INFO')
+        ? 'Nenhuma inclusão na folha: vínculo fora do escopo do ADP. Apenas confirmar a classificação no Sonnet.'
+        : 'Incluir o colaborador no ADP';
+    else if(base==='Existência no Sonnet') acao='Validar o ID Sonova no ADP ou solicitar criação no Sonnet';
+    else if(!d.adp || d.adp==='(vazio)' || d.adp==='—') acao='Preencher com: '+d.sonnet;
+    else if(!d.sonnet || d.sonnet==='(vazio)')          acao='Sem valor no Sonnet: validar com o time de People antes de alterar o ADP';
+    else if(base==='Salário')                            acao='Corrigir no Sonnet pela importação Pay Component Recurring: '+ (function(){
+      var mm=String(d.adp).match(/[\d.,]+/); if(!mm) return d.adp;
+      var v=normMoney(mm[0]); return v!==null?('R$ '+fmtMoney(v)+' x '+c.mult+' = R$ '+fmtMoney(v*c.mult)+' ao ano'):d.adp; })();
+    else acao='Alterar de "'+d.adp+'" para "'+d.sonnet+'"';
+    var destino = (base==='ID Sonova divergente') ? 'ADP e Sonnet'
+                : (base==='Salário') ? 'Sonnet'
+                : (base==='Existência no ADP' && d.sev==='INFO') ? 'Nenhum'
+                : (base==='Existência na remuneração') ? 'Sonnet'
+                : (base==='Existência no Sonnet') ? 'ADP e Sonnet'
+                : (!d.sonnet || d.sonnet==='(vazio)') ? 'Sonnet' : 'ADP';
+    plano.push({destino:destino,prio:PRIO[d.sev]||'4 - Baixa',sev:d.sev,id:d.id,nome:d.nome,campoAdp:mp.campo,
+                atual:d.adp,correto:d.sonnet,acao:acao,local:mp.local,obs:mp.obs||d.obs});
+  });
+  plano.sort(function(x,y){ return (ordem[y.sev]-ordem[x.sev]) || String(x.id).localeCompare(String(y.id)); });
+
+  /* ---------- qualidade de dados ---------- */
+  function completude(rows,which){
+    var out=[];
+    FIELDS[which].forEach(function(f){
+      if(!MAP[which][f.k]) return;
+      var ok=0;
+      rows.forEach(function(r){ var v=G(r,which,f.k); if(v!==null&&v!==undefined&&String(v).trim()!=='') ok++; });
+      out.push({campo:f.lbl,preenchidos:ok,total:rows.length,pct:rows.length?(ok/rows.length*100):0});
+    });
+    return out.sort(function(a,b){ return a.pct-b.pct; });
+  }
+  function chaveInfo(rows,which,lbl){
+    var vals=[],vazios=0,naoNum=0,lens={};
+    rows.forEach(function(r){
+      var v=normId(G(r,which,'id'));
+      if(!v){ vazios++; return; }
+      if(!/^\d+$/.test(v)) naoNum++;
+      vals.push(v); lens[v.length]=(lens[v.length]||0)+1;
+    });
+    var uniq={},dup=0;
+    vals.forEach(function(v){ uniq[v]=(uniq[v]||0)+1; });
+    Object.keys(uniq).forEach(function(k2){ if(uniq[k2]>1) dup++; });
+    return {arq:lbl,col:MAP[which].id||'(não mapeada)',total:rows.length,validos:vals.length,
+            unicos:Object.keys(uniq).length,vazios:vazios,naoNum:naoNum,dup:dup,
+            formato:Object.keys(lens).sort(function(x,y){return x-y;}).map(function(l){return l+' dígitos ('+lens[l]+')';}).join(', ')||'—',
+            amostra:vals.slice(0,4).join(', ')};
+  }
+  function dupIds(rows,which,key){
+    var cnt={},d=0;
+    rows.forEach(function(r){ var v=normId(G(r,which,key)); if(!v) return; cnt[v]=(cnt[v]||0)+1; });
+    Object.keys(cnt).forEach(function(k2){ if(cnt[k2]>1) d++; });
+    return d;
+  }
+  function dupTxt(rows,which,key){
+    var cnt={},d=0;
+    rows.forEach(function(r){ var v=normTxt(G(r,which,key)); if(!v) return; cnt[v]=(cnt[v]||0)+1; });
+    Object.keys(cnt).forEach(function(k2){ if(cnt[k2]>1) d++; });
+    return d;
+  }
+  var porFA={},porCNPJ={};
+  adpToSonnet.forEach(function(r){
+    if(r.ec!=='Sim'&&r.mon!=='Sim') return;
+    var e=ecIdx[r.id],m=monIdx[r.id];
+    var fa=e?normFArea(G(e,'EC','farea')):(m?normFArea(G(m,'MON','farea')):'(sem área)');
+    if(!fa) fa='(sem área)';
+    if(!porFA[fa]) porFA[fa]={k:fa,tot:0,ok:0};
+    porFA[fa].tot++; if(r.sev!=='CRITICO'&&r.sev!=='ALTO') porFA[fa].ok++;
+    var cn=r.cnpj||'(sem CNPJ)';
+    if(!porCNPJ[cn]) porCNPJ[cn]={k:cn,tot:0,ok:0,div:0};
+    porCNPJ[cn].tot++; porCNPJ[cn].div+=r.divs; if(r.sev!=='CRITICO'&&r.sev!=='ALTO') porCNPJ[cn].ok++;
+  });
+  function toArr(o){ return Object.keys(o).map(function(x){return o[x];}).sort(function(a,b){ return b.tot-a.tot; }); }
+  var confCount={ALTA:0,MEDIA:0,NENHUMA:0};
+  chefia.forEach(function(x){ confCount[x.conf]=(confCount[x.conf]||0)+1; });
+  var porCampo={};
+  divs.forEach(function(d){
+    var kk=d.bloco+' · '+d.campo;
+    if(!porCampo[kk]) porCampo[kk]={k:kk,tot:0,CRITICO:0,ALTO:0,MEDIO:0,INFO:0};
+    porCampo[kk].tot++; porCampo[kk][d.sev]++;
+  });
+  var interEcAdp=0,interMonAdp=0,interEcMon=0;
+  ec.forEach(function(e){ var id=normId(G(e,'EC','id')); if(adpIdx[id]) interEcAdp++; if(monIdx[id]) interEcMon++; });
+  mon.forEach(function(m){ if(adpIdx[normId(G(m,'MON','id'))]) interMonAdp++; });
+
+  var qual={
+    recon:recon,
+    fonteRem:fonteRem,
+    fontes:{monthly:DATA.MONR?DATA.MONR.rows.length:0,kaizen:DATA.KZN?DATA.KZN.rows.length:0,
+            complementados:DATA.MON?DATA.MON._compl:0,
+            porFonte:(function(){var o={};mon.forEach(function(r){var k=r._src||'?';o[k]=(o[k]||0)+1;});return o;})()},
+    chave:[chaveInfo(adp,'ADP','ADP'),chaveInfo(ec,'EC','Sonnet EC'),chaveInfo(mon,'MON','Sonnet remuneração')],
+    leitura:[
+      {arq:'ADP',      lidas:adpAll.length, cols:DATA.ADP?DATA.ADP.cols.length:0, consider:adp.length, ignor:adpAll.length-adp.length, dupId:dupIds(adp,'ADP','id'), dupMail:dupTxt(adp,'ADP','mail'), dupDoc:MAP.ADP.cpf?dupTxt(adp,'ADP','cpf'):0},
+      {arq:'Sonnet EC',lidas:ecAll.length,  cols:DATA.EC?DATA.EC.cols.length:0,   consider:ec.length,  ignor:ecAll.length-ec.length,   dupId:dupIds(ec,'EC','id'),   dupMail:dupTxt(ec,'EC','mail'),   dupDoc:0},
+      {arq:'Sonnet remuneração'+(fonteRem?' ('+({mon:'Monthly',kzn:'Kaizen',monkzn:'Monthly + Kaizen',kznmon:'Kaizen + Monthly'}[fonteRem]||fonteRem)+')':''),
+       lidas:monAll.length,cols:DATA.MON?DATA.MON.cols.length:0,consider:mon.length,ignor:monAll.length-mon.length,dupId:dupIds(mon,'MON','id'),dupMail:0,dupDoc:0}
+    ],
+    compl:{ADP:completude(adp,'ADP'),EC:completude(ec,'EC'),MON:completude(mon,'MON')},
+    cobertura:{ecAdp:interEcAdp,monAdp:interMonAdp,ecMon:interEcMon,
+               soEc:ec.length-interEcAdp,soMon:mon.length-interMonAdp,
+               soAdp:adpToSonnet.filter(function(r){return r.ec==='Não'&&r.mon==='Não';}).length},
+    porFA:toArr(porFA), porCNPJ:toArr(porCNPJ), conf:confCount,
+    porCampo:Object.keys(porCampo).map(function(x){return porCampo[x];}).sort(function(a,b){return b.tot-a.tot;})
+  };
+
+
+  var soADP=adpToSonnet.filter(function(r){ return r.ec==='Não'&&r.mon==='Não'; }).length;
+  var soSON=sonnetToAdp.filter(function(r){ return r.adp==='Não'; }).length;
+  var cruz  =adpToSonnet.filter(function(r){ return r.ec==='Sim'||r.mon==='Sim'; }).length;
+  var limpos=adpToSonnet.filter(function(r){ return (r.ec==='Sim'||r.mon==='Sim') && r.divs===0; }).length;
+  var semGrave=adpToSonnet.filter(function(r){ return (r.ec==='Sim'||r.mon==='Sim') && r.sev!=='CRITICO' && r.sev!=='ALTO'; }).length;
+  var chDiv =chefia.filter(function(r){ return r.status==='DIVERGENTE'; }).length;
+  var chNR  =chefia.filter(function(r){ return r.status==='NAO RESOLVIDO'; }).length;
+
+  RES={
+    ts:new Date(), cfg:c, excl:excl,
+    counts:{ec:ec.length,mon:mon.length,adp:adp.length,ecAll:ecAll.length,monAll:monAll.length,adpAll:adpAll.length},
+    divs:divs, chefia:chefia, adpToSonnet:adpToSonnet, sonnetToAdp:sonnetToAdp,
+    pares:pares, plano:plano, qual:qual, impBase:impBase, impSel:impSel, impRows:impRows,
+    kpi:{soADP:soADP,soSON:soSON,cruz:cruz,limpos:limpos,semGrave:semGrave,total:divs.length,sev:sevCount,chDiv:chDiv,chNR:chNR,
+         aderencia: cruz? (semGrave/cruz*100):0}
+  };
+  pushHist();
+  render();
+}
+
+/* ==========================================================================
+   HISTÓRICO
+   ========================================================================== */
+function pushHist(){
+  var h=[];
+  try{ h=JSON.parse(lsGet(LS_HIST)||'[]'); }catch(e){}
+  h.push({ts:RES.ts.toISOString(),adp:RES.counts.adp,ec:RES.counts.ec,mon:RES.counts.mon,
+          total:RES.kpi.total,crit:RES.kpi.sev.CRITICO||0,alto:RES.kpi.sev.ALTO||0,
+          medio:RES.kpi.sev.MEDIO||0,soADP:RES.kpi.soADP,soSON:RES.kpi.soSON,
+          ader:+RES.kpi.aderencia.toFixed(1)});
+  if(h.length>60) h=h.slice(h.length-60);
+  lsSet(LS_HIST,JSON.stringify(h));
+}
+function getHist(){ try{ return JSON.parse(lsGet(LS_HIST)||'[]'); }catch(e){ return []; } }
+
+/* ==========================================================================
+   RENDER
+   ========================================================================== */
+function esc(s){ return String(s===null||s===undefined?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function badge(s){ return '<span class="b b-'+s+'">'+s+'</span>'; }
+
+var TABS=[
+  {id:'dash',   lbl:'Dashboard de qualidade'},
+  {id:'plano',  lbl:'Corrigir no ADP'},
+  {id:'imp',    lbl:'Correção salarial (Sonnet)'},
+  {id:'par',    lbl:'Comparativo lado a lado'},
+  {id:'resumo', lbl:'Resumo'},
+  {id:'a2s',    lbl:'ADP → Sonnet'},
+  {id:'s2a',    lbl:'Sonnet → ADP'},
+  {id:'div',    lbl:'Divergências de campo'},
+  {id:'chef',   lbl:'Chefia (ID Sonova)'},
+  {id:'hist',   lbl:'Histórico'}
+];
+
+function render(){
+  document.getElementById('out').style.display='block';
+  document.getElementById('runStamp').textContent =
+    'Execução em '+RES.ts.toLocaleString('pt-BR')+
+    ' · ADP '+RES.counts.adp+'/'+RES.counts.adpAll+
+    ' · EC '+RES.counts.ec+'/'+RES.counts.ecAll+
+    ' · Monthly '+RES.counts.mon+'/'+RES.counts.monAll+' registros considerados';
+
+  var k=RES.kpi;
+  document.getElementById('kpis').innerHTML=
+    kpi(k.cruz,'Cruzados nas duas bases','ok')+
+    kpi(k.limpos,'Sem nenhuma divergência','ok')+
+    kpi(k.semGrave,'Sem divergência crítica ou alta','ok')+
+    kpi(k.aderencia.toFixed(1)+'%','Aderência de cadastro','ok')+
+    kpi(k.total,'Divergências totais','crit')+
+    kpi(k.sev.CRITICO||0,'Críticas','crit')+
+    kpi(k.sev.ALTO||0,'Altas','alto')+
+    kpi(k.sev.MEDIO||0,'Médias','med')+
+    kpi(k.sev.INFO||0,'Informativas','info')+
+    kpi(k.soADP,'Somente no ADP','crit')+
+    kpi(k.soSON,'Somente no Sonnet','crit')+
+    kpi(k.chDiv,'Chefia divergente','crit')+
+    kpi(k.chNR,'Chefia não resolvida','info');
+
+  var th=document.getElementById('tabs'), pn=document.getElementById('panes');
+  var counts={dash:'',plano:RES.plano.length,imp:RES.impRows.length,par:RES.pares.length,resumo:'',a2s:RES.adpToSonnet.length,s2a:RES.sonnetToAdp.length,div:RES.divs.length,chef:RES.chefia.length,hist:getHist().length};
+  th.innerHTML=TABS.map(function(t,i){
+    return '<button class="tab'+(i===0?' on':'')+'" data-t="'+t.id+'">'+t.lbl+(counts[t.id]!==''?'<span class="cnt">'+counts[t.id]+'</span>':'')+'</button>';
+  }).join('');
+  pn.innerHTML=TABS.map(function(t,i){ return '<div class="pane'+(i===0?' on':'')+'" id="pane-'+t.id+'"></div>'; }).join('');
+  Array.prototype.forEach.call(th.querySelectorAll('.tab'),function(b){
+    b.addEventListener('click',function(){
+      Array.prototype.forEach.call(th.querySelectorAll('.tab'),function(x){ x.classList.remove('on'); });
+      Array.prototype.forEach.call(pn.querySelectorAll('.pane'),function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      document.getElementById('pane-'+b.dataset.t).classList.add('on');
+      if(b.dataset.t==='hist') drawChart();
+      if(b.dataset.t==='dash') drawDash();
+    });
+  });
+
+  renderDash();
+  renderPlano();
+  renderImp();
+  renderPar();
+  renderResumo();
+  renderA2S();
+  renderS2A();
+  renderDiv();
+  renderChef();
+  renderHist();
+  aplicarMascaraSalario(SEM_SAL);
+
+  document.getElementById('btnXls').disabled=false;
+  document.getElementById('btnMd').disabled=false;
+  document.getElementById('btnPrint').disabled=false;
+  document.getElementById('btnPrintAba').disabled=false;
+}
+function kpi(n,l,cls){ return '<div class="kpi '+(cls||'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+
+
+/* ---------- DASHBOARD DE QUALIDADE ---------- */
+
+/* ==========================================================================
+   FICHA DA PESSOA — abre com duplo clique em qualquer linha
+   ========================================================================== */
+var FICHA_ID=null;
+function abrirFicha(id){
+  id=normId(id);
+  if(!id||!RES) return;
+  var par=RES.pares.filter(function(x){return x.id===id;})[0];
+  var a2s=RES.adpToSonnet.filter(function(x){return x.id===id;})[0];
+  var s2a=RES.sonnetToAdp.filter(function(x){return x.id===id;})[0];
+  var ch =RES.chefia.filter(function(x){return x.id===id;})[0];
+  var dv =RES.divs.filter(function(x){return x.id===id;});
+  var pl =RES.plano.filter(function(x){return x.id===id;});
+  var rc =RES.qual.recon.filter(function(x){return x.idAdp===id||x.idSon===id;})[0];
+  if(!par&&!a2s&&!s2a&&!dv.length) return;
+  FICHA_ID=id;
+
+  var nome=(par&&(par.nomeSon||par.nomeAdp))||(s2a&&s2a.nome)||(a2s&&a2s.nome)||(dv[0]&&dv[0].nome)||'';
+  document.getElementById('ovlNome').textContent=nome;
+  document.getElementById('ovlId').textContent='Sonova ID '+id+(a2s&&a2s.matr?'  ·  matrícula '+a2s.matr:'')+(a2s&&a2s.cnpj?'  ·  '+a2s.cnpj:'');
+
+  var h='';
+  h+='<div class="kv">';
+  h+='<div class="i"><span>Presente no ADP</span><b>'+((s2a?s2a.adp:(a2s?'Sim':'Não')))+'</b></div>';
+  h+='<div class="i"><span>Presente no EC</span><b>'+(a2s?a2s.ec:(s2a&&s2a.origem==='EC'?'Sim':'Não'))+'</b></div>';
+  h+='<div class="i"><span>Presente no Monthly</span><b>'+(a2s?a2s.mon:(s2a?s2a.mon:'Não'))+'</b></div>';
+  h+='<div class="i"><span>Employment Type</span><b>'+esc((s2a&&s2a.etype)||(par&&par.etypeSon)||'—')+'</b></div>';
+  h+='<div class="i"><span>Vínculo no ADP</span><b>'+esc((par&&par.vincAdp)||'—')+'</b></div>';
+  h+='<div class="i"><span>Divergências</span><b>'+dv.length+'</b></div>';
+  h+='<div class="i"><span>Severidade máxima</span><b>'+((a2s&&a2s.sev)||(s2a&&s2a.sev)||'OK')+'</b></div>';
+  h+='<div class="i"><span>Correções pendentes</span><b>'+pl.length+'</b></div>';
+  h+='</div>';
+
+  if(rc) h+='<div class="note err"><strong>ID Sonova divergente.</strong> Mesma pessoa localizada com '+esc(rc.idAdp)+' no ADP e '+esc(rc.idSon)+' no Sonnet, reconhecida por '+esc(rc.evidencia)+' (confiança '+esc(rc.conf)+').</div>';
+
+  if(par){
+    h+='<h4>ADP contra Sonnet</h4>';
+    var ths='<th></th>'+par.cells.map(function(cl){return '<th>'+esc(cl.lbl)+'</th>';}).join('');
+    var mk=function(cl){ return cl.st+((cl.k==='salm'||cl.k==='sala')?' money':''); };
+    var r1='<tr><td class="src src-adp">ADP<span class="srcsub">folha</span></td>'+par.cells.map(function(cl){return '<td class="'+mk(cl)+'">'+esc(cl.adp||'—')+'</td>';}).join('')+'</tr>';
+    var r2='<tr><td class="src src-son">Sonnet<span class="srcsub">'+esc(par.comp)+'</span></td>'+par.cells.map(function(cl){return '<td class="'+mk(cl)+'">'+esc(cl.son||'—')+'</td>';}).join('')+'</tr>';
+    h+='<div class="par"><div style="overflow:auto"><table><thead><tr>'+ths+'</tr></thead><tbody>'+r1+r2+'</tbody></table></div></div>';
+  }
+
+  if(ch){
+    h+='<h4>Chefia imediata</h4>';
+    h+=tbl(['Chefia no ADP','Matrícula','Estab.','ID Sonova resolvido','Origem do ID','Confiança','Chefia no Sonnet','ID no Sonnet','Situação'],
+      [[ch.chefeAdp,ch.matr,ch.estab,{v:ch.idResolv,c:'mono'},ch.via,{h:badge(ch.conf)},ch.chefeSonnet,{v:ch.idSonnet,c:'mono'},{h:badge(ch.status==='OK'?'OK':(ch.status==='DIVERGENTE'?'CRITICO':'INFO'))}]],'');
+  }
+
+  h+='<h4>Divergências ('+dv.length+')</h4>';
+  h+=tbl(['Bloco','Campo','Severidade','Valor ADP','Valor Sonnet','Observação'],
+    dv.map(function(d){ var mc=/Sal[aá]rio/i.test(d.campo)?'money':'';
+      return [d.bloco,d.campo,{h:badge(d.sev)},{v:d.adp,c:mc},{v:d.sonnet,c:mc},d.obs]; }),
+    'Nenhuma divergência para este colaborador.');
+
+  h+='<h4>Correções ('+pl.length+')</h4>';
+  h+=tbl(['Sistema','Prioridade','Campo a corrigir','Valor atual','Valor correto','Ação','Onde corrigir'],
+    pl.map(function(r){ var mc=/Salary|Sal[aá]rio/i.test(r.campoAdp)?'money':'';
+      return [r.destino,r.prio,r.campoAdp,{v:r.atual,c:mc},{v:r.correto,c:mc},{v:r.acao,c:mc},r.local]; }),
+    'Nenhuma correção pendente.');
+
+  document.getElementById('ovlBody').innerHTML=h;
+  aplicarMascaraSalario(SEM_SAL);
+  document.getElementById('ovl').classList.add('on');
+}
+function fecharFicha(){ document.getElementById('ovl').classList.remove('on'); FICHA_ID=null; }
+function fichaMd(){
+  if(!FICHA_ID||!RES) return;
+  var id=FICHA_ID;
+  var par=RES.pares.filter(function(x){return x.id===id;})[0];
+  var dv=RES.divs.filter(function(x){return x.id===id;});
+  var pl=RES.plano.filter(function(x){return x.id===id;});
+  var nome=document.getElementById('ovlNome').textContent;
+  var m='## Ficha de conciliação — '+nome+' (Sonova ID '+id+')\n\n';
+  if(par){
+    m+='| Campo | ADP | Sonnet |\n|---|---|---|\n';
+    par.cells.forEach(function(cl){ m+='| '+cl.lbl+' | '+String(cl.adp||'—').replace(/\|/g,'/')+' | '+String(cl.son||'—').replace(/\|/g,'/')+' |\n'; });
+    m+='\n';
+  }
+  if(dv.length){
+    m+='### Divergências\n\n| Campo | Severidade | ADP | Sonnet |\n|---|---|---|---|\n';
+    dv.forEach(function(d){ m+='| '+d.campo+' | '+d.sev+' | '+String(d.adp).replace(/\|/g,'/')+' | '+String(d.sonnet).replace(/\|/g,'/')+' |\n'; });
+    m+='\n';
+  }
+  if(pl.length){
+    m+='### Correções\n\n| Sistema | Prioridade | Campo | Ação |\n|---|---|---|---|\n';
+    pl.forEach(function(r){ m+='| '+r.destino+' | '+r.prio+' | '+r.campoAdp+' | '+String(r.acao).replace(/\|/g,'/')+' |\n'; });
+  }
+  copyText(m);
+}
+function ligarDuploClique(host,idxId){
+  if(!host) return;
+  Array.prototype.forEach.call(host.querySelectorAll('tbody tr'),function(tr){
+    var td=tr.children[idxId];
+    if(!td) return;
+    var id=normId(td.textContent);
+    if(!id) return;
+    tr.classList.add('pick');
+    tr.title='Duplo clique para abrir a ficha completa';
+    tr.addEventListener('dblclick',function(){ abrirFicha(id); });
+  });
+}
+
+
+/* ==========================================================================
+   IMPRESSÃO
+   ========================================================================== */
+var LBL_CAMPO={'':'todos os campos',sal:'Salário',dob:'Nascimento',hire:'Admissão',mail:'E-mail',farea:'Functional Area',pos:'Cargo',chefe:'Chefia'};
+var PAR_COUNT=[0,0];
+var SEM_SAL=false;
+function aplicarMascaraSalario(v){
+  SEM_SAL=!!v;
+  ['swSal','swSal2'].forEach(function(i){ var e=document.getElementById(i); if(e) e.checked=SEM_SAL; });
+  ['swSalL','swSal2L'].forEach(function(i){ var e=document.getElementById(i); if(e) e.classList[SEM_SAL?'add':'remove']('on'); });
+  var alvos=document.querySelectorAll('.money');
+  Array.prototype.forEach.call(alvos,function(el){ el.classList[SEM_SAL?'add':'remove']('money-off'); });
+  try{ lsSet('cruz_sem_sal_v1',SEM_SAL?'1':'0'); }catch(e){}
+}
+function descreverFiltrosPar(){
+  var g=function(i){ var e=document.getElementById(i); return e?e.value:''; };
+  var ck=function(i){ var e=document.getElementById(i); return !e||e.checked; };
+  var mode=g('parS'), campo=g('parC'), vinc=g('parV'), txt=g('parF');
+  var modos={dif:'apenas com divergência',all:'todos os cruzados',grave:'apenas críticas e altas'};
+  var est=[]; if(ck('lgD')) est.push('divergente'); if(ck('lgW')) est.push('atenção'); if(ck('lgE')) est.push('conferindo');
+  var p=[];
+  p.push('<b>'+PAR_COUNT[0]+' de '+PAR_COUNT[1]+'</b> registros cruzados');
+  p.push('<b>Escopo:</b> '+(modos[mode]||mode));
+  p.push('<b>Campo:</b> '+(LBL_CAMPO[campo]||campo));
+  p.push('<b>Vínculo:</b> '+(vinc||'todos'));
+  p.push('<b>Estados:</b> '+(est.join(', ')||'nenhum'));
+  if(txt) p.push('<b>Busca:</b> '+esc(txt));
+  return p.join(' &nbsp;·&nbsp; ');
+}
+function imprimir(modo){
+  if(!RES) return;
+  var abaEl=document.querySelector('.tab.on');
+  var abaNome=abaEl?abaEl.textContent.replace(/\s*\d+\s*$/,'').trim():'';
+  var abaId=abaEl?abaEl.dataset.t:'';
+  document.getElementById('phTit').textContent = (modo==='aba')
+    ? 'Conciliação Sonnet x ADP — '+abaNome
+    : 'Conciliação Sonnet x ADP — relatório completo';
+  document.getElementById('phSub').textContent =
+    'Sonova do Brasil · Departamento Pessoal · execução em '+RES.ts.toLocaleString('pt-BR')+
+    ' · ADP '+RES.counts.adp+' · EC '+RES.counts.ec+' · Monthly '+RES.counts.mon+' registros';
+  document.getElementById('phFil').innerHTML = (modo==='aba'&&abaId==='par') ? descreverFiltrosPar() : '';
+  var pv=document.getElementById('phVis');
+  if(pv) pv.textContent = SEM_SAL ? 'Valores salariais omitidos nesta via.' : '';
+  var cls = (modo==='aba')?'pr-aba':'pr-tudo';
+  document.body.classList.add(cls);
+  var limpar=function(){ document.body.classList.remove('pr-aba','pr-tudo'); };
+  if(window.onafterprint!==undefined){ window.onafterprint=function(){ limpar(); window.onafterprint=null; }; }
+  setTimeout(function(){ window.print(); setTimeout(limpar,1200); },60);
+}
+
+function renderDash(){
+  var q=RES.qual,k=RES.kpi,c=RES.cfg;
+  var h='';
+
+  h+='<div class="note"><strong>Chave de cruzamento: Sonova ID.</strong> Todo o confronto entre as bases é feito por esse campo. '+
+     'A tabela abaixo mostra qual coluna foi usada em cada arquivo, o formato encontrado e quantos casaram. '+
+     'Se a interseção vier muito abaixo do esperado, o problema está na chave, não nos dados.</div>';
+  h+=tbl(['Arquivo','Coluna usada','Registros','IDs válidos','IDs únicos','Em branco','Fora do padrão numérico','Duplicados','Formato','Amostra'],
+    q.chave.map(function(r){ return [r.arq,r.col,{v:r.total,c:'num'},{v:r.validos,c:'num'},{v:r.unicos,c:'num'},{v:r.vazios,c:'num'},{v:r.naoNum,c:'num'},{v:r.dup,c:'num'},r.formato,{v:r.amostra,c:'mono'}]; }),
+    'Sem dados.');
+  h+='<div class="mini" style="margin:12px 0 18px">'+
+     '<div class="m"><b>'+q.cobertura.ecAdp+'</b><span>EC casou com ADP</span></div>'+
+     '<div class="m"><b>'+q.cobertura.monAdp+'</b><span>Monthly casou com ADP</span></div>'+
+     '<div class="m"><b>'+q.cobertura.ecMon+'</b><span>EC casou com Monthly</span></div>'+
+     '<div class="m'+(q.recon.length?' warn':'')+'"><b>'+q.recon.length+'</b><span>Órfãos reconciliados por nome</span></div></div>';
+
+  if(q.recon.length){
+    h+='<div class="note err"><strong>'+q.recon.length+' registro(s) não casaram por Sonova ID, mas são a mesma pessoa.</strong> '+
+       'Identificados por nome e data de nascimento entre os órfãos das duas pontas. Significa que o ID Sonova está errado em um dos sistemas — enquanto isso não for alinhado, esses colaboradores permanecem invisíveis para qualquer cruzamento por chave.</div>';
+    h+=tbl(['ID no ADP','Nome no ADP','Nascimento ADP','ID no Sonnet','Nome no Sonnet','Nascimento Sonnet','Arquivo','Evidência','Confiança'],
+      q.recon.map(function(r){ return [{v:r.idAdp,c:'mono'},r.nomeAdp,r.dobAdp,{v:r.idSon,c:'mono'},r.nomeSon,r.dobSon,r.origem,r.evidencia,{h:badge(r.conf)}]; }),
+      '');
+    h+='<div style="height:18px"></div>';
+  }
+
+  var LBLF={mon:'Somente Monthly',kzn:'Somente Kaizen',monkzn:'Monthly com precedência, Kaizen completa',kznmon:'Kaizen com precedência, Monthly completa'};
+  var fo=q.fontes||{porFonte:{}};
+  h+='<div class="note"><strong>Fonte de remuneração: '+esc(LBLF[q.fonteRem]||q.fonteRem||'—')+'.</strong> '+
+     'Monthly com '+fo.monthly+' linhas e Kaizen com '+fo.kaizen+' linhas carregadas. '+
+     (fo.complementados?('Os dois foram unidos pelo Sonova ID: '+fo.complementados+' registro(s) vieram da segunda fonte por não existirem na primeira. '):'')+
+     'Distribuição final: '+(Object.keys(fo.porFonte||{}).map(function(k){return fo.porFonte[k]+' do '+k;}).join(' e ')||'nenhuma')+'.'+
+     ' No Kaizen os valores são resolvidos pelo rótulo do Pay Component, não pela posição da coluna Amount — se a ordem do export mudar, o mapeamento continua correto.</div>';
+  h+='<div class="note"><strong>Leitura dos arquivos.</strong> Números brutos do que entrou e do que foi efetivamente cruzado. Duplicidade de ID Sonova é a falha mais grave desta seção: invalida qualquer cruzamento por chave.</div>';
+  h+='<div class="mini" style="margin-bottom:18px">';
+  q.leitura.forEach(function(r){
+    h+='<div class="m"><b>'+r.lidas+'</b><span>'+esc(r.arq)+' · linhas lidas</span></div>';
+  });
+  q.leitura.forEach(function(r){
+    h+='<div class="m'+(r.dupId?' warn':'')+'"><b>'+r.dupId+'</b><span>'+esc(r.arq)+' · IDs duplicados</span></div>';
+  });
+  var ecTot=q.leitura[1].consider;
+  var pctMon=ecTot?(q.cobertura.ecMon/ecTot*100):0;
+  h+='<div class="m'+(pctMon<50?' warn':'')+'"><b>'+pctMon.toFixed(0)+'%</b><span>EC com remuneração no Monthly</span></div>';
+  h+='<div class="m'+(q.cobertura.soMon?' warn':'')+'"><b>'+q.cobertura.soMon+'</b><span>Monthly sem contraparte no ADP</span></div>';
+  h+='</div>';
+  if(pctMon<50) h+='<div class="note"><strong>Cobertura baixa entre EC e Monthly ('+pctMon.toFixed(0)+'%).</strong> As duas extrações parecem ser fatias diferentes da população. Enquanto isso, a comparação de salário só roda para quem existe nos dois arquivos, e a ausência de remuneração não é cobrada como divergência. Exporte EC e Monthly do mesmo recorte para liberar a conferência salarial completa.</div>';
+
+  h+=tbl(['Arquivo','Linhas lidas','Colunas','Considerados','Ignorados por filtro','IDs duplicados','E-mails duplicados','CPFs duplicados'],
+    q.leitura.map(function(r){ return [r.arq,{v:r.lidas,c:'num'},{v:r.cols,c:'num'},{v:r.consider,c:'num'},{v:r.ignor,c:'num'},{v:r.dupId,c:'num'},{v:r.dupMail,c:'num'},{v:r.dupDoc,c:'num'}]; }),
+    'Sem dados de leitura.');
+
+  h+='<div class="dashgrid" style="margin-top:18px">';
+
+  h+='<div class="dbox"><h4>Severidade das divergências</h4><div class="dh">Distribuição do total de '+k.total+' apontamentos.</div><div class="cvbox"><canvas id="dcSev"></canvas></div></div>';
+  h+='<div class="dbox"><h4>Cobertura entre as bases</h4><div class="dh">Quantos registros existem em cada interseção e quantos ficam isolados.</div><div class="cvbox"><canvas id="dcCob"></canvas></div></div>';
+  h+='<div class="dbox"><h4>Confiança da resolução de chefia</h4><div class="dh">Como o ID Sonova do gestor foi obtido a partir do ADP.</div><div class="cvbox"><canvas id="dcConf"></canvas></div></div>';
+  h+='<div class="dbox"><h4>Divergências por campo</h4><div class="dh">Onde o esforço de correção se concentra.</div><div class="cvbox"><canvas id="dcCampo"></canvas></div></div>';
+
+  h+='<div class="dbox wide"><h4>Completude de preenchimento por campo</h4><div class="dh">Percentual de registros com o campo preenchido, sobre os registros considerados. Campos abaixo de 80% aparecem destacados.</div>';
+  ['ADP','EC','MON'].forEach(function(w){
+    var lst=q.compl[w]; if(!lst||!lst.length) return;
+    var titulo = w==='ADP'?'ADP':(w==='EC'?'Sonnet EC':'Sonnet Monthly');
+    h+='<div style="margin-top:12px"><div style="font-size:12px;font-weight:500;color:var(--dk);margin-bottom:7px">'+titulo+'</div><div class="bars">';
+    lst.forEach(function(x){
+      var cls = x.pct<50?'low':(x.pct<80?'mid':'');
+      h+='<div class="barrow"><span title="'+esc(x.campo)+'">'+esc(x.campo)+'</span>'+
+         '<span class="track"><span class="fill '+cls+'" style="width:'+x.pct.toFixed(1)+'%"></span></span>'+
+         '<span class="val">'+x.pct.toFixed(0)+'% ('+x.preenchidos+')</span></div>';
+    });
+    h+='</div></div>';
+  });
+  h+='</div>';
+
+  var orf={};
+  RES.sonnetToAdp.forEach(function(r){
+    if(r.adp==='Sim') return;
+    var t=r.etype||'(não informado)';
+    if(!orf[t]) orf[t]={k:t,tot:0,crit:0};
+    orf[t].tot++; if(r.sev==='CRITICO') orf[t].crit++;
+  });
+  var orfL=Object.keys(orf).map(function(x){return orf[x];}).sort(function(a,b){return b.tot-a.tot;});
+  h+='<div class="dbox wide"><h4>Colaboradores no Sonnet sem contraparte no ADP, por Employment Type</h4>'+
+     '<div class="dh">O Employment Type é o critério que separa erro de folha de comportamento esperado. Estagiário, aprendiz, contingent worker e expatriado normalmente não existem na folha brasileira. Declare esses tipos no campo "Employment Type que não entra na folha ADP" para que deixem de contar como divergência crítica.</div>';
+  h+=tbl(['Employment Type','Sem contraparte no ADP','Tratados como críticos'],
+    orfL.map(function(r){ return [r.k,{v:r.tot,c:'num'},{v:r.crit,c:'num'}]; }),
+    'Todos os colaboradores do Sonnet têm contraparte no ADP.');
+  h+='</div>';
+
+  h+='<div class="dbox wide"><h4>Aderência por Functional Area</h4><div class="dh">Percentual de registros cruzados sem divergência crítica ou alta, agrupado pela área do Sonnet.</div>';
+  h+=tbl(['Functional Area','Cruzados','Sem divergência grave','Aderência'],
+    q.porFA.map(function(r){ return [r.k,{v:r.tot,c:'num'},{v:r.ok,c:'num'},{v:(r.tot?(r.ok/r.tot*100).toFixed(1):'0.0')+'%',c:'num'}]; }),
+    'Nenhum registro cruzado.');
+  h+='</div>';
+
+  h+='<div class="dbox wide"><h4>Aderência por CNPJ</h4><div class="dh">Permite direcionar a correção por empresa do cluster.</div>';
+  h+=tbl(['CNPJ','Cruzados','Sem divergência grave','Divergências','Aderência'],
+    q.porCNPJ.map(function(r){ return [r.k,{v:r.tot,c:'num'},{v:r.ok,c:'num'},{v:r.div,c:'num'},{v:(r.tot?(r.ok/r.tot*100).toFixed(1):'0.0')+'%',c:'num'}]; }),
+    'Nenhum registro cruzado.');
+  h+='</div>';
+
+  h+='</div>';
+  document.getElementById('pane-dash').innerHTML=h;
+  drawDash();
+}
+function drawDash(){
+  if(typeof Chart==='undefined'||!RES) return;
+  var q=RES.qual,k=RES.kpi;
+  mkChart('dcSev',{type:'doughnut',
+    data:{labels:['Críticas','Altas','Médias','Informativas'],
+      datasets:[{data:[k.sev.CRITICO||0,k.sev.ALTO||0,k.sev.MEDIO||0,k.sev.INFO||0],
+        backgroundColor:['#7D0041','#8C321E','#005A64','#8A8A8A'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'right',labels:{font:{family:'Roboto',size:11},boxWidth:12}}}}});
+  mkChart('dcCob',{type:'bar',
+    data:{labels:['EC ∩ ADP','Monthly ∩ ADP','EC ∩ Monthly','Só no EC','Só no Monthly','Só no ADP'],
+      datasets:[{data:[q.cobertura.ecAdp,q.cobertura.monAdp,q.cobertura.ecMon,q.cobertura.soEc,q.cobertura.soMon,q.cobertura.soAdp],
+        backgroundColor:['#0083CA','#0083CA','#6EB4DC','#7D0041','#7D0041','#8C321E'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{ticks:{font:{size:10}}}}}});
+  mkChart('dcConf',{type:'doughnut',
+    data:{labels:['Alta','Média','Não resolvida'],
+      datasets:[{data:[q.conf.ALTA||0,q.conf.MEDIA||0,q.conf.NENHUMA||0],
+        backgroundColor:['#2E7D32','#005A64','#8A8A8A'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+      plugins:{legend:{position:'right',labels:{font:{family:'Roboto',size:11},boxWidth:12}}}}});
+  var pc=q.porCampo.slice(0,10);
+  mkChart('dcCampo',{type:'bar',
+    data:{labels:pc.map(function(x){return x.k.split(' · ')[1]||x.k;}),
+      datasets:[
+        {label:'Críticas',data:pc.map(function(x){return x.CRITICO;}),backgroundColor:'#7D0041',borderWidth:0},
+        {label:'Altas',data:pc.map(function(x){return x.ALTO;}),backgroundColor:'#8C321E',borderWidth:0},
+        {label:'Médias',data:pc.map(function(x){return x.MEDIO;}),backgroundColor:'#005A64',borderWidth:0},
+        {label:'Info',data:pc.map(function(x){return x.INFO;}),backgroundColor:'#8A8A8A',borderWidth:0}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{family:'Roboto',size:10},boxWidth:11}}},
+      scales:{x:{stacked:true,beginAtZero:true,ticks:{precision:0}},y:{stacked:true,ticks:{font:{size:10}}}}}});
+}
+
+/* ---------- PLANO DE CORREÇÃO NO ADP ---------- */
+function renderPlano(){
+  var rows=RES.plano.map(function(r){
+    var dcls = r.destino==='ADP' ? 'b-ALTO' : (r.destino==='Sonnet' ? 'b-MEDIA' : (r.destino==='Nenhum' ? 'b-OK' : 'b-INFO'));
+    var mc=/Salary|Sal[aá]rio/i.test(r.campoAdp)?'money':'';
+    return [{h:'<span class="b '+dcls+'">'+esc(r.destino)+'</span>'},r.prio,{h:badge(r.sev)},r.id,r.nome,r.campoAdp,{v:r.atual,c:mc},{v:r.correto,c:mc},{v:r.acao,c:mc},r.local,r.obs];
+  });
+  var nAdp=RES.plano.filter(function(r){return r.destino==='ADP';}).length;
+  var nSon=RES.plano.filter(function(r){return r.destino!=='ADP';}).length;
+  var n1=RES.plano.filter(function(r){return r.sev==='CRITICO';}).length;
+  var n2=RES.plano.filter(function(r){return r.sev==='ALTO';}).length;
+  var h='<div class="note"><strong>O Sonnet é a fonte da verdade, exceto no salário.</strong> Para remuneração a referência é o ADP, e a correção sai pela aba Correção salarial (Sonnet). Toda linha abaixo é uma correção a executar no sistema indicado na primeira coluna. '+
+        'A coluna "Valor correto" é o que está no Sonnet; a coluna "Valor atual no ADP" é o que precisa ser substituído. '+
+        RES.plano.length+' correções no total, sendo '+n1+' de prioridade imediata e '+n2+' de prioridade alta. '+
+        nAdp+' vão para o ADP e '+nSon+' precisam ser resolvidas no próprio Sonnet — quando o Sonnet está incompleto, não há o que corrigir no ADP.</div>'+
+        '<div class="note"><strong>Sobre a coluna "Onde corrigir".</strong> É uma sugestão de caminho no ADP baseada na estrutura usual de cadastro de empregado, não uma verificação do seu ambiente. Ajuste conforme o menu da sua instalação.</div>'+
+        '<div class="btnrow" style="margin:0 0 12px"><button class="btn btn-s" id="btnPlanoMd" style="padding:6px 12px">Copiar plano em Markdown</button></div>';
+  h+=tblFilt('plano',['Sistema','Prioridade','Severidade','ID Sonova','Nome','Campo a corrigir','Valor atual','Valor correto (Sonnet)','Ação','Onde corrigir','Observação'],rows,'Nenhuma correção pendente. As bases estão alinhadas.');
+  document.getElementById('pane-plano').innerHTML=h;
+  var b=document.getElementById('btnPlanoMd');
+  if(b) b.addEventListener('click',planoMd);
+}
+function planoMd(){
+  var m='## Plano de correção no ADP\n\nFonte da verdade: Sonnet. Execução em '+RES.ts.toLocaleString('pt-BR')+'.\n\n';
+  m+='| Sistema | Prioridade | ID Sonova | Nome | Campo a corrigir | Valor atual | Valor correto | Ação |\n|---|---|---|---|---|---|---|---|\n';
+  RES.plano.forEach(function(r){
+    m+='| '+r.destino+' | '+r.prio+' | '+r.id+' | '+r.nome+' | '+r.campoAdp+' | '+String(r.atual).replace(/\|/g,'/')+' | '+String(r.correto).replace(/\|/g,'/')+' | '+String(r.acao).replace(/\|/g,'/')+' |\n';
+  });
+  copyText(m);
+}
+
+/* ---------- COMPARATIVO LADO A LADO ---------- */
+
+/* ---------- CORREÇÃO SALARIAL EM MASSA (template SuccessFactors) ---------- */
+function renderImp(){
+  var c=RES.cfg;
+  var nDif=RES.impBase.filter(function(x){return x.divergente;}).length;
+  var h='<div class="note"><strong>Aqui o salário do ADP é a referência, não o Sonnet.</strong> '+
+    'O cruzamento continua idêntico — a divergência segue sendo detectada do mesmo jeito. O que muda é o destino da correção: em vez de alterar a folha, o valor do ADP é levado ao Sonnet pela importação Pay Component Recurring.</div>';
+  h+='<div class="note">Regra de conversão: <strong>Salário Mensal do ADP x '+c.mult+' = valor anual</strong>, gravado nos dois códigos. '+
+    'Base Salary 100% ('+esc(c.pc100)+') e Base Salary Pro-Rated ('+esc(c.pcPro)+') recebem o mesmo valor quando o FTE é 1. '+
+    'Com FTE menor que 1, o 100% é dividido pelo FTE e o Pro-Rated fica com o valor do contrato.</div>';
+  h+='<div class="mini" style="margin-bottom:14px">'+
+     '<div class="m"><b>'+RES.impBase.length+'</b><span>Elegíveis (salário válido no ADP)</span></div>'+
+     '<div class="m'+(nDif?' warn':'')+'"><b>'+nDif+'</b><span>Com salário divergente</span></div>'+
+     '<div class="m"><b>'+RES.impBase.filter(function(x){return x.semSonnet;}).length+'</b><span>Sem remuneração no Sonnet</span></div>'+
+     '<div class="m"><b>'+RES.impSel.length+'</b><span>Selecionados pelo escopo</span></div>'+
+     '<div class="m"><b>'+RES.impRows.length+'</b><span>Linhas no template</span></div></div>';
+
+  h+='<div class="note">A aba gerada sai com as duas linhas de cabeçalho do template (nomes de sistema e rótulos) e apenas as colunas A a I. '+
+     'A legenda dos Global Pay Components foi movida para a aba Resumo: mantê-la ao lado dos dados faria a descrição de um código aparecer na linha de outro colaborador. '+
+     'Event Date é gravado como data real no formato mm/dd/yyyy, igual ao template original.</div>';
+  h+='<h4 style="font-size:13px;margin:16px 0 8px;color:var(--dk)">Prévia da aba PayComponentRecurringImportTemp</h4>';
+  h+=tblFilt('imp',['ID Sonova','Nome','Pay Component','Amount','Currency','Event Date','Frequency','User ID','Mensal ADP','FTE'],
+    RES.impRows.map(function(r){
+      return [r.uid,r._nome,r.pc+' — '+r._comp,{v:fmtMoney(r.valor),c:'num money'},r.moeda,fmtDateBR(r.data),r.freq,{v:r.uid,c:'mono'},{v:fmtMoney(r._mensal),c:'num money'},{v:r._fte,c:'num'}];
+    }),'Nenhuma linha gerada. Verifique o escopo selecionado e se há salário válido no ADP.');
+
+  h+='<h4 style="font-size:13px;margin:20px 0 8px;color:var(--dk)">Base de cálculo</h4>';
+  h+=tblFilt('impb',['ID Sonova','Nome','CNPJ','Mensal ADP','x'+c.mult,'FTE','Base Salary 100%','Base Salary Pro-Rated','Pro-Rated atual no Sonnet','Diferença','Situação'],
+    RES.impBase.map(function(x){
+      return [x.id,x.nome,x.cnpj,{v:fmtMoney(x.mensal),c:'num money'},{v:fmtMoney(x.anual),c:'num money'},{v:x.fte,c:'num'},
+              {v:fmtMoney(x.v100),c:'num money'},{v:fmtMoney(x.vpro),c:'num money'},
+              {v:x.sonPro===null?'—':fmtMoney(x.sonPro),c:'num money'},
+              {v:x.dif===null?'—':fmtMoney(x.dif),c:'num money'},
+              {h:badge(x.divergente?'CRITICO':(x.semSonnet?'INFO':'OK'))+' '+esc(x.motivo)}];
+    }),'Nenhum colaborador elegível.');
+  document.getElementById('pane-imp').innerHTML=h;
+}
+
+function optVinculos(){
+  var m={},i;
+  RES.pares.forEach(function(pp){
+    var v=String(pp.etypeSon||'').trim()||'(não informado)';
+    m[v]=(m[v]||0)+1;
+  });
+  var ks=Object.keys(m).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+  var h='<option value="">Todos os vínculos ('+RES.pares.length+')</option>';
+  ks.forEach(function(k){ h+='<option value="'+esc(k)+'">'+esc(k)+' ('+m[k]+')</option>'; });
+  return h;
+}
+function renderPar(){
+  var h='<div class="tbar">'+
+    '<input type="text" id="parF" placeholder="Filtrar por ID, nome, CNPJ...">'+
+    '<select id="parS"><option value="dif">Apenas com divergência</option><option value="all">Todos os cruzados</option><option value="grave">Apenas críticas e altas</option></select>'+
+    '<select id="parC">'+
+      '<option value="">Todos os campos</option>'+
+      '<option value="sal">Salário</option>'+
+      '<option value="hire">Admissão</option>'+
+      '<option value="dob">Nascimento</option>'+
+      '<option value="mail">E-mail</option>'+
+      '<option value="farea">Functional Area</option>'+
+      '<option value="pos">Cargo</option>'+
+      '<option value="chefe">Chefia</option>'+
+    '</select>'+
+    '<select id="parV">'+optVinculos()+'</select>'+
+    '<label class="swsal" id="swSal2L" style="padding:5px 10px"><input type="checkbox" id="swSal2">Ocultar salários</label>'+
+    '<button class="btn btn-a" id="parPrint" style="padding:6px 12px">Imprimir esta tela</button>'+
+    '<span class="meta" id="parMeta"></span></div>'+
+    '<div class="legend">'+
+    '<label><input type="checkbox" id="lgD" checked><i style="background:#FBF0F5;border:1px solid #E4C6D4"></i>Divergente — corrigir no ADP</label>'+
+    '<label><input type="checkbox" id="lgW" checked><i style="background:#F4F8FA;border:1px solid #CFE0E8"></i>Atenção — campo vazio ou equivalente</label>'+
+    '<label><input type="checkbox" id="lgE" checked><i style="background:#fff;border:1px solid #CCC"></i>Conferindo</label>'+
+    '<span style="margin-left:auto">A linha Sonnet é o registro consolidado: cadastro vem do EC, remuneração vem do Monthly, unidos pelo Sonova ID. Salário mensal do Sonnet = Base Amount Pro-Rated dividido por '+RES.cfg.mult+'.</span></div>'+
+    '<div class="parwrap" id="parHost"></div>';
+  document.getElementById('pane-par').innerHTML=h;
+  var b2=document.getElementById('swSal2');
+  if(b2) b2.addEventListener('change',function(){ aplicarMascaraSalario(this.checked); });
+  var bp=document.getElementById('parPrint');
+  if(bp) bp.addEventListener('click',function(){ imprimir('aba'); });
+  ['parF','parS','parC','parV','lgD','lgW','lgE'].forEach(function(i){
+    var el=document.getElementById(i);
+    if(el) el.addEventListener(i==='parF'?'input':'change',paintPar);
+  });
+  paintPar();
+}
+function paintPar(){
+  var f=stripAcc((document.getElementById('parF')||{}).value||'').toLowerCase();
+  var mode=(document.getElementById('parS')||{}).value||'dif';
+  var campo=(document.getElementById('parC')||{}).value||'';
+  var vinc=(document.getElementById('parV')||{}).value||'';
+  var okD=!document.getElementById('lgD')||document.getElementById('lgD').checked;
+  var okW=!document.getElementById('lgW')||document.getElementById('lgW').checked;
+  var okE=!document.getElementById('lgE')||document.getElementById('lgE').checked;
+  var GRUPO={sal:['salm','sala'],dob:['dob'],hire:['hire'],mail:['mail'],farea:['farea'],pos:['pos'],chefe:['chefe']};
+  function cellsDo(pp){
+    if(!campo) return pp.cells;
+    var ks=GRUPO[campo]||[];
+    return pp.cells.filter(function(cl){ return ks.indexOf(cl.k)>=0; });
+  }
+  var lst=RES.pares.filter(function(pp){
+    if(vinc && (String(pp.etypeSon||'').trim()||'(não informado)')!==vinc) return false;
+    if(mode==='grave' && pp.sev!=='CRITICO' && pp.sev!=='ALTO') return false;
+    var cs=cellsDo(pp);
+    var td=cs.some(function(cl){return cl.st==='dif';});
+    var tw=cs.some(function(cl){return cl.st==='war';});
+    if(mode==='dif' && !td && !tw) return false;
+    var passa = (okD&&td) || (okW&&tw) || (okE&&!td&&!tw);
+    if(!passa) return false;
+    if(!f) return true;
+    return stripAcc(pp.id+' '+pp.nomeAdp+' '+pp.nomeSon+' '+pp.cnpj+' '+pp.matr).toLowerCase().indexOf(f)>=0;
+  });
+  var host=document.getElementById('parHost');
+  if(!lst.length){ host.innerHTML='<div class="empty">Nenhum registro para o filtro aplicado.</div>'; }
+  else{
+    host.innerHTML=lst.map(function(pp){
+      var head='<div class="par-h"><span class="pid">'+esc(pp.id)+(pp.matr?' · matr. '+esc(pp.matr):'')+'</span>'+
+        '<span class="pnm">'+esc(pp.nomeSon||pp.nomeAdp)+'</span>'+
+        (pp.cnpj?'<span class="pid">'+esc(pp.cnpj)+'</span>':'')+
+        ((pp.etypeSon||pp.vincAdp)?'<span class="pid">vínculo: '+esc(pp.etypeSon||'—')+' (Sonnet) · '+esc(pp.vincAdp||'—')+' (ADP)</span>':'')+
+        '<span class="pr">'+(pp.noMON?'<span class="b b-INFO">sem remuneração no Monthly</span>':'')+(pp.noEC?'<span class="b b-INFO">sem cadastro no EC</span>':'')+
+        (pp.nd?'<span class="b b-CRITICO">'+pp.nd+' divergente'+(pp.nd>1?'s':'')+'</span>':'')+
+        (pp.nw?'<span class="b b-MEDIO">'+pp.nw+' atenção</span>':'')+
+        (!pp.nd&&!pp.nw?'<span class="b b-OK">conferindo</span>':'')+'</span></div>';
+      var foco=campo?(GRUPO[campo]||[]):[];
+      function fc(cl){ return (foco.indexOf(cl.k)>=0?' foco':'')+((cl.k==='salm'||cl.k==='sala')?' money':''); }
+      var ths='<th></th>'+pp.cells.map(function(cl){ return '<th class="'+(fc(cl).trim())+'">'+esc(cl.lbl)+'</th>'; }).join('');
+      var r1='<tr><td class="src src-adp">ADP<span class="srcsub">folha</span></td>'+pp.cells.map(function(cl){ return '<td class="'+cl.st+fc(cl)+'">'+esc(cl.adp||'—')+'</td>'; }).join('')+'</tr>';
+      var r2='<tr><td class="src src-son">Sonnet<span class="srcsub">'+esc(pp.comp)+'</span></td>'+pp.cells.map(function(cl){ return '<td class="'+cl.st+fc(cl)+'">'+esc(cl.son||'—')+'</td>'; }).join('')+'</tr>';
+      return '<div class="par pickcard" data-pid="'+esc(pp.id)+'" title="Duplo clique para abrir a ficha completa"'+((pp.sev==='CRITICO'||pp.sev==='ALTO')?' style="border-color:var(--ac)"':'')+'>'+head+
+             '<div style="overflow:auto"><table><thead><tr>'+ths+'</tr></thead><tbody>'+r1+r2+'</tbody></table></div></div>';
+    }).join('');
+  }
+  Array.prototype.forEach.call(host.querySelectorAll('.pickcard'),function(c2){
+    c2.style.cursor='pointer';
+    c2.addEventListener('dblclick',function(){ abrirFicha(c2.dataset.pid); });
+  });
+  aplicarMascaraSalario(SEM_SAL);
+  var mt=document.getElementById('parMeta');
+  PAR_COUNT=[lst.length,RES.pares.length];
+  if(mt) mt.textContent=lst.length+' de '+RES.pares.length+' registros cruzados'+
+    (campo?' · campo: '+(LBL_CAMPO[campo]||campo):'')+(vinc?' · vínculo: '+vinc:'');
+}
+
+function renderResumo(){
+  var k=RES.kpi,e=RES.excl,c=RES.cfg;
+  var porCampo={};
+  RES.divs.forEach(function(d){
+    var key=d.bloco+' · '+d.campo;
+    if(!porCampo[key]) porCampo[key]={bloco:d.bloco,campo:d.campo,CRITICO:0,ALTO:0,MEDIO:0,INFO:0,tot:0};
+    porCampo[key][d.sev]++; porCampo[key].tot++;
+  });
+  var lst=Object.keys(porCampo).map(function(x){ return porCampo[x]; }).sort(function(a,b){ return b.tot-a.tot; });
+
+  var h='<h3 style="font-size:15px;margin-bottom:10px">Divergências por campo</h3>';
+  h+=tbl(['Bloco','Campo','Críticas','Altas','Médias','Info','Total'],
+    lst.map(function(r){ return [r.bloco,r.campo,{v:r.CRITICO,c:'num'},{v:r.ALTO,c:'num'},{v:r.MEDIO,c:'num'},{v:r.INFO,c:'num'},{v:r.tot,c:'num'}]; }),
+    'Nenhuma divergência encontrada.');
+
+  h+='<div class="note"><strong>Regras aplicadas.</strong> Salário: Salário Mensal do ADP multiplicado por '+c.mult+' comparado ao Base Amount Pro-Rated, tolerância de R$ '+fmtMoney(c.tolAbs)+' ou '+c.tolPct+'%. '+
+     'Cargo: similaridade mínima de '+(c.sim*100).toFixed(0)+'%. Salário até R$ '+fmtMoney(c.mask)+' tratado como mascarado. '+
+     'Functional Area comparada apenas pelo prefixo (HBAnnn). E-mail comparado sem diferenciar maiúsculas. '+
+     'Aderência = registros cruzados sem divergência crítica ou alta, dividido pelo total de cruzados.</div>';
+
+  h+='<div class="note"><strong>Registros excluídos do cruzamento.</strong> '+
+     'Sonnet inativos: '+(e.ecInativo+e.monInativo)+' · ADP desligados: '+e.adpDeslig+' · sem ID Sonova: '+e.semId+'. '+
+     'Ajuste em "Regras de comparação" se quiser incluí-los.</div>';
+
+  var chOK=RES.chefia.filter(function(r){ return r.status==='OK'; }).length;
+  var chAlta=RES.chefia.filter(function(r){ return r.conf==='ALTA'; }).length;
+  h+='<h3 style="font-size:15px;margin:18px 0 10px">Resolução do ID Sonova da chefia</h3>';
+  h+='<div class="note">O ADP grava a chefia por nome e matrícula; o Sonnet grava por ID Sonova. A ferramenta resolve o ID em cascata — matrícula mais estabelecimento na própria base ADP (determinístico), depois nome exato, depois nome aproximado contra o diretório de gestores do Sonnet. '+
+     'Nesta execução: '+RES.chefia.length+' chefias analisadas, '+chAlta+' resolvidas com confiança alta, '+chOK+' conferem com o Sonnet, '+k.chDiv+' divergem e '+k.chNR+' não foram resolvidas.</div>';
+  document.getElementById('pane-resumo').innerHTML=h;
+}
+
+function renderA2S(){
+  var rows=RES.adpToSonnet.map(function(r){
+    return [r.id,r.matr,r.nome,r.cnpj,r.ec,r.mon,{v:r.divs,c:'num'},{h:badge(r.sev)},r.detalhe];
+  });
+  document.getElementById('pane-a2s').innerHTML=
+    '<div class="note">Cada registro da folha ADP verificado contra o Sonnet. Ordene por "Divergências" para priorizar. <strong>Duplo clique na linha abre a ficha completa do colaborador.</strong></div>'+
+    tblFilt('a2s',['ID Sonova','Matrícula','Nome (ADP)','CNPJ','No EC','No Monthly','Divergências','Severidade','Observação'],rows,'Nenhum registro ADP após os filtros.');
+}
+function renderS2A(){
+  var rows=RES.sonnetToAdp.map(function(r){
+    return [r.id,r.nome,r.origem,r.status,r.etype||'',r.farea,r.admissao,r.adp,r.mon,{v:r.divs,c:'num'},{h:badge(r.sev)},r.detalhe];
+  });
+  document.getElementById('pane-s2a').innerHTML=
+    '<div class="note">Cada registro do Sonnet verificado contra a folha ADP. "Não" na coluna ADP significa colaborador sem contraparte na folha do período. '+
+    'A coluna <strong>Employment Type</strong> é o que decide se essa ausência é erro ou comportamento esperado: vínculos declarados em "Employment Type que não entra na folha ADP" caem para severidade informativa.</div>'+
+    tblFilt('s2a',['ID Sonova','Nome (Sonnet)','Origem','Status','Employment Type','Functional Area','Admissão','No ADP','No Monthly','Divergências','Severidade','Observação'],rows,'Nenhum registro Sonnet após os filtros.');
+}
+function renderDiv(){
+  var rows=RES.divs.map(function(d){
+    var mc=/Sal[aá]rio/i.test(d.campo)?' money':'';
+    return [d.id,d.nome,d.bloco,d.campo,{h:badge(d.sev)},{h:'<span class="diffv"><span class="a">'+esc(d.adp)+'</span></span>',c:mc.trim()},
+            {h:'<span class="diffv"><span class="s">'+esc(d.sonnet)+'</span></span>',c:mc.trim()},d.obs];
+  });
+  document.getElementById('pane-div').innerHTML=
+    '<div class="note">Lista consolidada campo a campo. O valor da esquerda é o do ADP, o da direita é o do Sonnet.</div>'+
+    tblFilt('div',['ID Sonova','Nome','Bloco','Campo','Severidade','Valor ADP','Valor Sonnet','Observação'],rows,'Nenhuma divergência de campo.');
+}
+function renderChef(){
+  var rows=RES.chefia.map(function(r){
+    var sev = r.status==='OK'?'OK':(r.status==='DIVERGENTE'?'CRITICO':'INFO');
+    return [r.id,r.nome,r.chefeAdp,r.matr,r.estab,r.idResolv,r.via,{h:badge(r.conf)},r.chefeSonnet,r.idSonnet,{h:badge(sev)}];
+  });
+  document.getElementById('pane-chef').innerHTML=
+    '<div class="note">Construção do ID Sonova da chefia a partir do ADP e confronto com o Manager User Sys ID do Sonnet. A coluna "Origem do ID" mostra qual etapa da cascata resolveu cada caso.</div>'+
+    tblFilt('chef',['ID Sonova','Colaborador','Chefia no ADP','Matrícula','Estab.','ID Sonova resolvido','Origem do ID','Confiança','Chefia no Sonnet','ID no Sonnet','Situação'],rows,'Nenhuma chefia analisada.');
+}
+function renderHist(){
+  var h=getHist();
+  var rows=h.slice().reverse().map(function(x){
+    return [new Date(x.ts).toLocaleString('pt-BR'),{v:x.adp,c:'num'},{v:x.ec,c:'num'},{v:x.mon,c:'num'},
+            {v:x.total,c:'num'},{v:x.crit,c:'num'},{v:x.alto,c:'num'},{v:x.medio,c:'num'},
+            {v:x.soADP,c:'num'},{v:x.soSON,c:'num'},{v:x.ader.toFixed(1)+'%',c:'num'}];
+  });
+  document.getElementById('pane-hist').innerHTML=
+    '<div class="chartbox"><canvas id="cv"></canvas></div>'+
+    '<div class="btnrow" style="margin:12px 0"><button class="btn btn-d" id="btnClearHist">Apagar histórico</button></div>'+
+    tbl(['Execução','ADP','EC','Monthly','Divergências','Críticas','Altas','Médias','Só ADP','Só Sonnet','Aderência'],rows,'Sem execuções anteriores.');
+  var b=document.getElementById('btnClearHist');
+  if(b) b.addEventListener('click',function(){ if(confirm('Apagar todo o histórico de execuções desta máquina?')){ lsDel(LS_HIST); renderHist(); } });
+  drawChart();
+}
+function mkChart(id,conf){
+  if(typeof Chart==='undefined') return;
+  var el=document.getElementById(id); if(!el) return;
+  if(CH[id]){ try{ CH[id].destroy(); }catch(e){} }
+  CH[id]=new Chart(el.getContext('2d'),conf);
+}
+function drawChart(){
+  var cv=document.getElementById('cv'); if(!cv||typeof Chart==='undefined') return;
+  var h=getHist(); if(!h.length) return;
+  if(CHART){ CHART.destroy(); CHART=null; }
+  CHART=new Chart(cv.getContext('2d'),{
+    type:'line',
+    data:{
+      labels:h.map(function(x){ return new Date(x.ts).toLocaleDateString('pt-BR'); }),
+      datasets:[
+        {label:'Críticas',data:h.map(function(x){return x.crit;}),borderColor:'#7D0041',backgroundColor:'#7D0041',tension:.25},
+        {label:'Altas',data:h.map(function(x){return x.alto;}),borderColor:'#8C321E',backgroundColor:'#8C321E',tension:.25},
+        {label:'Médias',data:h.map(function(x){return x.medio;}),borderColor:'#005A64',backgroundColor:'#005A64',tension:.25},
+        {label:'Aderência (%)',data:h.map(function(x){return x.ader;}),borderColor:'#0083CA',backgroundColor:'#0083CA',tension:.25,yAxisID:'y2'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{font:{family:'Roboto',size:11}}}},
+      scales:{y:{beginAtZero:true,title:{display:true,text:'Divergências'}},
+              y2:{position:'right',beginAtZero:true,max:100,grid:{drawOnChartArea:false},title:{display:true,text:'Aderência %'}}}}
+  });
+}
+
+/* ---------- tabelas ---------- */
+function cellHtml(c){
+  if(c && typeof c==='object'){
+    if(c.h!==undefined) return '<td'+(c.c?' class="'+c.c+'"':'')+'>'+c.h+'</td>';
+    return '<td'+(c.c?' class="'+c.c+'"':'')+'>'+esc(c.v)+'</td>';
+  }
+  return '<td>'+esc(c)+'</td>';
+}
+function cellTxt(c){ return (c&&typeof c==='object')?String(c.v!==undefined?c.v:String(c.h).replace(/<[^>]*>/g,'')):String(c===null||c===undefined?'':c); }
+function tbl(cols,rows,emptyMsg){
+  if(!rows.length) return '<div class="empty">'+esc(emptyMsg)+'</div>';
+  var _id=cols.indexOf('ID Sonova'); if(_id<0) _id=cols.indexOf('ID no ADP');
+  if(_id>=0) setTimeout(function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tscroll table'),function(t){
+      if(t.dataset.dbl) return;
+      var hs=t.querySelectorAll('thead th'), ix=-1, i;
+      for(i=0;i<hs.length;i++){ var tx=hs[i].textContent.replace(/[\u25B2\u25BC]/g,'').trim(); if(tx==='ID Sonova'||tx==='ID no ADP'){ ix=i; break; } }
+      if(ix<0) return;
+      t.dataset.dbl='1'; ligarDuploClique(t,ix);
+    });
+  },0);
+  var h='<div class="tscroll"><table><thead><tr>'+cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('')+'</tr></thead><tbody>';
+  h+=rows.map(function(r){ return '<tr>'+r.map(cellHtml).join('')+'</tr>'; }).join('');
+  return h+'</tbody></table></div>';
+}
+var TSTORE={};
+function tblFilt(key,cols,rows,emptyMsg){
+  var idc=cols.indexOf('ID Sonova');
+  TSTORE[key]={cols:cols,rows:rows,sort:(idc>=0?idc:0),dir:1};
+  var sevIdx=cols.indexOf('Severidade');
+  if(sevIdx<0) sevIdx=cols.indexOf('Situação');
+  var h='<div class="tbar">'+
+    '<input type="text" placeholder="Filtrar..." data-f="'+key+'">'+
+    (sevIdx>=0?'<select data-s="'+key+'" data-i="'+sevIdx+'"><option value="">Todas as severidades</option><option>CRITICO</option><option>ALTO</option><option>MEDIO</option><option>INFO</option><option>OK</option></select>':'')+
+    '<button class="btn btn-s" data-x="'+key+'" style="padding:6px 12px">Exportar CSV</button>'+
+    '<span class="meta" id="meta-'+key+'"></span></div><div id="host-'+key+'"></div>';
+  setTimeout(function(){ paintTable(key); bindTable(key); },0);
+  return h;
+}
+function paintTable(key){
+  var S=TSTORE[key];
+  var f=(document.querySelector('[data-f="'+key+'"]')||{}).value||'';
+  var selEl=document.querySelector('[data-s="'+key+'"]');
+  var sv=selEl?selEl.value:'';
+  var svIdx=selEl?+selEl.dataset.i:-1;
+  var fl=stripAcc(f).toLowerCase();
+  var rows=S.rows.filter(function(r){
+    if(sv && svIdx>=0 && cellTxt(r[svIdx]).indexOf(sv)<0) return false;
+    if(!fl) return true;
+    return r.some(function(c){ return stripAcc(cellTxt(c)).toLowerCase().indexOf(fl)>=0; });
+  });
+  if(S.sort>=0){
+    var i=S.sort,d=S.dir;
+    rows=rows.slice().sort(function(a,b){
+      var x=cellTxt(a[i]),y=cellTxt(b[i]);
+      var nx=parseFloat(String(x).replace(/\./g,'').replace(',','.')),ny=parseFloat(String(y).replace(/\./g,'').replace(',','.'));
+      if(!isNaN(nx)&&!isNaN(ny)&&/^[\d.,\-%\s]+$/.test(x)&&/^[\d.,\-%\s]+$/.test(y)) return (nx-ny)*d;
+      return x.localeCompare(y,'pt-BR')*d;
+    });
+  }
+  var host=document.getElementById('host-'+key);
+  if(!host) return;
+  if(!rows.length){ host.innerHTML='<div class="empty">Nenhum registro para o filtro aplicado.</div>'; }
+  else{
+    var h='<div class="tscroll"><table><thead><tr>'+S.cols.map(function(c,i){
+      var mark = S.sort===i ? (S.dir===1?' \u25B2':' \u25BC') : '';
+      return '<th data-h="'+key+'" data-i="'+i+'">'+esc(c)+mark+'</th>';
+    }).join('')+'</tr></thead><tbody>';
+    h+=rows.map(function(r){ return '<tr>'+r.map(cellHtml).join('')+'</tr>'; }).join('');
+    host.innerHTML=h+'</tbody></table></div>';
+    Array.prototype.forEach.call(host.querySelectorAll('th'),function(t){
+      t.addEventListener('click',function(){
+        var i=+t.dataset.i;
+        if(S.sort===i) S.dir=-S.dir; else { S.sort=i; S.dir=1; }
+        paintTable(key);
+      });
+    });
+  }
+  var idc=S.cols.indexOf('ID Sonova');
+  if(idc<0) idc=S.cols.indexOf('ID no ADP');
+  if(idc>=0) ligarDuploClique(host,idc);
+  var meta=document.getElementById('meta-'+key);
+  if(meta) meta.textContent=rows.length+' de '+S.rows.length+' registros';
+  S.view=rows;
+}
+function bindTable(key){
+  var fi=document.querySelector('[data-f="'+key+'"]');
+  if(fi) fi.addEventListener('input',function(){ paintTable(key); });
+  var se=document.querySelector('[data-s="'+key+'"]');
+  if(se) se.addEventListener('change',function(){ paintTable(key); });
+  var xb=document.querySelector('[data-x="'+key+'"]');
+  if(xb) xb.addEventListener('click',function(){ exportCSV(key); });
+}
+function exportCSV(key){
+  var S=TSTORE[key], rows=S.view||S.rows;
+  var out=[S.cols.join(';')].concat(rows.map(function(r){
+    return r.map(function(c){ var t=cellTxt(c).replace(/"/g,'""'); return /[;"\n]/.test(t)?'"'+t+'"':t; }).join(';');
+  })).join('\r\n');
+  dl(new Blob(['\uFEFF'+out],{type:'text/csv;charset=utf-8'}),'Auditoria_'+key+'_'+stamp()+'.csv');
+}
+function stamp(){
+  var d=new Date();
+  return d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'_'+p2(d.getHours())+p2(d.getMinutes());
+}
+function dl(blob,name){
+  var a=document.createElement('a'),u=URL.createObjectURL(blob);
+  a.href=u; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },500);
+}
+
+/* ==========================================================================
+   EXPORTAÇÕES
+   ========================================================================== */
+
+/* ---------- estilo obrigatório das exportações Excel: Calibri Light 8 ---------- */
+var XL_FONT={name:'Calibri Light',sz:8};
+function estilizarAba(ws,linhasCabecalho){
+  if(!ws||!ws['!ref']) return ws;
+  var rng=XLSX.utils.decode_range(ws['!ref']),R,C,larg=[];
+  for(C=rng.s.c;C<=rng.e.c;C++){
+    var w=8;
+    for(R=rng.s.r;R<=rng.e.r;R++){
+      var cel=ws[XLSX.utils.encode_cell({r:R,c:C})];
+      if(!cel) continue;
+      var ehCab = (R-rng.s.r) < (linhasCabecalho===undefined?1:linhasCabecalho);
+      cel.s={
+        font:{name:XL_FONT.name,sz:XL_FONT.sz,bold:!!ehCab,color:{rgb:ehCab?'FF003C64':'FF333333'}},
+        alignment:{vertical:'center',wrapText:false},
+        fill:ehCab?{fgColor:{rgb:'FFE8F3FA'},patternType:'solid'}:undefined,
+        border:ehCab?{bottom:{style:'thin',color:{rgb:'FFCCCCCC'}}}:undefined
+      };
+      var txt=String(cel.w!==undefined?cel.w:(cel.v===undefined?'':cel.v));
+      if(txt.length+2>w) w=Math.min(txt.length+2,60);
+    }
+    larg.push({wch:w});
+  }
+  ws['!cols']=larg;
+  if(rng.e.r>rng.s.r) ws['!freeze']={xSplit:0,ySplit:1};
+  return ws;
+}
+function addAba(wb,ws,nome,linhasCabecalho){
+  XLSX.utils.book_append_sheet(wb,estilizarAba(ws,linhasCabecalho),nome);
+}
+
+function exportXlsx(){
+  if(!RES||typeof XLSX==='undefined') return;
+  var wb=XLSX.utils.book_new(), c=RES.cfg, k=RES.kpi;
+  var resumo=[
+    ['Auditoria de integridade Sonnet x ADP'],
+    ['Execução',RES.ts.toLocaleString('pt-BR')],
+    [],
+    ['Indicador','Valor'],
+    ['Registros ADP considerados',RES.counts.adp],
+    ['Registros EC considerados',RES.counts.ec],
+    ['Registros Monthly considerados',RES.counts.mon],
+    ['Cruzados nas duas bases',k.cruz],
+    ['Sem nenhuma divergência',k.limpos],
+    ['Sem divergência crítica ou alta',k.semGrave],
+    ['Aderência de cadastro (%)',+k.aderencia.toFixed(1)],
+    ['Divergências totais',k.total],
+    ['Críticas',k.sev.CRITICO||0],
+    ['Altas',k.sev.ALTO||0],
+    ['Médias',k.sev.MEDIO||0],
+    ['Informativas',k.sev.INFO||0],
+    ['Somente no ADP',k.soADP],
+    ['Somente no Sonnet',k.soSON],
+    ['Chefia divergente',k.chDiv],
+    ['Chefia não resolvida',k.chNR],
+    [],
+    ['Regra','Valor'],
+    ['Multiplicador salarial',c.mult],
+    ['Tolerância salarial (R$)',c.tolAbs],
+    ['Tolerância salarial (%)',c.tolPct],
+    ['Similaridade mínima de cargo',c.sim],
+    ['Salário mascarado até (R$)',c.mask],
+    ['Somente ativos no Sonnet',c.ativos?'Sim':'Não'],
+    ['Exigir linha no Monthly',c.exigeMon],
+    ['Employment Type fora da folha ADP',c.foraFolhaTxt||'(nenhum declarado)'],
+    ['Fonte de remuneracao',c.fonteRem],
+    [],
+    ['Correcao salarial em massa','Valor'],
+    ['Referencia de salario','ADP'],
+    ['Event Date (vigencia)',c.vigencia],
+    ['Currency',c.moeda],
+    ['Frequency',c.freq],
+    ['Pay Component Base Salary 100%',c.pc100],
+    ['Pay Component Base Salary Pro-Rated',c.pcPro],
+    ['Escopo das linhas',c.escopo==='todos'?'Todos com salario no ADP':(c.escopo==='difsem'?'Divergencias e sem remuneracao no Sonnet':'Apenas divergencias confirmadas')],
+    ['Linhas geradas no template',RES.impRows.length],
+    [],
+    ['Global Pay Components (legenda do template)','Codigo'],
+    ['Base Salary 100%',c.pc100],
+    ['Base Salary Pro-Rated',c.pcPro],
+    ['Target VCC 100%','2000'],
+    ['Target VCC Pro-Rated','5000'],
+    ['Excluir desligados no ADP',c.deslig?'Sim':'Não']
+  ];
+  addAba(wb,XLSX.utils.aoa_to_sheet(resumo),'Resumo',1);
+  addAba(wb,XLSX.utils.json_to_sheet(RES.plano.map(function(r){
+    return {'Sistema a corrigir':r.destino,'Prioridade':r.prio,'Severidade':r.sev,'ID Sonova':r.id,'Nome':r.nome,'Campo a corrigir':r.campoAdp,
+            'Valor atual no ADP':r.atual,'Valor correto (Sonnet)':r.correto,'Acao':r.acao,'Onde corrigir':r.local,'Observacao':r.obs};
+  })),'Corrigir no ADP',1);
+  var parAoa=[['ID Sonova','Nome','CNPJ','Origem','Composicao','Nascimento','Admissao','E-mail','Functional Area','Cargo','Chefia (ID)','Salario mensal','Salario x'+c.mult,'Divergencias']];
+  RES.pares.forEach(function(pp){
+    parAoa.push([pp.id,pp.nomeSon||pp.nomeAdp,pp.cnpj,'ADP','folha'].concat(pp.cells.map(function(cl){return cl.adp;})).concat([pp.nd]));
+    parAoa.push([pp.id,pp.nomeSon||pp.nomeAdp,pp.cnpj,'Sonnet',pp.comp].concat(pp.cells.map(function(cl){return cl.son;})).concat([pp.nd]));
+  });
+  addAba(wb,XLSX.utils.aoa_to_sheet(parAoa),'Comparativo',1);
+  var qAoa=[['Qualidade de dados'],[],['Arquivo','Linhas lidas','Colunas','Considerados','Ignorados','IDs duplicados','E-mails duplicados','CPFs duplicados']];
+  RES.qual.leitura.forEach(function(r){ qAoa.push([r.arq,r.lidas,r.cols,r.consider,r.ignor,r.dupId,r.dupMail,r.dupDoc]); });
+  qAoa.push([]); qAoa.push(['Cobertura','Registros']);
+  qAoa.push(['EC e ADP',RES.qual.cobertura.ecAdp]);
+  qAoa.push(['Monthly e ADP',RES.qual.cobertura.monAdp]);
+  qAoa.push(['EC e Monthly',RES.qual.cobertura.ecMon]);
+  qAoa.push(['Somente EC',RES.qual.cobertura.soEc]);
+  qAoa.push(['Somente Monthly',RES.qual.cobertura.soMon]);
+  qAoa.push(['Somente ADP',RES.qual.cobertura.soAdp]);
+  qAoa.push([]); qAoa.push(['Completude por campo']);
+  qAoa.push(['Base','Campo','Preenchidos','Total','Percentual']);
+  ['ADP','EC','MON'].forEach(function(w){
+    (RES.qual.compl[w]||[]).forEach(function(x){ qAoa.push([w,x.campo,x.preenchidos,x.total,+x.pct.toFixed(1)]); });
+  });
+  qAoa.push([]); qAoa.push(['Aderencia por Functional Area']);
+  qAoa.push(['Functional Area','Cruzados','Sem divergencia grave','Aderencia %']);
+  RES.qual.porFA.forEach(function(x){ qAoa.push([x.k,x.tot,x.ok,x.tot?+(x.ok/x.tot*100).toFixed(1):0]); });
+  qAoa.push([]); qAoa.push(['Aderencia por CNPJ']);
+  qAoa.push(['CNPJ','Cruzados','Sem divergencia grave','Divergencias','Aderencia %']);
+  RES.qual.porCNPJ.forEach(function(x){ qAoa.push([x.k,x.tot,x.ok,x.div,x.tot?+(x.ok/x.tot*100).toFixed(1):0]); });
+  addAba(wb,XLSX.utils.aoa_to_sheet(qAoa),'Qualidade',1);
+  addAba(wb,XLSX.utils.json_to_sheet(RES.adpToSonnet.map(function(r){
+    return {'ID Sonova':r.id,'Matricula':r.matr,'Nome ADP':r.nome,'CNPJ':r.cnpj,'No EC':r.ec,'No Monthly':r.mon,'Divergencias':r.divs,'Severidade':r.sev,'Observacao':r.detalhe};
+  })),'ADP para Sonnet',1);
+  addAba(wb,XLSX.utils.json_to_sheet(RES.sonnetToAdp.map(function(r){
+    return {'ID Sonova':r.id,'Nome Sonnet':r.nome,'Origem':r.origem,'Status':r.status,'Employment Type':r.etype||'','Functional Area':r.farea,'Admissao':r.admissao,'No ADP':r.adp,'No Monthly':r.mon,'Divergencias':r.divs,'Severidade':r.sev,'Observacao':r.detalhe};
+  })),'Sonnet para ADP',1);
+  addAba(wb,XLSX.utils.json_to_sheet(RES.divs.map(function(d){
+    return {'ID Sonova':d.id,'Nome':d.nome,'Bloco':d.bloco,'Campo':d.campo,'Severidade':d.sev,'Valor ADP':d.adp,'Valor Sonnet':d.sonnet,'Observacao':d.obs};
+  })),'Divergencias',1);
+  addAba(wb,XLSX.utils.json_to_sheet(RES.chefia.map(function(r){
+    return {'ID Sonova':r.id,'Colaborador':r.nome,'Chefia ADP':r.chefeAdp,'Matricula chefia':r.matr,'Estab chefia':r.estab,'ID Sonova resolvido':r.idResolv,'Origem do ID':r.via,'Confianca':r.conf,'Chefia Sonnet':r.chefeSonnet,'ID Sonnet':r.idSonnet,'Situacao':r.status};
+  })),'Chefia',1);
+  /* ---- template de importação SuccessFactors ---- */
+  var vg=String(c.vigencia||'');
+  var mv=vg.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  var dtEvt = mv ? new Date(+mv[1],+mv[2]-1,+mv[3],12,0,0) : new Date();
+  var impAoa=[
+    ['','paycompvalue','currency-code','start-date','frequency','pay-component','seq-number','user-id','operation'],
+    ['','Amount','Currency','Event Date','Frequency','Pay Component','Sequence Number','User ID','Operation']
+  ];
+  RES.impRows.forEach(function(r){
+    impAoa.push(['',r.valor,r.moeda,dtEvt,r.freq,isNaN(+r.pc)?r.pc:+r.pc,'',isNaN(+r.uid)?r.uid:+r.uid,'']);
+  });
+  var wsImp=XLSX.utils.aoa_to_sheet(impAoa,{cellDates:true});
+  (function(){
+    var rg=XLSX.utils.decode_range(wsImp['!ref']);
+    for(var R=2;R<=rg.e.r;R++){
+      var cd=wsImp[XLSX.utils.encode_cell({r:R,c:3})]; if(cd&&cd.t==='d') cd.z='mm/dd/yyyy';
+      var cb=wsImp[XLSX.utils.encode_cell({r:R,c:1})]; if(cb&&cb.t==='n') cb.z='#,##0.00';
+    }
+  })();
+  addAba(wb,wsImp,'PayComponentRecurringImportTemp',2);
+
+  addAba(wb,XLSX.utils.json_to_sheet(RES.impBase.map(function(x){
+    return {'ID Sonova':x.id,'Nome':x.nome,'CNPJ':x.cnpj,'Matricula ADP':x.matr,
+            'Salario Mensal ADP':x.mensal,'Multiplicador':x.mult,'Valor anual':x.anual,'FTE':x.fte,
+            'Base Salary 100%':x.v100,'Base Salary Pro-Rated':x.vpro,
+            'Pro-Rated atual no Sonnet':x.sonPro===null?'':x.sonPro,
+            'Base 100% atual no Sonnet':x.son100===null?'':x.son100,
+            'Diferenca':x.dif===null?'':x.dif,'Situacao':x.motivo,
+            'Entrou no template':(c.escopo==='todos'||(c.escopo==='difsem'&&(x.divergente||x.semSonnet))||(c.escopo==='dif'&&x.divergente))?'Sim':'Nao'};
+  })),'Base da correcao salarial',1);
+
+  var h=getHist();
+  if(h.length) addAba(wb,XLSX.utils.json_to_sheet(h.map(function(x){
+    return {'Execucao':new Date(x.ts).toLocaleString('pt-BR'),'ADP':x.adp,'EC':x.ec,'Monthly':x.mon,'Divergencias':x.total,'Criticas':x.crit,'Altas':x.alto,'Medias':x.medio,'So ADP':x.soADP,'So Sonnet':x.soSON,'Aderencia':x.ader};
+  })),'Historico',1);
+  XLSX.writeFile(wb,'Auditoria_Sonnet_ADP_'+stamp()+'.xlsx',{cellStyles:true});
+  if(!XLSX.write || !SUPORTA_ESTILO) flash('Excel gerado. A biblioteca de estilo não carregou, então a fonte Calibri Light 8 não foi aplicada — verifique o acesso a cdn.jsdelivr.net.');
+}
+function exportMd(){
+  if(!RES) return;
+  var k=RES.kpi,c=RES.cfg;
+  var m='## Auditoria de integridade Sonnet x ADP\n\n';
+  m+='Execução: '+RES.ts.toLocaleString('pt-BR')+'\n\n';
+  m+='| Indicador | Valor |\n|---|---|\n';
+  m+='| Registros ADP considerados | '+RES.counts.adp+' |\n';
+  m+='| Registros EC considerados | '+RES.counts.ec+' |\n';
+  m+='| Registros Monthly considerados | '+RES.counts.mon+' |\n';
+  m+='| Cruzados nas duas bases | '+k.cruz+' |\n';
+  m+='| Sem nenhuma divergência | '+k.limpos+' |\n';
+  m+='| Sem divergência crítica ou alta | '+k.semGrave+' |\n';
+  m+='| Aderência de cadastro | '+k.aderencia.toFixed(1)+'% |\n';
+  m+='| Divergências totais | '+k.total+' |\n';
+  m+='| Críticas | '+(k.sev.CRITICO||0)+' |\n';
+  m+='| Altas | '+(k.sev.ALTO||0)+' |\n';
+  m+='| Médias | '+(k.sev.MEDIO||0)+' |\n';
+  m+='| Informativas | '+(k.sev.INFO||0)+' |\n';
+  m+='| Somente no ADP | '+k.soADP+' |\n';
+  m+='| Somente no Sonnet | '+k.soSON+' |\n';
+  m+='| Chefia divergente | '+k.chDiv+' |\n';
+  m+='| Chefia não resolvida | '+k.chNR+' |\n\n';
+  var pc={};
+  RES.divs.forEach(function(d){ var key=d.bloco+' · '+d.campo; pc[key]=(pc[key]||0)+1; });
+  var lst=Object.keys(pc).sort(function(a,b){ return pc[b]-pc[a]; });
+  if(lst.length){
+    m+='### Divergências por campo\n\n| Bloco e campo | Ocorrências |\n|---|---|\n';
+    lst.forEach(function(x){ m+='| '+x+' | '+pc[x]+' |\n'; });
+    m+='\n';
+  }
+  var crit=RES.divs.filter(function(d){ return d.sev==='CRITICO'; });
+  if(crit.length){
+    m+='### Divergências críticas\n\n| ID Sonova | Nome | Campo | ADP | Sonnet |\n|---|---|---|---|---|\n';
+    crit.slice(0,200).forEach(function(d){
+      m+='| '+d.id+' | '+d.nome+' | '+d.campo+' | '+String(d.adp).replace(/\|/g,'/')+' | '+String(d.sonnet).replace(/\|/g,'/')+' |\n';
+    });
+    if(crit.length>200) m+='\n'+(crit.length-200)+' linhas adicionais no relatório Excel.\n';
+    m+='\n';
+  }
+  if(RES.plano.length){
+    var pc1=RES.plano.filter(function(r){return r.sev==='CRITICO';}).length;
+    var pc2=RES.plano.filter(function(r){return r.sev==='ALTO';}).length;
+    m+='### Correções a executar no ADP\n\nFonte da verdade: Sonnet. '+RES.plano.length+' correções, sendo '+pc1+' imediatas e '+pc2+' de prioridade alta.\n\n';
+    m+='| Prioridade | ID Sonova | Nome | Campo no ADP | Valor atual | Valor correto |\n|---|---|---|---|---|---|\n';
+    RES.plano.slice(0,200).forEach(function(r){
+      m+='| '+r.prio+' | '+r.id+' | '+r.nome+' | '+r.campoAdp+' | '+String(r.atual).replace(/\|/g,'/')+' | '+String(r.correto).replace(/\|/g,'/')+' |\n';
+    });
+    if(RES.plano.length>200) m+='\n'+(RES.plano.length-200)+' linhas adicionais no relatório Excel.\n';
+    m+='\n';
+  }
+  m+='Regras: multiplicador salarial '+c.mult+', tolerância R$ '+fmtMoney(c.tolAbs)+' ou '+c.tolPct+'%, similaridade mínima de cargo '+(c.sim*100).toFixed(0)+'%.\n';
+  copyText(m);
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){ flash('Resumo copiado em Markdown.'); },function(){ fallbackCopy(t); });
+  }else fallbackCopy(t);
+}
+function fallbackCopy(t){
+  var ta=document.createElement('textarea');
+  ta.value=t; ta.style.position='fixed'; ta.style.left='-9999px';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); flash('Resumo copiado em Markdown.'); }
+  catch(e){ flash('Não foi possível copiar automaticamente.'); }
+  ta.remove();
+}
+function flash(msg){
+  var el=document.getElementById('runInfo');
+  el.textContent=msg;
+  setTimeout(function(){ if(el.textContent===msg) el.textContent=''; },4000);
+}
+
+/* ==========================================================================
+   UI / EVENTOS
+   ========================================================================== */
+function bindDrop(dzId,inputId,which,label){
+  var dz=document.getElementById(dzId), inp=document.getElementById(inputId);
+  function load(file){
+    if(!file) return;
+    dz.querySelector('.st').textContent='Lendo '+file.name+'...';
+    readFile(file).then(function(d){
+      DATA[which]=d;
+      autoMap(which);
+      dz.classList.add('loaded');
+      dz.querySelector('.st').textContent=d.name+' · '+d.rows.length+' registros · '+d.cols.length+' colunas';
+      document.getElementById('mapCard').style.display='block';
+      renderMap(); checkReady();
+      document.getElementById('loadErr').innerHTML='';
+    }).catch(function(e){
+      dz.classList.remove('loaded');
+      dz.querySelector('.st').textContent='Falha na leitura';
+      document.getElementById('loadErr').innerHTML='<div class="note err"><strong>'+esc(label)+':</strong> '+esc(e.message)+'</div>';
+    });
+  }
+  inp.addEventListener('change',function(){ load(this.files[0]); });
+  ['dragenter','dragover'].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.remove('over'); }); });
+  dz.addEventListener('drop',function(e){ if(e.dataTransfer.files&&e.dataTransfer.files[0]) load(e.dataTransfer.files[0]); });
+}
+function checkReady(){
+  var okADP=DATA.ADP && MAP.ADP.id;
+  var okSon=(DATA.EC && MAP.EC.id) || (DATA.MONR && MAP.MONR.id) || (DATA.KZN && MAP.KZN.id);
+  document.getElementById('btnRun').disabled=!(okADP&&okSon);
+}
+function resetAll(){
+  if(!confirm('Limpar arquivos carregados, mapeamento e resultado? O histórico de execuções é preservado.')) return;
+  DATA={EC:null,MONR:null,KZN:null,MON:null,ADP:null};
+  MAP={EC:{},MONR:{},KZN:{},ADP:{},MON:{id:'id',status:'status',first:'first',last:'last',farea:'farea',pos:'pos',prorated:'prorated',base100:'base100',fte:'fte',cur:'cur',hire:'hire',etype:'etype'}};
+  RES=null;
+  lsDel(LS_MAP);
+  ['dzEC','dzMON','dzKZN','dzADP'].forEach(function(i){
+    var dz=document.getElementById(i); dz.classList.remove('loaded');
+    dz.querySelector('.st').textContent='Nenhum arquivo carregado';
+  });
+  ['fEC','fMON','fKZN','fADP'].forEach(function(i){ document.getElementById(i).value=''; });
+  document.getElementById('mapCard').style.display='none';
+  document.getElementById('out').style.display='none';
+  document.getElementById('loadErr').innerHTML='';
+  ['btnXls','btnMd','btnPrint','btnPrintAba'].forEach(function(i){ document.getElementById(i).disabled=true; });
+  checkReady();
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  var hj=new Date();
+  document.getElementById('cVigencia').value=hj.getFullYear()+'-'+p2(hj.getMonth()+1)+'-01';
+  loadCfg();
+  try{ SUPORTA_ESTILO = (typeof XLSX!=='undefined') && !!(XLSX.version && XLSX.utils && XLSX.write) && /js-style/i.test(String(XLSX.version))===false && typeof XLSX.utils.book_new==='function'; }catch(e){ SUPORTA_ESTILO=false; }
+  try{ SUPORTA_ESTILO = (typeof XLSX!=='undefined') && typeof XLSX.write==='function'; }catch(e){ SUPORTA_ESTILO=false; }
+  bindDrop('dzEC','fEC','EC','Employee Export (EC)');
+  bindDrop('dzMON','fMON','MONR','Compensation Monthly');
+  bindDrop('dzKZN','fKZN','KZN','Kaizen (Base Pay)');
+  bindDrop('dzADP','fADP','ADP','Extração ADP');
+  document.getElementById('btnRun').addEventListener('click',function(){
+    try{ runAudit(); flash('Auditoria concluída.'); }
+    catch(e){ document.getElementById('loadErr').innerHTML='<div class="note err"><strong>Erro na auditoria:</strong> '+esc(e.message)+'</div>'; }
+  });
+  document.getElementById('btnXls').addEventListener('click',exportXlsx);
+  document.getElementById('btnMd').addEventListener('click',exportMd);
+  document.getElementById('swSal').addEventListener('change',function(){ aplicarMascaraSalario(this.checked); });
+  try{ SEM_SAL = lsGet('cruz_sem_sal_v1')==='1'; document.getElementById('swSal').checked=SEM_SAL;
+       document.getElementById('swSalL').classList[SEM_SAL?'add':'remove']('on'); }catch(e){}
+  document.getElementById('btnPrint').addEventListener('click',function(){ imprimir('tudo'); });
+  document.getElementById('btnPrintAba').addEventListener('click',function(){ imprimir('aba'); });
+  document.getElementById('btnReset').addEventListener('click',resetAll);
+  document.getElementById('ovlX').addEventListener('click',fecharFicha);
+  document.getElementById('ovlMd').addEventListener('click',fichaMd);
+  document.getElementById('ovl').addEventListener('click',function(e){ if(e.target===this) fecharFicha(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') fecharFicha(); });
+  ['cMult','cTolAbs','cTolPct','cSim','cMask','cAtivos','cDeslig','cVazio','cExigeMon','cFonteRem','cForaFolha','cVigencia','cMoeda','cFreq','cPC100','cPCPro','cEscopo'].forEach(function(i){
+    document.getElementById(i).addEventListener('change',saveCfg);
+  });
+  if(typeof XLSX==='undefined'){
+    document.getElementById('loadErr').innerHTML='<div class="note err"><strong>Bibliotecas externas não carregaram.</strong> A leitura de .xlsx depende de acesso à rede (cdnjs.cloudflare.com). Arquivos .csv continuam funcionando. Se a rede corporativa bloquear o domínio, salve as bibliotecas localmente ao lado deste arquivo.</div>';
+  }
+});
+</script>
+</body>
+</html>
