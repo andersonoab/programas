@@ -14,6 +14,18 @@ O indice de colaboradores e montado a partir:
 
 Dependencias: customtkinter, openpyxl, pynput e pywin32.
 Arquivos .xls antigos usam pandas + xlrd quando instalados.
+
+& $Python -m cx_Freeze `
+"C:\_RPA\aAppEnvios PDF\_dist_scanner\PreenchedorScannerAdmissao_F8_v1 (1).py" `
+--base-name Win32GUI `
+--target-dir "C:\_RPA\aAppEnvios PDF\build\ScannerAdmissao_v1_4_CF615" `
+--target-name "ScannerAdmissao_v1_4.exe" `
+--packages "customtkinter,openpyxl,pynput,win32com,win32gui,pythoncom,pywintypes,PIL,pymupdf,pandas,xlrd"
+cx_Freeze 6.15.16
+LIEF 0.12.3
+Python 3.10
+
+
 """
 
 from __future__ import annotations
