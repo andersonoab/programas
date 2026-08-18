@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de RV — Sonova</title>
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{--p:#0083CA;--dk:#003C64;--md:#005A64;--lt:#6EB4DC;--ac:#7D0041;--al:#8C321E;
+      --tx:#333333;--tx2:#646464;--bd:#CCCCCC;--thbg:#E8F3FA;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Roboto',Arial,sans-serif;font-weight:300;color:var(--tx);background:#fff;font-size:14px;}
+.topbar{background:var(--p);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.topbar h1{font-family:'Rufina',Georgia,serif;font-size:19px;margin:0;font-weight:700;color:#fff;}
+.topbar .sub{font-size:12.5px;opacity:.92;margin-top:2px;}
+.wave{display:flex;align-items:flex-end;gap:3px;height:22px;}
+.wave i{display:block;width:3px;background:#fff;border-radius:2px;opacity:.9;}
+.wrap{padding:18px 22px 40px;}
+
+/* carregador */
+.loader{border:1.5px dashed var(--bd);border-radius:8px;padding:26px;text-align:center;margin-bottom:18px;background:#FAFCFE;}
+.loader.drag{border-color:var(--p);background:#F2F9FD;}
+.loader h2{font-family:'Rufina',serif;font-size:17px;margin:0 0 6px;color:var(--dk);font-weight:700;}
+.loader p{margin:0 0 14px;font-size:13px;color:var(--tx2);}
+.btn{border:none;border-radius:5px;padding:9px 16px;font-family:inherit;font-size:13px;cursor:pointer;color:#fff;background:var(--p);}
+.btn.sec{background:var(--lt);}
+.btn.aux{background:#8A8A8A;}
+.btn:hover{filter:brightness(.93);}
+.fileinfo{font-size:12.5px;color:var(--tx2);margin-top:10px;}
+.err{background:#FDF1EE;border:1px solid var(--al);color:var(--al);border-radius:6px;padding:10px 12px;font-size:13px;margin-top:12px;text-align:left;}
+
+/* barra de controles */
+.ctrl{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:16px;}
+.fld{font-size:11.5px;color:var(--tx2);display:flex;flex-direction:column;gap:3px;}
+.fld select,.fld input{padding:5px 6px;border:1px solid var(--bd);border-radius:4px;font-family:inherit;font-size:13px;color:var(--tx);background:#fff;}
+.fld input[type=text]{min-width:190px;}
+.spacer{flex:1;}
+.multi{position:relative;min-width:190px;}
+.multi-btn{width:100%;min-height:29px;border:1px solid var(--bd);border-radius:4px;background:#fff;color:var(--tx);font-family:inherit;font-size:12.5px;padding:5px 28px 5px 7px;text-align:left;cursor:pointer;position:relative;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.multi-btn::after{content:'▾';position:absolute;right:8px;color:var(--tx2);}
+.multi.open .multi-btn{outline:1.5px solid var(--p);}
+.multi-pop{display:none;position:absolute;top:calc(100% + 5px);left:0;width:330px;max-width:82vw;background:#fff;border:1px solid var(--bd);border-radius:7px;box-shadow:0 8px 24px rgba(0,60,100,.16);z-index:45;padding:9px;}
+.multi.open .multi-pop{display:block;}
+.multi-search{width:100%;padding:6px 8px!important;margin-bottom:7px;}
+.multi-actions{display:flex;gap:6px;margin-bottom:6px;}
+.multi-actions button{border:1px solid var(--bd);background:#fff;color:var(--p);border-radius:4px;padding:4px 8px;font-family:inherit;font-size:11px;cursor:pointer;}
+.multi-list{max-height:245px;overflow:auto;border-top:1px solid #EEE;padding-top:4px;}
+.multi-opt{display:flex;align-items:flex-start;gap:7px;padding:5px 4px;color:var(--tx);font-size:12px;line-height:1.3;cursor:pointer;border-radius:4px;}
+.multi-opt:hover{background:#F2F9FD;}.multi-opt input{margin:1px 0 0;padding:0;flex:0 0 auto;}
+
+/* simulador */
+.simbox{border:1px solid var(--bd);border-radius:8px;margin-bottom:18px;}
+.simhead{background:var(--thbg);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;border-radius:7px 7px 0 0;}
+.simhead h3{font-family:'Rufina',serif;font-size:14.5px;margin:0;color:var(--dk);font-weight:700;}
+.simhead .tag{font-size:12px;color:var(--md);}
+.simbody{padding:14px;display:flex;gap:22px;flex-wrap:wrap;}
+.simbody.hide{display:none;}
+table.matrix{border-collapse:collapse;font-size:13px;}
+table.matrix th{background:var(--thbg);color:var(--dk);font-weight:500;padding:6px 9px;border:1px solid var(--bd);text-align:center;}
+table.matrix td{border:1px solid var(--bd);padding:4px 6px;text-align:center;}
+table.matrix td.rl{text-align:left;background:#FAFAFA;font-size:12.5px;white-space:nowrap;}
+table.matrix input{width:64px;padding:4px;border:1px solid var(--bd);border-radius:4px;text-align:center;font-family:inherit;font-size:13px;}
+table.matrix input:focus{outline:1.5px solid var(--p);}
+.simopts{display:flex;flex-direction:column;gap:10px;min-width:250px;}
+.presets{display:flex;gap:7px;flex-wrap:wrap;}
+.pbtn{border:1px solid var(--bd);background:#fff;color:var(--tx);border-radius:5px;padding:6px 10px;font-family:inherit;font-size:12px;cursor:pointer;}
+.pbtn.on{background:var(--p);color:#fff;border-color:var(--p);}
+.action-toggle{border:1px solid var(--lt);border-radius:7px;background:#F7FBFE;padding:10px 12px;display:flex;flex-direction:column;gap:5px;}
+.action-toggle .chk{font-weight:500;color:var(--dk);}
+.action-toggle small{font-size:11.5px;line-height:1.45;color:var(--tx2);padding-left:24px;}
+tr.ind-off{opacity:.42;}
+tr.ind-off input{background:#F2F2F2;cursor:not-allowed;}
+.note{font-size:11.5px;color:var(--tx2);line-height:1.5;max-width:430px;}
+
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;}
+.card{border:1px solid var(--bd);border-radius:8px;padding:12px 14px;}
+.card .lbl{font-size:11.5px;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;}
+.card .val{font-size:20px;color:var(--dk);margin-top:4px;font-weight:400;}
+.card .det{font-size:11.5px;color:var(--tx2);margin-top:3px;}
+
+/* abas */
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--bd);margin-bottom:14px;}
+.tab{padding:9px 18px;font-size:13.5px;cursor:pointer;color:var(--tx2);border-bottom:2px solid transparent;margin-bottom:-2px;}
+.tab.active{color:var(--p);border-bottom-color:var(--p);font-weight:500;}
+.panel{display:none;} .panel.active{display:block;}
+
+/* tabelas */
+.tblwrap{border:1px solid var(--bd);border-radius:8px;overflow:auto;max-height:560px;}
+table.data{width:100%;border-collapse:collapse;font-size:12.5px;min-width:900px;}
+table.data th{position:sticky;top:0;background:var(--thbg);color:var(--dk);font-weight:500;padding:8px 9px;text-align:right;white-space:nowrap;cursor:pointer;border-bottom:1px solid var(--bd);z-index:2;}
+table.data th.l,table.data td.l{text-align:left;}
+table.data td{padding:6px 9px;text-align:right;border-bottom:1px solid #EDEDED;white-space:nowrap;}
+table.data tr.z td{background:#FAFAFA;}
+table.data tbody tr:hover td{background:#F2F9FD;}
+table.data tr.click{cursor:pointer;}
+.arr{font-size:9px;margin-left:4px;}
+.pos{color:var(--md);} .neg{color:var(--ac);}
+.hint{font-size:11.5px;color:var(--tx2);margin-top:8px;line-height:1.5;}
+.count{font-size:12px;color:var(--tx2);}
+.badge{display:inline-block;background:var(--thbg);color:var(--dk);border:1px solid var(--lt);border-radius:9px;padding:1px 7px;font-size:10.5px;margin-left:6px;vertical-align:middle;}
+.badge.solo{background:#F5F5F5;color:var(--tx2);border-color:var(--bd);}
+.badge.alerta{background:#FBEFF4;color:var(--ac);border-color:var(--ac);}
+.badge.leg{background:#FDF3EF;color:var(--al);border-color:var(--al);}
+.chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx);cursor:pointer;}
+.tip{position:relative;cursor:help;}
+.tip::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 7px);width:270px;background:var(--dk);color:#fff;
+  font-size:11.5px;font-weight:300;line-height:1.45;padding:8px 10px;border-radius:5px;text-align:left;white-space:normal;
+  opacity:0;visibility:hidden;transition:opacity .15s;z-index:60;pointer-events:none;}
+.tip:hover::after{opacity:1;visibility:visible;}
+.tip.up::after{top:auto;bottom:calc(100% + 7px);}
+.help{display:inline-block;width:15px;height:15px;line-height:15px;text-align:center;border-radius:50%;
+  background:var(--lt);color:#fff;font-size:10.5px;margin-left:6px;vertical-align:middle;}
+.chartbox{border:1px solid var(--bd);border-radius:8px;padding:14px;margin-top:18px;}
+.chartbox h3{font-family:'Rufina',serif;font-size:14.5px;margin:0 0 10px;color:var(--dk);font-weight:700;}
+.cwrap{height:330px;position:relative;}
+
+/* modal */
+.ovl{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:24px;z-index:50;}
+.ovl.on{display:flex;}
+.modal{background:#fff;border-radius:8px;max-width:1080px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.mhead{background:var(--p);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;}
+.mhead h3{font-family:'Rufina',serif;font-size:16px;margin:0;font-weight:700;color:#fff;}
+.mhead .msub{font-size:12px;opacity:.92;margin-top:3px;}
+.mclose{background:transparent;border:1px solid rgba(255,255,255,.6);color:#fff;border-radius:4px;padding:4px 10px;cursor:pointer;font-family:inherit;font-size:12px;}
+.mbody{padding:16px 18px;overflow:auto;}
+.mfoot{border-top:1px solid var(--bd);padding:10px 18px;display:flex;justify-content:flex-end;gap:8px;background:#FAFAFA;}
+.mhead .acts{display:flex;gap:8px;flex-shrink:0;}
+.mclose.prim{background:#fff;color:var(--p);border-color:#fff;font-weight:500;}
+.mkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+.mkpis .card .val{font-size:17px;}
+.explain{border:1px solid var(--lt);border-left:5px solid var(--p);border-radius:7px;background:#F7FBFE;padding:12px 14px;margin-bottom:14px;color:var(--tx);}
+.explain strong{color:var(--dk);font-weight:500;}
+.explain p{margin:6px 0 0;line-height:1.5;font-size:12.5px;}
+.logic{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.logic .step{border:1px solid #D6E8F3;border-radius:6px;background:#fff;padding:8px 10px;font-size:11.5px;line-height:1.4;}
+.logic .step b{display:block;color:var(--p);font-size:10.5px;text-transform:uppercase;letter-spacing:.35px;margin-bottom:2px;}
+.badge.extra{background:#FBEFF4;color:var(--ac);border-color:var(--ac);font-weight:500;}
+.badge.ok{background:#EEF8F4;color:#286B52;border-color:#73AF98;}
+.badge.info{background:#F2F9FD;color:var(--dk);border-color:var(--lt);}
+@media(max-width:720px){.logic{grid-template-columns:1fr;}}
+
+/* análise executiva e impressão */
+.decision-tools{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;border:1px solid var(--bd);border-radius:8px;padding:12px 14px;margin-bottom:14px;background:#FAFCFE;}
+.report{border:1px solid var(--bd);border-radius:9px;padding:20px;background:#fff;}
+.report-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:2px solid var(--p);padding-bottom:12px;margin-bottom:14px;}
+.report-head h2{font-family:'Rufina',serif;color:var(--dk);font-size:19px;margin:0 0 4px;}.report-head p{margin:0;color:var(--tx2);font-size:12px;line-height:1.45;}
+.decision-banner{border-radius:8px;padding:13px 15px;margin:12px 0 14px;border-left:6px solid var(--p);background:#F2F9FD;}
+.decision-banner.ok{border-left-color:#3B8066;background:#EEF8F4;}.decision-banner.warn{border-left-color:#C17B16;background:#FFF8EA;}.decision-banner.risk{border-left-color:var(--ac);background:#FBEFF4;}
+.decision-banner .status{font-family:'Rufina',serif;font-weight:700;color:var(--dk);font-size:16px;}.decision-banner p{margin:5px 0 0;font-size:12.5px;line-height:1.5;}
+.report-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;}.report-kpis .card{min-height:88px;}
+.decision-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:14px 0;}.decision-block{border:1px solid var(--bd);border-radius:7px;padding:12px 14px;}
+.decision-block h3{font-family:'Rufina',serif;font-size:14px;color:var(--dk);margin:0 0 7px;}.decision-block ul{margin:0;padding-left:18px;font-size:12.5px;line-height:1.55;}.decision-block li+li{margin-top:3px;}
+.report table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px;}.report th{background:var(--thbg);color:var(--dk);padding:6px 7px;text-align:right;border-bottom:1px solid var(--bd);}.report th:first-child,.report td:first-child{text-align:left;}.report td{padding:5px 7px;text-align:right;border-bottom:1px solid #EEE;}
+.report-title{font-family:'Rufina',serif;color:var(--dk);font-size:14.5px;margin:18px 0 7px;}.method{font-size:10.5px;color:var(--tx2);line-height:1.45;margin-top:14px;padding-top:9px;border-top:1px solid var(--bd);}
+.print-only{display:none;}
+.print-head{border-bottom:2px solid var(--p);padding-bottom:9px;margin-bottom:12px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;}
+.print-head h2{font-family:'Rufina',serif;color:var(--dk);font-size:18px;margin:0 0 3px;}.print-head p{font-size:10.5px;color:var(--tx2);line-height:1.4;margin:0;}
+.print-data{width:100%;border-collapse:collapse;table-layout:auto;font-size:8px;}
+.print-data th{background:var(--thbg);color:var(--dk);padding:4px 3px;text-align:right;border:1px solid #C8D7E0;white-space:nowrap;}
+.print-data th:first-child,.print-data td:first-child,.print-data .l{text-align:left;}
+.print-data td{padding:3px;border:1px solid #E1E1E1;text-align:right;vertical-align:top;}
+.print-data tbody tr:nth-child(even) td{background:#FAFAFA;}
+@media(max-width:900px){.report-kpis{grid-template-columns:repeat(2,1fr)}.decision-grid{grid-template-columns:1fr;}}
+@media print{
+  @page{size:A4 landscape;margin:9mm;}
+  body.printing{font-size:10px;background:#fff;}
+  body.printing .topbar,body.printing .footbar,body.printing #loader,body.printing #app>.ctrl,body.printing #app>.simbox,body.printing #app>.tabs,body.printing .panel .btn,body.printing .decision-tools{display:none!important;}
+  body.printing .wrap{padding:0;}body.printing #app,body.printing #printHeader{display:block!important;}
+  body.print-decisao #printHeader,body.print-decisao #printContent,body.printing .chk{display:none!important;}
+  body.print-pessoas #printContent,body.print-lojas #printContent{display:block!important;}
+  body.printing #app>.panel{display:none!important;}body.print-decisao #p-decisao{display:block!important;}
+  body.print-decisao #app>.kpis{display:none!important;}
+  body.printing .kpis{grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px;}body.printing .card{padding:7px 8px;}body.printing .card .val{font-size:15px;}
+  body.printing .tblwrap{max-height:none!important;overflow:visible!important;border:none;}body.printing table.data{min-width:0!important;font-size:8px;}body.printing table.data thead{display:table-header-group;}body.printing table.data th{position:static;padding:4px 3px;}body.printing table.data td{padding:3px;white-space:normal;}
+  body.printing .print-data thead{display:table-header-group;}body.printing .print-data tr{break-inside:avoid;page-break-inside:avoid;}
+  body.printing .hint{font-size:9px;}body.printing .chartbox{break-before:page;margin-top:10px;}body.printing .cwrap{height:260px;}
+  body.printing .report{border:none;padding:0;}body.printing .report-kpis{grid-template-columns:repeat(4,1fr);gap:6px;}
+  body.printing .card,body.printing .decision-block{break-inside:avoid;}body.printing .decision-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  body.printing .report-head{margin-bottom:8px;}body.printing .report-title{margin-top:11px;}
+}
+
+.footbar{background:var(--p);color:#fff;padding:10px 22px;font-size:11.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.hide{display:none;}
+
+/* experiência compacta para notebook */
+html{scroll-behavior:smooth;}
+body{background:#F4F7F9;}
+.topbar{padding:10px 18px;min-height:54px;}
+.wrap{width:min(1600px,100%);margin:0 auto;padding:12px 16px 28px;}
+.ctrl{
+  position:sticky;top:0;z-index:35;
+  display:grid;grid-template-columns:repeat(8,minmax(110px,1fr));gap:8px;
+  align-items:end;padding:9px 11px;margin-bottom:10px;background:#fff;
+  box-shadow:0 5px 16px rgba(0,60,100,.08);
+}
+.ctrl .fld{min-width:0;}
+.ctrl .fld select,.ctrl .fld input,.ctrl .multi{width:100%;min-width:0;}
+.ctrl .fld.wide{grid-column:span 2;}
+.ctrl .spacer{display:none;}
+.ctrl>.count{grid-column:1/-3;align-self:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ctrl>.btn{height:31px;padding:6px 10px;white-space:nowrap;}
+.simbox{margin-bottom:10px;background:#fff;}
+.simhead{padding:8px 12px;}
+.simhead::after{content:'Abrir / recolher';font-size:10.5px;color:var(--tx2);margin-left:auto;padding-left:12px;}
+.simhead .tag{margin-left:12px;}
+.simbody{padding:12px;gap:16px;}
+.kpis{grid-template-columns:repeat(5,minmax(145px,1fr));gap:8px;margin-bottom:10px;}
+.card{background:#fff;padding:9px 11px;}
+.card .val{font-size:18px;}
+.tabs{margin-bottom:10px;background:#fff;border-radius:7px 7px 0 0;padding:0 5px;overflow-x:auto;white-space:nowrap;}
+.tab{padding:8px 14px;}
+.panel{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:10px;}
+.tblwrap{max-height:calc(100vh - 315px);min-height:280px;}
+table.data{font-size:12px;}
+table.data th{padding:7px 8px;}
+table.data td{padding:5px 8px;}
+.chartbox{margin-top:12px;padding:11px;}
+.cwrap{height:290px;}
+.panelbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;}
+.panelbar .left,.panelbar .actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+
+/* resumo gerencial */
+.summary-lead{display:grid;grid-template-columns:minmax(300px,1.1fr) minmax(360px,1.9fr);gap:10px;margin-bottom:10px;}
+.summary-story{border-left:6px solid var(--p);border-radius:8px;background:#F2F9FD;padding:13px 15px;}
+.summary-story h2{font-family:'Rufina',serif;color:var(--dk);font-size:18px;margin:0 0 6px;}
+.summary-story p{font-size:12.5px;line-height:1.5;margin:0;color:var(--tx);}
+.summary-story .scope{color:var(--tx2);font-size:11.5px;margin-top:7px;}
+.summary-kpis{display:grid;grid-template-columns:repeat(3,minmax(140px,1fr));gap:8px;}
+.summary-kpis .card{min-height:84px;}
+.summary-impact{display:grid;grid-template-columns:repeat(5,minmax(145px,1fr));gap:8px;margin:0 0 10px;}
+.summary-impact .card{min-height:82px;border-color:#C9D3D9;}
+.summary-impact .card .val{font-size:19px;}
+.summary-impact .card .det{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.summary-block{border:1px solid var(--bd);border-radius:8px;overflow:hidden;background:#fff;}
+.summary-block h3{font-family:'Rufina',serif;font-size:14px;color:var(--dk);margin:0;padding:10px 11px 7px;}
+.summary-block .subline{font-size:11px;color:var(--tx2);padding:0 11px 7px;}
+.rank-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.rank-table th{background:var(--thbg);color:var(--dk);font-weight:500;text-align:right;padding:6px;white-space:nowrap;}
+.rank-table th:first-child,.rank-table td:first-child{text-align:left;}
+.rank-table td{padding:6px;border-top:1px solid #EEE;text-align:right;vertical-align:middle;}
+.rank-table tr:hover td{background:#F7FBFE;}
+.rank-table tr.summary-link{cursor:pointer;}
+.rank-table tr.summary-link:hover td{background:#EAF5FB;}
+.rank-name{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.metric-bar{height:5px;background:#E8EEF2;border-radius:5px;margin-top:4px;overflow:hidden;}
+.metric-bar i{display:block;height:100%;background:var(--p);border-radius:5px;}
+.summary-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--tx2);}
+.source-chip{display:inline-flex;align-items:center;gap:5px;background:#EEF8F4;color:#286B52;border:1px solid #73AF98;border-radius:12px;padding:2px 8px;}
+
+@media(max-width:1400px){
+  .ctrl{grid-template-columns:repeat(6,minmax(120px,1fr));}
+  .kpis{grid-template-columns:repeat(5,minmax(130px,1fr));}
+  .summary-impact{grid-template-columns:repeat(5,minmax(125px,1fr));}
+  .summary-grid{grid-template-columns:1fr 1fr;}
+  .summary-block:last-child{grid-column:1/-1;}
+}
+@media(max-width:1100px){
+  .ctrl{grid-template-columns:repeat(4,minmax(130px,1fr));position:relative;}
+  .ctrl>.count{grid-column:1/-1;}
+  .summary-lead{grid-template-columns:1fr;}
+  .summary-impact{grid-template-columns:repeat(3,minmax(145px,1fr));}
+  .tblwrap{max-height:520px;}
+}
+@media(max-width:760px){
+  .wrap{padding:8px;}
+  .topbar{padding:9px 12px;}
+  .ctrl{grid-template-columns:1fr 1fr;}
+  .ctrl .fld.wide{grid-column:1/-1;}
+  .ctrl>.count{grid-column:1/-1;white-space:normal;}
+  .kpis,.summary-kpis,.summary-impact{grid-template-columns:1fr 1fr;}
+  .summary-grid{grid-template-columns:1fr;}
+  .summary-block:last-child{grid-column:auto;}
+  .panel{padding:8px;}
+}
+@media print{
+  body.print-resumo #p-resumo{display:block!important;}
+  body.print-regionais #printContent{display:block!important;}
+  body.print-resumo #printHeader,body.print-resumo #printContent{display:none!important;}
+  body.print-resumo #app>.kpis{display:none!important;}
+  body.print-resumo .summary-grid{grid-template-columns:repeat(3,1fr);gap:6px;}
+  body.print-resumo .summary-lead{grid-template-columns:1fr 2fr;gap:6px;}
+  body.print-resumo .summary-impact{grid-template-columns:repeat(5,1fr);gap:5px;}
+  body.print-resumo .summary-block{break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Simulador de Remuneração Variável</h1>
+    <div class="sub" id="subHead">Carregue a Base RV para iniciar a simulação</div>
+  </div>
+  <div class="wave" id="wave"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- CARREGADOR -->
+  <div class="loader" id="loader">
+    <h2>Carregar planilha</h2>
+    <p>Selecione o arquivo da Base RV (.xlsx, .xlsm, .xls ou .csv). Os dados ficam apenas neste navegador; nada é enviado para fora.</p>
+    <button class="btn" onclick="document.getElementById('file').click()">Selecionar arquivo</button>
+    <input type="file" id="file" accept=".xlsx,.xlsm,.xls,.xlsb,.csv" class="hide">
+    <div class="fileinfo" id="fileInfo">Também é possível arrastar o arquivo para esta área.</div>
+    <div id="memBox" class="hide" style="margin-top:14px;border-top:1px solid var(--bd);padding-top:14px;">
+      <div class="fileinfo" id="memInfo"></div>
+      <div style="margin-top:9px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn" onclick="usarMemoria()">Continuar com a planilha guardada</button>
+        <button class="btn aux" onclick="limparMemoria()">Apagar dados guardados</button>
+      </div>
+    </div>
+    <div class="err hide" id="errBox"></div>
+  </div>
+
+  <div id="app" class="hide">
+
+    <div class="print-only" id="printHeader"></div>
+
+    <!-- CONTROLES -->
+    <div class="ctrl">
+      <label class="fld">Função<select id="fFunc"></select></label>
+      <label class="fld">De<select id="selFrom"></select></label>
+      <label class="fld">Até<select id="selTo"></select></label>
+      <label class="fld">Regional<select id="fReg"><option value="">Todas</option></select></label>
+      <div class="fld">Loja(s)
+        <div class="multi" id="fLojaMulti">
+          <button type="button" class="multi-btn" id="fLojaBtn">Todas as lojas</button>
+          <div class="multi-pop">
+            <input type="text" class="multi-search" id="fLojaBusca" placeholder="Buscar loja ou código">
+            <div class="multi-actions"><button type="button" id="fLojaTodas">Limpar seleção</button><button type="button" id="fLojaVisiveis">Selecionar visíveis</button></div>
+            <div class="multi-list" id="fLojaOpts"></div>
+          </div>
+        </div>
+      </div>
+      <div class="fld">Régua atual
+        <div class="multi" id="fReguaMulti">
+          <button type="button" class="multi-btn" id="fReguaBtn">Todas as réguas</button>
+          <div class="multi-pop">
+            <div class="multi-actions"><button type="button" id="fReguaTodas">Limpar seleção</button></div>
+            <div class="multi-list" id="fReguaOpts"></div>
+          </div>
+        </div>
+      </div>
+      <label class="fld tip" data-tip="Filtra as competências consideradas em todos os cálculos. Meta batida = venda do mês maior ou igual à meta do mês, com meta maior que zero.">Competências
+        <select id="fMeta">
+          <option value="">Todos os meses</option>
+          <option value="bateu">Somente meses com meta batida</option>
+          <option value="nao">Somente meses sem meta batida</option>
+        </select>
+      </label>
+      <label class="fld tip" data-tip="Com 2+ considera a loja inteira quando ela teve pelo menos dois profissionais simultâneos em algum mês do período selecionado.">Equipe da loja
+        <select id="fEquipe">
+          <option value="">Todas as composições</option>
+          <option value="multi">Com 2+ no mesmo mês</option>
+          <option value="solo">Com apenas 1 por mês</option>
+        </select>
+      </label>
+      <label class="fld wide">Buscar<input type="text" id="fBusca" placeholder="Nome, regional, loja ou código"></label>
+      <div class="spacer"></div>
+      <span class="count" id="memStat"></span>
+      <button class="btn aux" onclick="resetFiltros()">Limpar filtros</button>
+      <button class="btn sec" onclick="trocarArquivo()">Trocar planilha</button>
+    </div>
+
+    <!-- SIMULADOR -->
+    <div class="simbox">
+      <div class="simhead" onclick="toggleSim()">
+        <h3>Modelo de aceleração da ação</h3>
+        <span class="tag" id="simTag"></span>
+      </div>
+      <div class="simbody hide" id="simBody">
+        <div>
+          <table class="matrix">
+            <tr><th>Atingimento do colaborador</th><th id="colH0">Loja não atinge — base</th><th id="colH1">Loja atinge — acelerador</th></tr>
+            <tr><td class="rl" id="lb0"></td><td><input type="number" step="0.1" id="m00"></td><td><input type="number" step="0.1" id="m01"></td></tr>
+            <tr><td class="rl" id="lb1"></td><td><input type="number" step="0.1" id="m10"></td><td><input type="number" step="0.1" id="m11"></td></tr>
+            <tr><td class="rl" id="lb2"></td><td><input type="number" step="0.1" id="m20"></td><td><input type="number" step="0.1" id="m21"></td></tr>
+            <tr id="rowInd"><td class="rl" id="lb3"></td><td><input type="number" step="0.1" id="m30"></td><td><input type="number" step="0.1" id="m31"></td></tr>
+          </table>
+        </div>
+        <div class="simopts">
+          <div class="presets">
+            <button class="pbtn on tip" id="pb-loja" data-tip="Único modelo da ação: o resultado somado da loja no mês libera ou não a coluna aceleradora." onclick="applyPreset('loja')">Aceleração por loja</button>
+          </div>
+          <input type="hidden" id="crit" value="loja">
+          <div class="action-toggle">
+            <label class="chk"><input type="checkbox" id="indAccel"> Permitir aceleração extraordinária por colaborador</label>
+            <small>Ligada: quem atingir a última faixa individual pode receber o percentual máximo, desde que a loja também atinja a meta. Desligada: a última faixa fica limitada ao percentual da faixa anterior.</small>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <label class="fld">Corte 1 (%)<input type="number" id="t1" step="1" style="width:70px;"></label>
+            <label class="fld">Corte 2 (%)<input type="number" id="t2" step="1" style="width:70px;"></label>
+            <label class="fld">Corte 3 (%)<input type="number" id="t3" step="1" style="width:70px;"></label>
+            <label class="fld" id="fldG">Meta da loja para acelerar (%)<input type="number" id="tg" step="1" style="width:80px;"></label>
+          </div>
+        </div>
+        <div class="note" id="simNote"></div>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+    <div class="print-only" id="printContent"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-t="resumo">Resumo</div>
+      <div class="tab" data-t="regionais">Regionais</div>
+      <div class="tab" data-t="pessoas">Fonos</div>
+      <div class="tab" data-t="lojas">Lojas</div>
+      <div class="tab" data-t="decisao">Análise para decisão</div>
+    </div>
+
+    <!-- RESUMO -->
+    <div class="panel active" id="p-resumo">
+      <div class="panelbar">
+        <div class="left"><span class="count" id="cntResumo"></span></div>
+        <div class="actions"><button class="btn" onclick="imprimirAba('resumo')">Imprimir / salvar PDF</button></div>
+      </div>
+      <div id="resumoExecutivo"></div>
+    </div>
+
+    <!-- REGIONAIS -->
+    <div class="panel" id="p-regionais">
+      <div class="panelbar">
+        <div class="left"><span class="count" id="cntRegionais"></span></div>
+        <div class="actions"><button class="btn sec" onclick="exportar('regionais')">Exportar CSV</button><button class="btn" onclick="imprimirAba('regionais')">Imprimir / salvar PDF</button></div>
+      </div>
+      <div class="tblwrap"><table class="data" id="tblRegionais"></table></div>
+      <div class="hint">Média mensal regional considera apenas competências com dados. Venda média por fono divide, mês a mês, a venda regional pela quantidade de fonos ativos, evitando que uma região maior pareça mais produtiva apenas por tamanho. Clique em uma regional para abrir suas lojas.</div>
+    </div>
+
+    <!-- PESSOAS -->
+    <div class="panel" id="p-pessoas">
+      <div class="panelbar">
+        <div class="left">
+          <span class="count" id="cntPessoas"></span>
+          <button class="btn aux hide" id="btVolta" style="padding:4px 11px;font-size:12px;" onclick="voltar()">Voltar às lojas</button>
+        </div>
+        <div class="actions"><button class="btn sec" onclick="exportar('pessoas')">Exportar CSV</button><button class="btn" onclick="imprimirAba('pessoas')">Imprimir / salvar PDF</button></div>
+      </div>
+      <div class="tblwrap"><table class="data" id="tblPessoas"></table></div>
+      <div class="hint">Duplo clique em uma pessoa abre o detalhe mês a mês, com a faixa e o percentual aplicados em cada competência. A marca "equipe" indica que a pessoa dividiu a loja com outra em pelo menos um mês do período.</div>
+      <div class="chartbox">
+        <h3>Régua simulada × percentual efetivo praticado hoje</h3>
+        <div class="cwrap"><canvas id="chScatter"></canvas></div>
+        <div class="hint">Cada ponto é uma competência individual. Clique em um ponto para abrir o detalhe daquela pessoa. Eixo X: atingimento no mês (limitado a 200%). Eixo Y: percentual efetivo pago hoje. As linhas em degrau são as duas colunas da matriz simulada.</div>
+      </div>
+    </div>
+
+    <!-- LOJAS -->
+    <div class="panel" id="p-lojas">
+      <div class="panelbar">
+        <div class="left"><span class="count" id="cntLojas"></span></div>
+        <div class="actions"><button class="btn sec" onclick="exportar('lojas')">Exportar CSV</button><button class="btn" onclick="imprimirAba('lojas')">Imprimir / salvar PDF</button></div>
+      </div>
+      <div class="tblwrap"><table class="data" id="tblLojas"></table></div>
+      <div class="hint"><strong>Atingimento da loja é o único gatilho coletivo da ação.</strong> Quando a venda somada alcança a meta, a loja libera a coluna aceleradora. Se a opção individual estiver ligada, o colaborador na faixa extraordinária pode receber o percentual máximo. Clique em uma loja para ver as pessoas; duplo clique abre a explicação mês a mês.</div>
+    </div>
+
+    <!-- ANÁLISE EXECUTIVA -->
+    <div class="panel" id="p-decisao">
+      <div class="decision-tools">
+        <label class="fld tip" data-tip="Margem disponível para absorver o custo incremental da comissão. Ajuste conforme o P&L validado por Finanças.">Margem de contribuição (%)<input type="number" id="aMargem" value="60" min="0" max="100" step="1"></label>
+        <label class="fld tip" data-tip="Estimativa adicional sobre a variação da comissão: DSR, encargos e reflexos. É uma premissa gerencial editável.">DSR, encargos e reflexos (%)<input type="number" id="aCarga" value="35" min="0" step="1"></label>
+        <label class="fld tip" data-tip="Crescimento de vendas que se espera obter por causa do novo desenho de remuneração.">Crescimento esperado das vendas (%)<input type="number" id="aLift" value="2" min="0" step="0.1"></label>
+        <div class="spacer"></div>
+        <button class="btn" type="button" onclick="imprimirAba('decisao')">Imprimir / salvar em PDF</button>
+      </div>
+      <div class="report" id="relatorioDecisao"></div>
+    </div>
+  </div>
+</div>
+
+<div class="ovl" id="ovl" onclick="if(event.target===this) fecharModal()">
+  <div class="modal">
+    <div class="mhead">
+      <div><h3 id="mTit"></h3><div class="msub" id="mSub"></div></div>
+      <div class="acts">
+        <button class="mclose prim" onclick="voltar()" title="Retorna à aba, aos filtros e à ordenação de onde este detalhe foi aberto">Voltar à análise</button>
+        <button class="mclose" onclick="fecharModal()">Fechar</button>
+      </div>
+    </div>
+    <div class="mbody">
+      <div id="mExplain"></div>
+      <div class="mkpis" id="mKpis"></div>
+      <div class="tblwrap" style="max-height:none;"><table class="data" id="mTbl" style="min-width:1280px;"></table></div>
+      <div class="hint" id="mHint"></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn sec" onclick="voltar()">Voltar à análise</button>
+    </div>
+  </div>
+</div>
+
+<div class="footbar">
+  <span>Uso interno RH — Sonova Brasil | Simulação indicativa: não substitui a apuração da folha</span>
+  <span>Elaboração: Anderson Souza — RH</span>
+</div>
+
+<script>
+/* ================= formatação ================= */
+const BRL=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const BRL2=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2});
+const NUM=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
+const fpp=(v,d=1)=>(isFinite(v)?v:0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+const sgn=v=>(v>0?'+':'')+BRL.format(v);
+const clsD=d=>d>1?'pos':(d<-1?'neg':'');
+const MES3=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const mesPT=k=>{const[y,m]=k.split('-');return MES3[+m-1]+'/'+y.slice(2);};
+
+/* ================= estado ================= */
+const QUADRO=[[1,1],[1,1.5],[2,2.5],[2.5,3]];   // matriz padrão do quadro aplicado
+const PRESETS={
+  loja:{n:'Aceleração por loja',crit:'loja',ind:false,t:[70,100,120],g:100,m:JSON.parse(JSON.stringify(QUADRO))}
+};
+function nomeCenario(){
+  const p=PRESETS.loja;
+  const padrao=p.g===cfg.g && p.t.every((v,i)=>v===cfg.t[i]) &&
+    p.m.every((r,i)=>r.every((v,j)=>v===cfg.m[i][j]));
+  const base=padrao?'Aceleração por loja':'Aceleração por loja personalizada';
+  return cfg.ind?base+' + colaborador extraordinário':base;
+}
+let cfg=JSON.parse(JSON.stringify(PRESETS.loja)), cfgNome='Aceleração por loja';
+let ROWS=[], MESES=[], REGIONAIS=[], LOJAS=[], FUNCOES=[], per={a:0,b:0};
+let SORT={regionais:{k:'vendaFonoMes',asc:false},pessoas:{k:'mVenda',asc:false},lojas:{k:'vendaFonoMes',asc:false}};
+const REGUAS_ATUAIS=['Sem comissão','Abaixo de 0,5%','Piso 1%','Padrão 2%','Legado 3%','Legado 4,5%','Acima de 5%'];
+let FILTRO_LOJAS=new Set(), FILTRO_REGUAS=new Set();
+let CACHE=null, chart=null, ARQ_ATUAL='', ABA_ORIGEM='', DUPLICADOS_REMOVIDOS=0;
+
+/* ================= leitura do arquivo ================= */
+const norm=s=>String(s==null?'':s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toNum(v){
+  if(v==null||v==='')return 0;
+  if(typeof v==='number')return isFinite(v)?v:0;
+  let s=String(v).replace(/[R$\s%]/g,'').trim();
+  if(s===''||s==='-')return 0;
+  if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(','))s=s.replace(',','.');
+  const n=parseFloat(s);return isNaN(n)?0:n;
+}
+function toMes(v){
+  if(v instanceof Date&&!isNaN(v))return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0');
+  if(typeof v==='number'&&v>1000){const d=XLSX.SSF.parse_date_code(v);if(d&&d.y)return d.y+'-'+String(d.m).padStart(2,'0');}
+  const s=String(v||'').trim();if(!s)return null;
+  let m=s.match(/^(\d{4})-(\d{1,2})/);if(m)return m[1]+'-'+String(+m[2]).padStart(2,'0');
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return m[3]+'-'+String(+m[2]).padStart(2,'0');
+  m=s.match(/^(\d{1,2})\/(\d{4})$/);if(m)return m[2]+'-'+String(+m[1]).padStart(2,'0');
+  m=s.toLowerCase().match(/^([a-zç]{3})[a-zç]*[\/\- ](\d{2,4})$/);
+  if(m){const i=MES3.indexOf(m[1]);if(i>=0){let y=+m[2];if(y<100)y+=2000;return y+'-'+String(i+1).padStart(2,'0');}}
+  return null;
+}
+function acharCol(heads,alvos,contem){
+  for(const a of alvos){const i=heads.indexOf(a);if(i>=0)return i;}
+  if(contem)for(let i=0;i<heads.length;i++){if(heads[i]&&contem.some(c=>heads[i].includes(c)))return i;}
+  return -1;
+}
+function lerArquivo(file){
+  erro('');
+  const fr=new FileReader();
+  fr.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+      const dados=extrair(wb);
+      if(!dados.length){erro('Não foi possível localizar as colunas esperadas (Nome, Mês, Meta, Valor de Venda). Verifique se a planilha contém a aba de base analítica.');return;}
+      montar(dados,file.name);
+    }catch(ex){erro('Falha ao ler o arquivo: '+ex.message);}
+  };
+  fr.onerror=()=>erro('Não foi possível abrir o arquivo.');
+  fr.readAsArrayBuffer(file);
+}
+function extrair(wb){
+  const candidatos=[];
+  for(const sn of wb.SheetNames){
+    const mat=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null,blankrows:false});
+    for(let h=0;h<Math.min(12,mat.length);h++){
+      const heads=(mat[h]||[]).map(norm);
+      const iNome=acharCol(heads,['nome'],['nome']);
+      const iMes=acharCol(heads,['mes','competencia','mesano'],['mes']);
+      const iVen=acharCol(heads,['valordevenda','venda','vendas','valorvenda'],['valordevenda','venda']);
+      const iMeta=acharCol(heads,['meta'],['meta']);
+      if(iNome<0||iMes<0||iVen<0||iMeta<0)continue;
+      const iReg=acharCol(heads,['regional'],['regional']);
+      const iCdc=acharCol(heads,['cdc','loja'],['cdc','loja']);
+      const iFun=acharCol(heads,['fonoac','funcao','cargo'],['fonoac','funcao','cargo']);
+      const iCom=acharCol(heads,['comissao'],null);
+      const iPer=acharCol(heads,['periodo'],['periodo']);
+      const iMat=acharCol(heads,['matricula'],['matricula']);
+      const out=[];
+      for(let r=h+1;r<mat.length;r++){
+        const L=mat[r];if(!L)continue;
+        const nome=String(L[iNome]==null?'':L[iNome]).trim();
+        const mes=toMes(L[iMes]);
+        if(!nome||!mes)continue;
+        const cdc=String(iCdc>=0?(L[iCdc]==null?'':L[iCdc]):'').trim();
+        const cod=(cdc.match(/^\s*(\d+)/)||[,cdc||'—'])[1];
+        out.push({
+          nome, mes, cod, cdcTxt:cdc,
+          reg:String(iReg>=0?(L[iReg]==null?'':L[iReg]):'—').trim()||'—',
+          fun:String(iFun>=0?(L[iFun]==null?'':L[iFun]):'—').trim()||'—',
+          mat:iMat>=0?String(L[iMat]==null?'':L[iMat]).trim():'',
+          meta:toNum(L[iMeta]), venda:toNum(L[iVen]),
+          com:iCom>=0?toNum(L[iCom]):0,
+          saz:iPer>=0?norm(L[iPer]).includes('sazonal')&&!norm(L[iPer]).includes('naosazonal'):false
+        });
+      }
+      if(!out.length)continue;
+      const unicos=new Map();
+      out.forEach(r=>{
+        const chave=(r.mat||norm(r.nome))+'|'+r.cod+'|'+r.mes+'|'+r.meta+'|'+r.venda+'|'+r.com;
+        if(!unicos.has(chave))unicos.set(chave,r);
+      });
+      const rows=[...unicos.values()];
+      const maxMes=Math.max(...rows.map(r=>+r.mes.replace('-','')));
+      const ns=norm(sn);
+      const prioridade=ns.includes('atualizada')?300000:ns.includes('atual')?220000:ns.includes('base')?120000:0;
+      const qualidade=[iReg,iCdc,iFun,iCom,iMat].filter(i=>i>=0).length*100;
+      // A competência mais recente decide a base; nome da aba, qualidade e cabeçalho mais baixo resolvem empates.
+      const score=maxMes*1000000+prioridade+qualidade+rows.length+h*10;
+      candidatos.push({sn,h,rows,raw:out.length,score});
+    }
+  }
+  if(!candidatos.length)return [];
+  candidatos.sort((a,b)=>b.score-a.score);
+  const melhor=candidatos[0];
+  ABA_ORIGEM=melhor.sn;
+  DUPLICADOS_REMOVIDOS=melhor.raw-melhor.rows.length;
+  return melhor.rows;
+}
+function erro(msg){
+  const b=document.getElementById('errBox');
+  b.textContent=msg; b.classList.toggle('hide',!msg);
+}
+
+/* ================= memória (localStorage) ================= */
+const LS='rv_sim_v2', LSC='rv_sim_cfg_v1', LSA='rv_sim_analise_v1';
+function salvarCfg(){try{localStorage.setItem(LSC,JSON.stringify({cfg:cfg,nome:cfgNome}));}catch(ex){}}
+function carregarCfg(){
+  try{const s=localStorage.getItem(LSC);if(!s)return;const o=JSON.parse(s);
+    if(o&&o.cfg){
+      // Migração: cenários sazonais, individuais e padrão deixam de existir nesta ação.
+      if(o.cfg.crit!=='loja')cfg=JSON.parse(JSON.stringify(PRESETS.loja));
+      else{
+        cfg=o.cfg;
+        cfg.crit='loja';
+        if(typeof cfg.ind!=='boolean')cfg.ind=false;
+      }
+      cfgNome=nomeCenario();
+    }}catch(ex){}
+}
+function salvarMemoria(dados,nomeArq){
+  try{
+    const pack=dados.map(r=>[r.nome,r.mat,r.reg,r.fun,r.cod,r.cdcTxt,r.mes,r.meta,r.venda,r.com,r.saz?1:0]);
+    localStorage.setItem(LS,JSON.stringify({arq:nomeArq,aba:ABA_ORIGEM,duplicados:DUPLICADOS_REMOVIDOS,data:new Date().toISOString(),rows:pack}));
+    avisoMemoria(true);
+  }catch(ex){avisoMemoria(false,ex.name==='QuotaExceededError'?'A planilha excedeu o espaço do navegador e não ficou guardada.':'Não foi possível guardar a planilha neste navegador.');}
+}
+function salvarPremissas(){try{localStorage.setItem(LSA,JSON.stringify({margem:document.getElementById('aMargem').value,carga:document.getElementById('aCarga').value,lift:document.getElementById('aLift').value}));}catch(ex){}}
+function carregarPremissas(){try{const o=JSON.parse(localStorage.getItem(LSA)||'null');if(!o)return;document.getElementById('aMargem').value=o.margem??60;document.getElementById('aCarga').value=o.carga??35;document.getElementById('aLift').value=o.lift??2;}catch(ex){}}
+function lerMemoria(){
+  try{const s=localStorage.getItem(LS);return s?JSON.parse(s):null;}catch(ex){return null;}
+}
+function usarMemoria(){
+  const m=lerMemoria();if(!m)return;
+  carregarCfg();
+  ABA_ORIGEM=m.aba||'Base guardada';DUPLICADOS_REMOVIDOS=m.duplicados||0;
+  const dados=m.rows.map(a=>({nome:a[0],mat:a[1],reg:a[2],fun:a[3],cod:a[4],cdcTxt:a[5],mes:a[6],meta:a[7],venda:a[8],com:a[9],saz:!!a[10]}));
+  montar(dados,m.arq,true);
+}
+function limparMemoria(){
+  localStorage.removeItem(LS);localStorage.removeItem(LSC);localStorage.removeItem(LSA);
+  document.getElementById('memBox').classList.add('hide');
+  document.getElementById('memStat').textContent='';
+}
+function avisoMemoria(ok,msg){
+  const el=document.getElementById('memStat');
+  el.textContent=ok?'Planilha mantida na memória e recarregada automaticamente.':(msg||'');
+  el.className=ok?'count':'count neg';
+}
+function checarMemoria(){
+  const m=lerMemoria();if(!m)return;
+  const d=new Date(m.data);
+  document.getElementById('memInfo').textContent='Há uma planilha guardada neste navegador: '+m.arq+' ('+m.rows.length+
+    ' registros, carregada em '+d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+').';
+  document.getElementById('memBox').classList.remove('hide');
+}
+
+/* ================= montagem ================= */
+function montar(dados,nomeArq,daMemoria){
+  if(!daMemoria){FILTRO_LOJAS.clear();FILTRO_REGUAS.clear();}
+  ROWS=dados;
+  ARQ_ATUAL=nomeArq;
+  MESES=[...new Set(ROWS.map(r=>r.mes))].sort();
+  const mi={}; MESES.forEach((m,i)=>mi[m]=i);
+  ROWS.forEach(r=>r.mi=mi[r.mes]);
+  REGIONAIS=[...new Set(ROWS.map(r=>r.reg))].sort();
+  FUNCOES=[...new Set(ROWS.map(r=>r.fun))].sort();
+  // nome canônico da loja: grafia mais frequente, sem o código na frente
+  const cont={};
+  ROWS.forEach(r=>{(cont[r.cod]=cont[r.cod]||{})[r.cdcTxt]=(cont[r.cod][r.cdcTxt]||0)+1;});
+  const nomeLoja={};
+  Object.keys(cont).forEach(c=>{
+    const g=Object.entries(cont[c]).sort((a,b)=>b[1]-a[1])[0][0];
+    nomeLoja[c]=g.replace(/^\s*\d+\s*-?\s*/,'').replace(/\s{2,}/g,' ').trim()||c;
+  });
+  const regLoja={};
+  Object.keys(cont).forEach(c=>{
+    const rs={};ROWS.filter(r=>r.cod===c).forEach(r=>rs[r.reg]=(rs[r.reg]||0)+1);
+    regLoja[c]=Object.entries(rs).sort((a,b)=>b[1]-a[1])[0][0];
+  });
+  LOJAS=Object.keys(nomeLoja).sort().map(c=>({cod:c,nome:nomeLoja[c],reg:regLoja[c]}));
+  ROWS.forEach(r=>{r.loja=nomeLoja[r.cod];});
+
+  per={a:0,b:MESES.length-1};
+  carregarPremissas();
+  initSelects();
+  document.getElementById('loader').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('subHead').textContent=
+    nomeArq+' | aba '+(ABA_ORIGEM||'identificada automaticamente')+' | '+ROWS.length+' registros | '+MESES.length+' competências ('+mesPT(MESES[0])+' a '+mesPT(MESES[MESES.length-1])+')';
+  if(daMemoria) avisoMemoria(true); else salvarMemoria(dados,nomeArq);
+  loadSim(); render();
+}
+function initSelects(){
+  const sf=document.getElementById('selFrom'),st=document.getElementById('selTo');
+  sf.innerHTML='';st.innerHTML='';
+  MESES.forEach((m,i)=>{sf.add(new Option(mesPT(m),i));st.add(new Option(mesPT(m),i));});
+  sf.value=per.a;st.value=per.b;
+  sf.onchange=()=>{per.a=+sf.value;if(per.a>per.b){per.b=per.a;st.value=per.b;}render();};
+  st.onchange=()=>{per.b=+st.value;if(per.b<per.a){per.a=per.b;sf.value=per.a;}render();};
+  const fu=document.getElementById('fFunc');
+  fu.innerHTML='<option value="">Todas</option>';
+  FUNCOES.forEach(f=>fu.add(new Option(f,f)));
+  const padrao=FUNCOES.find(f=>norm(f).includes('fono'));
+  fu.value=padrao||'';
+  const fr=document.getElementById('fReg');
+  fr.innerHTML='<option value="">Todas</option>';
+  REGIONAIS.forEach(r=>fr.add(new Option(r,r)));
+  initMultis();
+  encherLojas();
+  atualizarOpcoesEquipe();
+  ['fFunc','fReg','fMeta','fEquipe'].forEach(id=>document.getElementById(id).onchange=()=>{
+    if(id==='fReg')encherLojas();
+    if(id==='fFunc')atualizarOpcoesEquipe();
+    render();
+  });
+  document.getElementById('fBusca').oninput=()=>{desenharKpis();desenharResumo();desenharTabelas();desenharScatter();desenharDecisao();};
+  ['aMargem','aCarga','aLift'].forEach(id=>document.getElementById(id).oninput=()=>{salvarPremissas();desenharDecisao();});
+}
+function atualizarOpcoesEquipe(){
+  const s=document.getElementById('fEquipe'),plural=rotFun(2),sing=rotFun(1);
+  s.options[1].text='Com 2+ '+plural+' no mesmo mês';
+  s.options[2].text='Com apenas 1 '+sing+' por mês';
+}
+function initMultis(){
+  const loja=document.getElementById('fLojaMulti'),reguaEl=document.getElementById('fReguaMulti');
+  [loja,reguaEl].forEach(el=>el.onclick=e=>e.stopPropagation());
+  document.getElementById('fLojaBtn').onclick=()=>{reguaEl.classList.remove('open');loja.classList.toggle('open');};
+  document.getElementById('fReguaBtn').onclick=()=>{loja.classList.remove('open');reguaEl.classList.toggle('open');};
+  document.getElementById('fLojaBusca').oninput=renderLojaOpcoes;
+  document.getElementById('fLojaTodas').onclick=()=>{FILTRO_LOJAS.clear();renderLojaOpcoes();render();};
+  document.getElementById('fLojaVisiveis').onclick=()=>{
+    document.querySelectorAll('#fLojaOpts input[data-cod]').forEach(x=>FILTRO_LOJAS.add(x.dataset.cod));
+    renderLojaOpcoes();render();
+  };
+  document.getElementById('fReguaTodas').onclick=()=>{FILTRO_REGUAS.clear();renderReguaOpcoes();render();};
+  renderReguaOpcoes();
+}
+document.addEventListener('click',()=>document.querySelectorAll('.multi.open').forEach(x=>x.classList.remove('open')));
+function atualizarRotuloMulti(tipo){
+  if(tipo==='loja'){
+    const b=document.getElementById('fLojaBtn'),n=FILTRO_LOJAS.size;
+    if(!n)b.textContent='Todas as lojas';
+    else if(n===1){const cod=[...FILTRO_LOJAS][0],l=LOJAS.find(x=>x.cod===cod);b.textContent=l?cod+' '+l.nome:cod;}
+    else b.textContent=n+' lojas selecionadas';
+  }else{
+    const n=FILTRO_REGUAS.size;
+    document.getElementById('fReguaBtn').textContent=!n?'Todas as réguas':n===1?[...FILTRO_REGUAS][0]:n+' réguas selecionadas';
+  }
+}
+function renderLojaOpcoes(){
+  const reg=document.getElementById('fReg').value,q=norm(document.getElementById('fLojaBusca').value);
+  const itens=LOJAS.filter(l=>(!reg||l.reg===reg)&&(!q||norm(l.cod+' '+l.nome).includes(q)));
+  const box=document.getElementById('fLojaOpts');
+  box.innerHTML=itens.length?itens.map(l=>'<label class="multi-opt"><input type="checkbox" data-cod="'+esc(l.cod)+'" '+(FILTRO_LOJAS.has(l.cod)?'checked':'')+'><span>'+esc(l.cod+' '+l.nome)+'</span></label>').join(''):'<div class="count" style="padding:7px;">Nenhuma loja encontrada.</div>';
+  box.querySelectorAll('input[data-cod]').forEach(x=>x.onchange=()=>{x.checked?FILTRO_LOJAS.add(x.dataset.cod):FILTRO_LOJAS.delete(x.dataset.cod);atualizarRotuloMulti('loja');render();});
+  atualizarRotuloMulti('loja');
+}
+function renderReguaOpcoes(){
+  const box=document.getElementById('fReguaOpts');
+  box.innerHTML=REGUAS_ATUAIS.map(r=>'<label class="multi-opt"><input type="checkbox" data-regua="'+esc(r)+'" '+(FILTRO_REGUAS.has(r)?'checked':'')+'><span>'+esc(r)+'</span></label>').join('');
+  box.querySelectorAll('input[data-regua]').forEach(x=>x.onchange=()=>{x.checked?FILTRO_REGUAS.add(x.dataset.regua):FILTRO_REGUAS.delete(x.dataset.regua);atualizarRotuloMulti('regua');render();});
+  atualizarRotuloMulti('regua');
+}
+function encherLojas(){
+  const reg=document.getElementById('fReg').value;
+  if(reg){const disponiveis=new Set(LOJAS.filter(l=>l.reg===reg).map(l=>l.cod));FILTRO_LOJAS=new Set([...FILTRO_LOJAS].filter(c=>disponiveis.has(c)));}
+  renderLojaOpcoes();
+}
+function resetFiltros(){
+  document.getElementById('fReg').value='';
+  document.getElementById('fBusca').value='';
+  document.getElementById('fLojaBusca').value='';
+  document.getElementById('fMeta').value='';
+  document.getElementById('fEquipe').value='';
+  FILTRO_LOJAS.clear();FILTRO_REGUAS.clear();
+  encherLojas();
+  renderReguaOpcoes();
+  SORT={regionais:{k:'vendaFonoMes',asc:false},pessoas:{k:'mVenda',asc:false},lojas:{k:'vendaFonoMes',asc:false}};
+  PILHA=[];
+  MODAL_ORIGEM=null;
+  render();
+}
+function trocarArquivo(){
+  document.getElementById('app').classList.add('hide');
+  document.getElementById('loader').classList.remove('hide');
+  document.getElementById('file').value='';
+  document.getElementById('subHead').textContent='Carregue a Base RV para iniciar a simulação';
+  checarMemoria();
+}
+
+/* ================= simulador ================= */
+function loadSim(){
+  ['t1','t2','t3'].forEach((id,i)=>document.getElementById(id).value=cfg.t[i]);
+  document.getElementById('tg').value=cfg.g;
+  cfg.crit='loja';
+  document.getElementById('crit').value='loja';
+  document.getElementById('indAccel').checked=cfg.ind!==false;
+  for(let i=0;i<4;i++)for(let j=0;j<2;j++)document.getElementById('m'+i+j).value=cfg.m[i][j];
+  rotulos();
+}
+function rotulos(){
+  const t=cfg.t, dec=v=>(v-0.01).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('lb0').textContent='Abaixo de '+t[0]+'%';
+  document.getElementById('lb1').textContent='De '+t[0]+'% a '+dec(t[1])+'%';
+  document.getElementById('lb2').textContent='De '+t[1]+'% a '+dec(t[2])+'%';
+  document.getElementById('lb3').textContent=t[2]+'% ou mais'+(cfg.ind?' — extraordinário':' — sem extra individual');
+  document.getElementById('colH0').textContent='Loja não atinge — base';
+  document.getElementById('colH1').textContent='Loja atinge — acelerador';
+  document.getElementById('fldG').style.opacity=1;
+  document.getElementById('tg').disabled=false;
+  const rowInd=document.getElementById('rowInd');
+  rowInd.classList.toggle('ind-off',!cfg.ind);
+  rowInd.querySelectorAll('input').forEach(x=>x.disabled=!cfg.ind);
+  document.getElementById('simTag').textContent=cfgNome;
+  document.getElementById('simNote').innerHTML=
+    '<strong>Regra da ação:</strong><br>1. O resultado individual posiciona o colaborador na matriz.<br>2. A loja precisa atingir '+fpp(cfg.g,0)+' para liberar a coluna aceleradora.<br>3. '+
+    (cfg.ind
+      ? '<strong>O percentual máximo de '+fpp(cfg.m[3][1],1)+' exige loja acelerada + colaborador em '+cfg.t[2]+'% ou mais.</strong>'
+      : '<strong>A aceleração individual está desligada: resultados de '+cfg.t[2]+'% ou mais usam os percentuais da faixa anterior.</strong>');
+  document.getElementById('pb-loja').classList.add('on');
+}
+function bindSim(){
+  const ler=()=>{
+    cfg.t=[+t1.value||0,+t2.value||0,+t3.value||0];
+    cfg.g=+tg.value||0; cfg.crit='loja';
+    cfg.ind=document.getElementById('indAccel').checked;
+    for(let i=0;i<4;i++)for(let j=0;j<2;j++)cfg.m[i][j]=+document.getElementById('m'+i+j).value||0;
+    cfgNome=nomeCenario();
+    rotulos();salvarCfg();render();
+  };
+  ['t1','t2','t3','tg','indAccel'].forEach(id=>document.getElementById(id).addEventListener('change',ler));
+  for(let i=0;i<4;i++)for(let j=0;j<2;j++)document.getElementById('m'+i+j).addEventListener('change',ler);
+}
+function applyPreset(k){cfg=JSON.parse(JSON.stringify(PRESETS.loja));cfgNome=nomeCenario();loadSim();salvarCfg();render();}
+function toggleSim(){document.getElementById('simBody').classList.toggle('hide');}
+
+/* ================= cálculo ================= */
+function faixa(at){return at<cfg.t[0]?0:at<cfg.t[1]?1:at<cfg.t[2]?2:3;}
+function gatesLoja(){
+  const fun=document.getElementById('fFunc').value, ag={};
+  ROWS.forEach(r=>{if(r.mi<per.a||r.mi>per.b)return;if(fun&&r.fun!==fun)return;
+    const k=r.cod+'|'+r.mi;const a=ag[k]||(ag[k]={m:0,v:0});a.m+=r.meta;a.v+=r.venda;});
+  const g={};for(const k in ag){const a=ag[k];g[k]=a.m>0&&(a.v/a.m)*100>=cfg.g-1e-9;}
+  return g;
+}
+function calc(){
+  const gates=gatesLoja();
+  const fun=document.getElementById('fFunc').value;
+  const reg=document.getElementById('fReg').value;
+  const fm=document.getElementById('fMeta').value;
+  const comp=document.getElementById('fEquipe').value;
+  const base0=ROWS.filter(r=>r.mi>=per.a&&r.mi<=per.b&&(!fun||r.fun===fun)&&(!reg||r.reg===reg)&&(!FILTRO_LOJAS.size||FILTRO_LOJAS.has(r.cod)));
+  // pessoas distintas por loja-mês, para identificar equipe compartilhada
+  const equipe={};
+  base0.forEach(r=>{const k=r.cod+'|'+r.mi;(equipe[k]=equipe[k]||new Set()).add(r.mat||norm(r.nome));});
+  const lojasMulti=new Set(Object.entries(equipe).filter(([,p])=>p.size>1).map(([k])=>k.split('|')[0]));
+  const base=base0.filter(r=>!comp||(comp==='multi'?lojasMulti.has(r.cod):!lojasMulti.has(r.cod)));
+  const det=[];
+  base.forEach(r=>{
+    const bateu=r.meta>0&&r.venda>=r.meta;
+    if(fm==='bateu'&&!bateu)return;
+    if(fm==='nao'&&bateu)return;
+    const at=r.meta>0?r.venda/r.meta*100:0;
+    const fxOriginal=faixa(at);
+    // Sem aceleração individual, a faixa extraordinária utiliza a faixa anterior.
+    const fx=!cfg.ind&&fxOriginal===3?2:fxOriginal;
+    const col=gates[r.cod+'|'+r.mi]?1:0;
+    const p=cfg.m[fx][col];
+    det.push({...r,at,fx,fxOriginal,col,pct:p,sim:r.venda*p/100,bateu,nEq:equipe[r.cod+'|'+r.mi].size});
+  });
+  const pessoas={},lojas={},regionais={},tot={venda:0,meta:0,com:0,sim:0,n:0};
+  det.forEach(d=>{
+    tot.venda+=d.venda;tot.meta+=d.meta;tot.com+=d.com;tot.sim+=d.sim;tot.n++;
+    const chave=d.mat||norm(d.nome);
+    const P=pessoas[chave]||(pessoas[chave]={key:chave,nome:d.nome,mat:d.mat,reg:d.reg,fun:d.fun,meta:0,venda:0,com:0,sim:0,lojas:new Set(),meses:new Set(),nEq:1,bateu:0,det:[]});
+    P.meta+=d.meta;P.venda+=d.venda;P.com+=d.com;P.sim+=d.sim;P.lojas.add(d.cod);P.meses.add(d.mi);P.det.push(d);
+    P.nEq=Math.max(P.nEq,d.nEq); if(d.bateu)P.bateu++;
+    const L=lojas[d.cod]||(lojas[d.cod]={cod:d.cod,nome:d.loja,reg:d.reg,meta:0,venda:0,com:0,sim:0,pes:new Set(),meses:new Set(),nEq:1,det:[]});
+    L.meta+=d.meta;L.venda+=d.venda;L.com+=d.com;L.sim+=d.sim;L.pes.add(d.nome);L.meses.add(d.mi);L.det.push(d);
+    L.nEq=Math.max(L.nEq,d.nEq);
+    const A=regionais[d.reg]||(regionais[d.reg]={key:d.reg,reg:d.reg,meta:0,venda:0,com:0,sim:0,pes:new Set(),lojas:new Set(),meses:new Set(),det:[]});
+    A.meta+=d.meta;A.venda+=d.venda;A.com+=d.com;A.sim+=d.sim;A.pes.add(chave);A.lojas.add(d.cod);A.meses.add(d.mi);A.det.push(d);
+  });
+  // quantidade de profissionais de cada loja, trazida para a pessoa
+  Object.values(pessoas).forEach(P=>{
+    P.nLoja=Math.max(...[...P.lojas].map(c=>lojas[c]?lojas[c].pes.size:1));
+  });
+  const mensais=(lista,tipo)=>{
+    const ag={};
+    lista.forEach(d=>{
+      const a=ag[d.mi]||(ag[d.mi]={meta:0,venda:0,com:0,sim:0,pes:new Set(),lojas:new Set()});
+      a.meta+=d.meta;a.venda+=d.venda;a.com+=d.com;a.sim+=d.sim;
+      a.pes.add(d.mat||norm(d.nome));a.lojas.add(d.cod);
+    });
+    const ms=Object.values(ag),validos=ms.filter(m=>m.meta>0);
+    const media=(f)=>ms.length?ms.reduce((s,m)=>s+f(m),0)/ms.length:0;
+    return {
+      nMeses:ms.length,
+      mVenda:media(m=>m.venda),mMeta:media(m=>m.meta),mCom:media(m=>m.com),mSim:media(m=>m.sim),
+      taxaMeta:validos.length?validos.filter(m=>m.venda>=m.meta).length/validos.length*100:0,
+      fonoMes:media(m=>m.pes.size),
+      lojasMes:media(m=>m.lojas.size),
+      vendaFonoMes:media(m=>m.pes.size?m.venda/m.pes.size:0)
+    };
+  };
+  const fmt=(o,tipo)=>({...o,...mensais(o.det,tipo),at:o.meta>0?o.venda/o.meta*100:0,
+    pAtual:o.venda>0?o.com/o.venda*100:0,pSim:o.venda>0?o.sim/o.venda*100:0,d:o.sim-o.com});
+  return {
+    det,tot,lojasMulti,
+    pessoas:Object.values(pessoas).map(o=>fmt(o,'pessoas')),
+    lojas:Object.values(lojas).map(o=>fmt(o,'lojas')),
+    regionais:Object.values(regionais).map(o=>fmt(o,'regionais'))
+  };
+}
+
+/* rótulo curto da função filtrada, usado nos contadores e marcas */
+function rotFun(n){
+  const f=norm(document.getElementById('fFunc').value);
+  if(!f) return n===1?'pessoa':'pessoas';
+  if(f.includes('fono')) return n===1?'fono':'fonos';
+  if(f.includes('assistente')) return n===1?'AC':'ACs';
+  const p=document.getElementById('fFunc').value.split(' ')[0].toLowerCase();
+  return n===1?p:p+'s';
+}
+
+/* classificação da régua praticada hoje, inferida do percentual efetivo */
+function regua(pct,com){
+  if(!com||com<=0)   return {t:'Sem comissão',c:'solo'};
+  if(pct<0.5)        return {t:'Abaixo de 0,5%',c:'solo'};
+  if(pct<1.5)        return {t:'Piso 1%',c:''};
+  if(pct<2.5)        return {t:'Padrão 2%',c:''};
+  if(pct<3.5)        return {t:'Legado 3%',c:'leg'};
+  if(pct<=5)         return {t:'Legado 4,5%',c:'leg'};
+  return {t:'Acima de 5%',c:'alerta'};
+}
+const badgeRegua=(pct,com)=>{const r=regua(pct,com);return '<span class="badge '+r.c+'">'+r.t+'</span>';};
+
+/* ================= render ================= */
+function render(){CACHE=calc();desenharKpis();desenharResumo();desenharTabelas();desenharScatter();desenharDecisao();}
+function kpi(l,v,d){return '<div class="card"><div class="lbl">'+l+'</div><div class="val">'+v+'</div>'+(d?'<div class="det">'+d+'</div>':'')+'</div>';}
+function resumoFiltrado(){
+  const pessoas=filtrar(CACHE.pessoas,'pessoas'),lojas=filtrar(CACHE.lojas,'lojas'),regionais=filtrar(CACHE.regionais,'regionais');
+  const t=pessoas.reduce((a,p)=>{a.venda+=p.venda;a.meta+=p.meta;a.com+=p.com;a.sim+=p.sim;a.n+=p.det.length;return a;},{venda:0,meta:0,com:0,sim:0,n:0});
+  return {pessoas,lojas,regionais,t};
+}
+function desenharKpis(){
+  const R=resumoFiltrado(),t=R.t,d=t.sim-t.com;
+  const lojaMes=R.lojas.reduce((s,l)=>s+l.nMeses,0),fonoMes=R.pessoas.reduce((s,p)=>s+p.nMeses,0);
+  document.getElementById('kpis').innerHTML=
+    kpi('Vendas no período',BRL.format(t.venda),NUM.format(t.n)+' competências | '+R.pessoas.length+' pessoas')+
+    kpi('Atingimento consolidado',fpp(t.meta?t.venda/t.meta*100:0,1),BRL.format(t.meta)+' de meta')+
+    kpi('Média por loja / mês',BRL.format(lojaMes?t.venda/lojaMes:0),NUM.format(lojaMes)+' combinações loja-mês')+
+    kpi('Média por fono / mês',BRL.format(fonoMes?t.venda/fonoMes:0),NUM.format(fonoMes)+' combinações fono-mês')+
+    kpi('Variação da comissão','<span class="'+clsD(d)+'">'+sgn(d)+'</span>',BRL.format(t.com)+' atual → '+BRL.format(t.sim)+' simulada');
+}
+function barraMetrica(v,max,rotulo){
+  const w=max>0?Math.max(3,Math.min(100,v/max*100)):0;
+  return rotulo+'<div class="metric-bar"><i style="width:'+w.toFixed(1)+'%"></i></div>';
+}
+function desenharResumo(){
+  const el=document.getElementById('resumoExecutivo');if(!el||!CACHE)return;
+  const R=resumoFiltrado(),t=R.t;
+  const d=t.sim-t.com;
+  const ganham=R.pessoas.filter(p=>p.d>1).length,perdem=R.pessoas.filter(p=>p.d<-1).length;
+  const estaveis=R.pessoas.length-ganham-perdem;
+  const lojaMes=R.lojas.reduce((s,l)=>s+l.nMeses,0),fonoMes=R.pessoas.reduce((s,p)=>s+p.nMeses,0);
+  const mediaLoja=lojaMes?t.venda/lojaMes:0,mediaFono=fonoMes?t.venda/fonoMes:0;
+  const comFono=fonoMes?t.com/fonoMes:0,ating=t.meta?t.venda/t.meta*100:0;
+  const multi=R.lojas.filter(l=>l.nEq>1),solo=R.lojas.length-multi.length;
+  const mesesLoja=R.lojas.reduce((s,l)=>s+l.nMeses,0);
+  const taxaMeta=mesesLoja?R.lojas.reduce((s,l)=>s+l.taxaMeta*l.nMeses,0)/mesesLoja:0;
+  const regs=R.regionais.slice().sort((a,b)=>b.vendaFonoMes-a.vendaFonoMes).slice(0,6);
+  const lojas=R.lojas.slice().sort((a,b)=>b.vendaFonoMes-a.vendaFonoMes).slice(0,6);
+  const fonos=R.pessoas.slice().sort((a,b)=>b.mVenda-a.mVenda).slice(0,6);
+  const maxReg=Math.max(0,...regs.map(x=>x.vendaFonoMes)),maxLoja=Math.max(0,...lojas.map(x=>x.vendaFonoMes)),maxFono=Math.max(0,...fonos.map(x=>x.mVenda));
+  const dif=ating-100;
+  const leitura=!R.pessoas.length
+    ? 'Os filtros atuais não retornam fonos. Ajuste o recorte para reconstruir o resumo.'
+    : 'O recorte alcançou <strong>'+fpp(ating,1)+'</strong> da meta, '+(dif>=0?'superando-a em '+fpp(dif,1):'ficando '+fpp(Math.abs(dif),1)+' abaixo')+
+      '. A média foi de <strong>'+BRL.format(mediaLoja)+' por loja/mês</strong> e <strong>'+BRL.format(mediaFono)+' por fono/mês</strong>. '+
+      multi.length+' loja'+(multi.length===1?'':'s')+' teve'+(multi.length===1?'':'ram')+' dois ou mais '+rotFun(2)+' simultâneos; '+solo+' operaram com apenas um por mês.';
+  const rowsReg=regs.map((r,i)=>'<tr class="summary-link" data-resumo-reg="'+i+'" title="Duplo clique para abrir as lojas desta regional"><td class="rank-name">'+esc(r.reg)+'</td><td>'+r.lojas.size+'</td><td>'+barraMetrica(r.vendaFonoMes,maxReg,BRL.format(r.vendaFonoMes))+'</td><td>'+fpp(r.at,1)+'</td></tr>').join('');
+  const rowsLoja=lojas.map((l,i)=>'<tr class="summary-link" data-resumo-loja="'+i+'" title="Duplo clique para abrir o detalhe mês a mês da loja"><td class="rank-name">'+esc(l.cod+' '+l.nome)+' '+(l.nEq>1?'<span class="badge">2+</span>':'<span class="badge solo">1</span>')+'</td><td>'+barraMetrica(l.vendaFonoMes,maxLoja,BRL.format(l.vendaFonoMes))+'</td><td>'+fpp(l.at,1)+'</td><td>'+fpp(l.taxaMeta,0)+'</td></tr>').join('');
+  const rowsFono=fonos.map((p,i)=>'<tr class="summary-link" data-resumo-fono="'+i+'" title="Duplo clique para abrir o detalhe mês a mês do fono"><td class="rank-name">'+esc(p.nome)+'</td><td>'+barraMetrica(p.mVenda,maxFono,BRL.format(p.mVenda))+'</td><td>'+fpp(p.at,1)+'</td><td>'+fpp(p.taxaMeta,0)+'</td></tr>').join('');
+  document.getElementById('cntResumo').textContent=R.regionais.length+' regionais | '+R.lojas.length+' lojas | '+R.pessoas.length+' '+rotFun(R.pessoas.length)+' | '+mesPT(MESES[per.a])+' a '+mesPT(MESES[per.b]);
+  el.innerHTML=
+    '<div class="summary-lead"><div class="summary-story"><h2>Resumo executivo da base</h2><p>'+leitura+'</p>'+
+      '<div class="scope">'+esc(escopoAtual())+'</div></div>'+
+      '<div class="summary-kpis">'+
+        kpi('Média loja / mês',BRL.format(mediaLoja),NUM.format(lojaMes)+' loja-mês')+
+        kpi('Média fono / mês',BRL.format(mediaFono),NUM.format(fonoMes)+' fono-mês')+
+        kpi('Média comissão / fono / mês',BRL.format(comFono),fpp(t.venda?t.com/t.venda*100:0,2)+' das vendas')+
+        kpi('Atingimento consolidado',fpp(ating,1),BRL.format(t.venda)+' vendidos')+
+        kpi('Meses de loja com meta batida',fpp(taxaMeta,0),'média ponderada no recorte')+
+        kpi('Lojas com mais de um fono',multi.length,fpp(R.lojas.length?multi.length/R.lojas.length*100:0,0)+' das lojas filtradas')+
+      '</div></div>'+
+    '<div class="summary-impact">'+
+      kpi('Vendas no período',BRL.format(t.venda),NUM.format(t.n)+' competências | '+R.pessoas.length+' '+rotFun(R.pessoas.length))+
+      kpi('Comissão atual',BRL.format(t.com),fpp(t.venda?t.com/t.venda*100:0,2)+' sobre vendas')+
+      kpi('Comissão simulada',BRL.format(t.sim),fpp(t.venda?t.sim/t.venda*100:0,2)+' sobre vendas')+
+      kpi('Variação','<span class="'+clsD(d)+'">'+sgn(d)+'</span>',fpp(t.com?d/t.com*100:0,1)+' sobre o custo atual')+
+      kpi('Ganham × perdem',ganham+' × '+perdem,estaveis+' sem variação relevante')+
+    '</div>'+
+    '<div class="summary-grid">'+
+      '<section class="summary-block"><h3>Regionais — venda média por fono</h3><div class="subline">Duplo clique abre as lojas da regional.</div><table class="rank-table"><thead><tr><th>Regional</th><th>Lojas</th><th>Venda/fono/mês</th><th>Ating.</th></tr></thead><tbody>'+rowsReg+'</tbody></table></section>'+
+      '<section class="summary-block"><h3>Lojas — venda média por fono</h3><div class="subline">Duplo clique abre o detalhe mensal da loja; a marca 2+ identifica equipe.</div><table class="rank-table"><thead><tr><th>Loja</th><th>Venda/fono/mês</th><th>Ating.</th><th>Meta batida</th></tr></thead><tbody>'+rowsLoja+'</tbody></table></section>'+
+      '<section class="summary-block"><h3>Fonos — venda média mensal</h3><div class="subline">Duplo clique abre o detalhe mensal do fono.</div><table class="rank-table"><thead><tr><th>Fono</th><th>Venda/mês</th><th>Ating.</th><th>Meta batida</th></tr></thead><tbody>'+rowsFono+'</tbody></table></section>'+
+    '</div><div class="summary-foot"><span class="source-chip">Base usada: '+esc(ABA_ORIGEM||'aba identificada automaticamente')+'</span><span>Duplo clique em regional, loja ou fono para detalhar | '+NUM.format(ROWS.length)+' registros válidos'+(DUPLICADOS_REMOVIDOS?' | '+DUPLICADOS_REMOVIDOS+' duplicado(s) removido(s)':'')+'</span></div>';
+  el.querySelectorAll('tr[data-resumo-loja]').forEach(tr=>tr.ondblclick=()=>{const l=lojas[+tr.dataset.resumoLoja];if(l)modalLoja(l);});
+  el.querySelectorAll('tr[data-resumo-fono]').forEach(tr=>tr.ondblclick=()=>{const p=fonos[+tr.dataset.resumoFono];if(p)modalPessoa(p);});
+  el.querySelectorAll('tr[data-resumo-reg]').forEach(tr=>tr.ondblclick=()=>{
+    const r=regs[+tr.dataset.resumoReg];if(!r)return;
+    PILHA=[snapshot()];document.getElementById('fReg').value=r.reg;FILTRO_LOJAS.clear();encherLojas();trocarAba('lojas');render();
+  });
+}
+function filtrar(lista,tipo){
+  const reg=document.getElementById('fReg').value;
+  const q=norm(document.getElementById('fBusca').value);
+  return lista.filter(o=>{
+    if(reg&&o.reg!==reg)return false;
+    if(FILTRO_LOJAS.size){
+      if(tipo==='lojas'){if(!FILTRO_LOJAS.has(o.cod))return false;}
+      else if(!o.lojas||![...o.lojas].some(c=>FILTRO_LOJAS.has(c)))return false;
+    }
+    if(FILTRO_REGUAS.size&&!FILTRO_REGUAS.has(regua(o.pAtual,o.com).t))return false;
+    if(q){
+      const alvo=tipo==='lojas'?norm(o.cod+o.nome+o.reg)
+        :tipo==='regionais'?norm(o.reg)
+        :norm(o.nome+o.reg+[...o.lojas].join(''));
+      if(!alvo.includes(q))return false;
+    }
+    return true;
+  });
+}
+function tabela(elId,cols,linhas,tipo){
+  const st=SORT[tipo];
+  linhas.sort((a,b)=>{const x=a[st.k],y=b[st.k];
+    const r=typeof x==='string'?x.localeCompare(y,'pt-BR'):(x-y);return st.asc?r:-r;});
+  let h='<thead><tr>'+cols.map(c=>'<th class="'+(c.l?'l':'')+'" data-k="'+c.k+'"'+(c.t?' title="'+c.t+'"':'')+'>'+
+    c.h+(st.k===c.k?'<span class="arr">'+(st.asc?'\u25B2':'\u25BC')+'</span>':'')+'</th>').join('')+'</tr></thead><tbody>';
+  linhas.forEach((r,i)=>{h+='<tr class="click'+(i%2?' z':'')+'" data-id="'+i+'">'+
+    cols.map(c=>'<td class="'+(c.l?'l':'')+' '+(c.cls?c.cls(r):'')+'">'+c.f(r)+'</td>').join('')+'</tr>';});
+  h+='</tbody>';
+  const el=document.getElementById(elId);el.innerHTML=h;
+  el.querySelectorAll('th').forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;if(st.k===k)st.asc=!st.asc;else{st.k=k;st.asc=false;}desenharTabelas();});
+  el.querySelectorAll('tbody tr').forEach(tr=>{
+    const o=linhas[+tr.dataset.id];
+    if(tipo==='regionais'){
+      tr.onclick=()=>{PILHA=[snapshot()];document.getElementById('fReg').value=o.reg;FILTRO_LOJAS.clear();encherLojas();trocarAba('lojas');render();};
+      return;
+    }
+    let t=null;
+    tr.ondblclick=()=>{if(t){clearTimeout(t);t=null;} tipo==='pessoas'?modalPessoa(o):modalLoja(o);};
+    if(tipo==='lojas')tr.onclick=()=>{                       // espera o duplo clique antes de filtrar
+      if(t)return;
+      t=setTimeout(()=>{t=null;PILHA=[snapshot()];
+        FILTRO_LOJAS=new Set([o.cod]);renderLojaOpcoes();trocarAba('pessoas');render();
+      },230);
+    };
+  });
+  return linhas.length;
+}
+function lojasDe(p){
+  const cods=[...p.lojas];
+  const txt=cods.length===1?cods[0]+' '+(LOJAS.find(l=>l.cod===cods[0])||{nome:''}).nome:cods.length+' lojas no período';
+  const n=p.nLoja||1;
+  const tip=n+' '+rotFun(n)+' na loja no período'+(p.nEq!==n?' | até '+p.nEq+' no mesmo mês':'')+
+    (n===1?'. Loja individual: com o gatilho coletivo, a meta da loja é a própria meta da pessoa.'
+          :'. Loja com equipe: o gatilho coletivo depende também do resultado dos colegas.');
+  return txt+'<span class="badge '+(n>1?'':'solo')+'" title="'+tip+'">'+n+' '+rotFun(n)+'</span>';
+}
+function desenharTabelas(){
+  const colsR=[
+    {k:'reg',h:'Regional',l:1,f:r=>r.reg,t:'Clique para abrir as lojas da regional.'},
+    {k:'nLojas',h:'Lojas',f:r=>r.lojas.size},
+    {k:'nPessoas',h:rotFun(2).charAt(0).toUpperCase()+rotFun(2).slice(1),f:r=>r.pes.size},
+    {k:'mVenda',h:'Venda média / mês',f:r=>BRL.format(r.mVenda),t:'Venda regional total dividida pelos meses com movimento no recorte.'},
+    {k:'vendaFonoMes',h:'Venda média / fono / mês',f:r=>BRL.format(r.vendaFonoMes),t:'Em cada mês, venda regional dividida pelos fonos ativos; depois é calculada a média dos meses.'},
+    {k:'at',h:'Atingimento',f:r=>fpp(r.at),t:'Venda total dividida pela meta total da regional.'},
+    {k:'taxaMeta',h:'Meses com meta batida',f:r=>fpp(r.taxaMeta,0),t:'Percentual de meses em que a soma regional alcançou a soma das metas.'},
+    {k:'mCom',h:'Com. atual média / mês',f:r=>BRL.format(r.mCom)},
+    {k:'pAtual',h:'% atual',f:r=>fpp(r.pAtual,2)},
+    {k:'mSim',h:'Com. simulada média / mês',f:r=>BRL.format(r.mSim)},
+    {k:'d',h:'Variação total',f:r=>sgn(r.d),cls:r=>clsD(r.d)}
+  ];
+  const lr=filtrar(CACHE.regionais,'regionais').map(r=>({...r,nLojas:r.lojas.size,nPessoas:r.pes.size}));
+  tabela('tblRegionais',colsR,lr,'regionais');
+  document.getElementById('cntRegionais').textContent=lr.length+' regiona'+(lr.length===1?'l':'is')+' | médias calculadas em '+mesPT(MESES[per.a])+' a '+mesPT(MESES[per.b])+' | clique para detalhar lojas';
+
+  const colsP=[
+    {k:'nome',h:'Pessoa',l:1,f:r=>r.nome,t:'Duplo clique abre o detalhe mês a mês desta pessoa.'},
+    {k:'reg',h:'Regional',l:1,f:r=>r.reg},
+    {k:'lojaTxt',h:'Loja',l:1,f:r=>lojasDe(r),t:'Loja de atuação no período. A marca "equipe" indica meses em que houve duas ou mais pessoas na mesma loja.'},
+    {k:'nm',h:'Meses',f:r=>r.meses.size,t:'Competências consideradas no período, já respeitando o filtro de meses.'},
+    {k:'venda',h:'Vendas',f:r=>BRL.format(r.venda)},
+    {k:'mVenda',h:'Venda média / mês',f:r=>BRL.format(r.mVenda),t:'Venda total do fono dividida pelos meses com dados no recorte.'},
+    {k:'meta',h:'Meta',f:r=>BRL.format(r.meta)},
+    {k:'at',h:'Atingimento',f:r=>fpp(r.at),t:'Soma das vendas dividida pela soma das metas no período.'},
+    {k:'taxaMeta',h:'Meses com meta batida',f:r=>fpp(r.taxaMeta,0),t:'Percentual de meses em que o fono alcançou a própria meta.'},
+    {k:'extras',h:'Acel. colaborador',f:r=>cfg.ind?(r.extras?r.extras+' <span class="badge extra">extraordinári'+(r.extras===1?'a':'as')+'</span>':'—'):'Desligada',t:'Quantidade de competências em que a aceleração extraordinária por colaborador foi acionada. Quando a opção está desligada, a última faixa não é aplicada.'},
+    {k:'com',h:'Com. atual',f:r=>BRL.format(r.com),t:'Comissão apurada na planilha, incluindo réguas legadas e garantias.'},
+    {k:'mCom',h:'Com. média / mês',f:r=>BRL.format(r.mCom),t:'Comissão atual total dividida pelos meses com dados.'},
+    {k:'pAtual',h:'% atual',f:r=>fpp(r.pAtual,2),t:'Comissão atual dividida pelas vendas do período.'},
+    {k:'pAtual',h:'Régua atual',l:1,f:r=>badgeRegua(r.pAtual,r.com),t:'Classificação da régua praticada hoje, inferida do percentual efetivo: piso 1%, padrão 2%, legado 3% ou 4,5% e casos acima de 5%, que em geral são garantias mínimas.'},
+    {k:'pSim',h:'% médio simulado',f:r=>fpp(r.pSim,2),t:'Comissão simulada dividida pelas vendas: é a média ponderada dos percentuais aplicados mês a mês.'},
+    {k:'sim',h:'Com. simulada',f:r=>BRL.format(r.sim),t:'Soma das comissões calculadas pela matriz do simulador em cada competência.'},
+    {k:'d',h:'Variação',f:r=>sgn(r.d),cls:r=>clsD(r.d),t:'Comissão simulada menos comissão atual.'}
+  ];
+  const lp=filtrar(CACHE.pessoas,'pessoas').map(p=>({...p,lojaTxt:[...p.lojas][0]||'',nm:p.meses.size,extras:p.det.filter(d=>d.fx===3&&d.col===1).length}));
+  tabela('tblPessoas',colsP,lp,'pessoas');
+  const eq=lp.filter(p=>(p.nLoja||1)>1).length;
+  document.getElementById('cntPessoas').textContent=lp.length+' '+rotFun(lp.length)+' | '+eq+' em loja com dois ou mais | '+
+    mesPT(MESES[per.a])+' a '+mesPT(MESES[per.b])+' | cenário: '+cfgNome+rotuloMeses();
+
+  const colsL=[
+    {k:'cod',h:'Código',l:1,f:r=>r.cod},
+    {k:'nome',h:'Loja',l:1,f:r=>r.nome+'<span class="badge '+(r.pes.size>1?'':'solo')+'" title="'+r.pes.size+' '+rotFun(r.pes.size)+' na loja no período, com até '+r.nEq+' no mesmo mês">'+r.pes.size+' '+rotFun(r.pes.size)+'</span>',
+      t:'Clique para filtrar as pessoas; duplo clique abre o detalhe mês a mês.'},
+    {k:'reg',h:'Regional',l:1,f:r=>r.reg},
+    {k:'np',h:rotFun(2).charAt(0).toUpperCase()+rotFun(2).slice(1),f:r=>r.pes.size,t:'Profissionais distintos que passaram pela loja ao longo do período.'},
+    {k:'nEq',h:'Máx. no mesmo mês',f:r=>r.nEq,t:'Maior número atuando na loja em um mesmo mês. A partir de 2, o gatilho coletivo passa a diferenciar de fato; com 1, ele vira acréscimo automático ao bater a meta individual.'},
+    {k:'venda',h:'Vendas',f:r=>BRL.format(r.venda)},
+    {k:'mVenda',h:'Venda média / mês',f:r=>BRL.format(r.mVenda),t:'Venda total da loja dividida pelos meses com movimento.'},
+    {k:'vendaFonoMes',h:'Venda média / fono / mês',f:r=>BRL.format(r.vendaFonoMes),t:'Em cada mês, venda da loja dividida pelos fonos ativos; depois é calculada a média dos meses.'},
+    {k:'fonoMes',h:'Fonos médios / mês',f:r=>r.fonoMes.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}),t:'Média da quantidade de fonos ativos por mês na loja.'},
+    {k:'meta',h:'Meta',f:r=>BRL.format(r.meta)},
+    {k:'at',h:'Atingimento',f:r=>fpp(r.at),t:'Soma das vendas dividida pela soma das metas das pessoas da loja.'},
+    {k:'taxaMeta',h:'Meses com meta batida',f:r=>fpp(r.taxaMeta,0),t:'Percentual de meses em que a soma da loja alcançou a meta somada.'},
+    {k:'extras',h:'Acel. colaborador',f:r=>cfg.ind?(r.extras?r.extras+' <span class="badge extra">extraordinári'+(r.extras===1?'a':'as')+'</span>':'—'):'Desligada',t:'Competências individuais em que ocorreram as duas condições: loja atingiu a meta e colaborador chegou à faixa extraordinária.'},
+    {k:'com',h:'Com. atual',f:r=>BRL.format(r.com)},
+    {k:'mCom',h:'Com. média / mês',f:r=>BRL.format(r.mCom)},
+    {k:'pAtual',h:'% atual',f:r=>fpp(r.pAtual,2),t:'Comissão atual da loja dividida pelas vendas da loja no período.'},
+    {k:'pAtual',h:'Régua atual',l:1,f:r=>badgeRegua(r.pAtual,r.com),t:'Classificação da régua praticada hoje na loja, inferida do percentual efetivo.'},
+    {k:'pSim',h:'% médio simulado',f:r=>fpp(r.pSim,2),t:'Média ponderada das comissões individuais. Não representa um percentual único concedido à loja.'},
+    {k:'sim',h:'Com. simulada',f:r=>BRL.format(r.sim)},
+    {k:'d',h:'Variação',f:r=>sgn(r.d),cls:r=>clsD(r.d),t:'Comissão simulada menos comissão atual.'}
+  ];
+  const ll=filtrar(CACHE.lojas,'lojas').map(l=>({...l,np:l.pes.size,extras:l.det.filter(d=>d.fx===3&&d.col===1).length}));
+  tabela('tblLojas',colsL,ll,'lojas');
+  const lm=ll.filter(l=>l.nEq>1).length, ls=ll.length-lm;
+  document.getElementById('cntLojas').textContent=ll.length+' loja'+(ll.length===1?'':'s')+' | '+lm+' com dois ou mais '+rotFun(2)+' | '+ls+' com apenas um';
+  atualizarVolta();
+}
+function atualizarVolta(){
+  const b=document.getElementById('btVolta');
+  if(b) b.classList.toggle('hide',PILHA.length===0||FILTRO_LOJAS.size===0);
+}
+function rotuloMeses(){
+  const v=document.getElementById('fMeta').value;
+  return v==='bateu'?' | somente meses com meta batida':v==='nao'?' | somente meses sem meta batida':'';
+}
+function degrau(col){
+  const t=cfg.t,m=cfg.m.map(r=>r[col]);
+  if(!cfg.ind)m[3]=m[2];
+  return [{x:0,y:m[0]},{x:t[0],y:m[0]},{x:t[0],y:m[1]},{x:t[1],y:m[1]},{x:t[1],y:m[2]},{x:t[2],y:m[2]},{x:t[2],y:m[3]},{x:200,y:m[3]}];
+}
+function desenharScatter(){
+  const pts=[],out=[];
+  const visiveis=new Set(filtrar(CACHE.pessoas,'pessoas').map(p=>p.key));
+  CACHE.det.filter(d=>visiveis.has(d.mat||norm(d.nome))).forEach(d=>{
+    if(d.venda<=0||d.meta<=0)return;
+    const y=d.com/d.venda*100;
+    (y>5?out:pts).push({x:Math.min(d.at,200),y:Math.min(y,12),nome:d.nome,at:d.at,mes:d.mes,key:d.mat||norm(d.nome)});
+  });
+  if(chart)chart.destroy();
+  chart=new Chart(document.getElementById('chScatter'),{type:'scatter',data:{datasets:[
+    {label:'Competência',data:pts,backgroundColor:'rgba(110,180,220,0.45)',pointRadius:2.6,pointHoverRadius:6},
+    {label:'Efetivo acima de 5%',data:out,backgroundColor:'#7D0041',pointRadius:3.4,pointHoverRadius:6},
+    {label:'Matriz — coluna 2',data:degrau(1),type:'line',borderColor:'#003C64',borderWidth:2,pointRadius:0,fill:false,tension:0},
+    {label:'Matriz — coluna 1',data:degrau(0),type:'line',borderColor:'#8C321E',borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false,tension:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,animation:false,
+    onHover:(e,els)=>{e.native.target.style.cursor=els.length&&chart.data.datasets[els[0].datasetIndex].type!=='line'?'pointer':'default';},
+    onClick:(e,els)=>{
+      if(!els.length)return;
+      const ds=chart.data.datasets[els[0].datasetIndex];
+      if(ds.type==='line')return;
+      const pt=ds.data[els[0].index];
+      const p=CACHE.pessoas.find(x=>x.key===pt.key);
+      if(p)modalPessoa(p,pt.mes);
+    },
+    plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.type==='line'
+      ? c.dataset.label+': '+fpp(c.parsed.y,1)
+      : (c.raw.nome||'')+' | '+mesPT(c.raw.mes)+' | atingimento '+fpp(c.raw.at||c.parsed.x,0)+' | efetivo '+fpp(c.parsed.y,2)+' | clique para abrir'}}},
+    scales:{x:{min:0,max:200,title:{display:true,text:'Atingimento no mês (%)'},ticks:{callback:v=>v+'%'}},
+            y:{min:0,max:12,title:{display:true,text:'Percentual efetivo pago (%)'},ticks:{callback:v=>v+'%'}}}}});
+}
+
+/* ================= modais ================= */
+const FXNOME=t=>{const d=v=>(v-0.01).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});return ['Abaixo de '+t[0]+'%','De '+t[0]+'% a '+d(t[1])+'%','De '+t[1]+'% a '+d(t[2])+'%',t[2]+'% ou mais'];};
+function colNome(col){return col?'Loja atinge — acelerador':'Loja não atinge — base';}
+function leituraAcelerador(d){
+  if(!cfg.ind&&d.fxOriginal===3)
+    return d.col===1
+      ? '<span class="badge ok">Loja atingiu · extra individual desligado</span>'
+      : '<span class="badge solo">Loja não atingiu · extra individual desligado</span>';
+  if(d.fx===3&&d.col===1)
+    return '<span class="badge extra">Extraordinário · ganhou a aceleração individual máxima</span>';
+  if(d.fx===3)
+    return '<span class="badge alerta">Extraordinário · loja não liberou o máximo</span>';
+  if(d.col===1)
+    return '<span class="badge ok">Loja atingiu · percentual da faixa individual</span>';
+  return '<span class="badge solo">Loja não atingiu · coluna base</span>';
+}
+function explicacaoRegra(extraTexto){
+  const titulo=cfg.ind?'Como funcionam as duas acelerações':'Como funciona a aceleração por loja';
+  const passo2='A soma da loja libera a coluna “Loja atinge — acelerador”.';
+  const fecho=cfg.ind
+    ? 'A loja é o gatilho principal. <strong>O percentual máximo exige as duas condições no mesmo mês: loja atingiu '+cfg.g+'% da meta + colaborador teve resultado extraordinário de '+cfg.t[2]+'% ou mais.</strong>'
+    : 'A loja é o único gatilho de aceleração. <strong>A faixa individual extraordinária está desligada; resultados de '+cfg.t[2]+'% ou mais permanecem limitados à faixa anterior.</strong>';
+  return '<div class="explain"><strong>'+titulo+'</strong><div class="logic">'+
+    '<div class="step"><b>1 · Linha</b>Atingimento do colaborador posiciona a faixa base.</div>'+
+    '<div class="step"><b>2 · Coluna</b>'+passo2+'</div>'+
+    '<div class="step"><b>3 · Percentual</b>O cruzamento define a comissão de cada profissional.</div>'+
+    '</div><p>'+fecho+(extraTexto?' '+extraTexto:'')+'</p></div>';
+}
+let PILHA=[], MODAL_ORIGEM=null;
+function snapshot(){
+  const g=id=>document.getElementById(id);
+  const ab=document.querySelector('.tab.active');
+  return {aba:ab?ab.dataset.t:'resumo',
+    fFunc:g('fFunc').value,fReg:g('fReg').value,fLojas:[...FILTRO_LOJAS],fReguas:[...FILTRO_REGUAS],fBusca:g('fBusca').value,
+    fMeta:g('fMeta').value,fEquipe:g('fEquipe').value,per:{a:per.a,b:per.b},
+    sort:JSON.parse(JSON.stringify(SORT)),
+    scP:document.querySelector('#p-pessoas .tblwrap').scrollTop,
+    scL:document.querySelector('#p-lojas .tblwrap').scrollTop,
+    scR:document.querySelector('#p-regionais .tblwrap').scrollTop};
+}
+function restaurar(s){
+  if(!s)return;
+  const g=id=>document.getElementById(id);
+  g('fFunc').value=s.fFunc;g('fReg').value=s.fReg;FILTRO_LOJAS=new Set(s.fLojas||[]);FILTRO_REGUAS=new Set(s.fReguas||[]);encherLojas();renderReguaOpcoes();
+  g('fBusca').value=s.fBusca;g('fMeta').value=s.fMeta;g('fEquipe').value=s.fEquipe||'';
+  per={a:s.per.a,b:s.per.b}; g('selFrom').value=per.a; g('selTo').value=per.b;
+  SORT=JSON.parse(JSON.stringify(s.sort));
+  trocarAba(s.aba); render();
+  setTimeout(()=>{document.querySelector('#p-pessoas .tblwrap').scrollTop=s.scP;
+                  document.querySelector('#p-lojas .tblwrap').scrollTop=s.scL;
+                  document.querySelector('#p-regionais .tblwrap').scrollTop=s.scR||0;},0);
+}
+function voltar(){
+  const ovl=document.getElementById('ovl');
+  if(ovl.classList.contains('on')){
+    const s=MODAL_ORIGEM;
+    fecharModal();
+    if(s)restaurar(s);
+    return;
+  }
+  const s=PILHA.pop();
+  if(s)restaurar(s);
+}
+
+function abrirModal(tit,sub,kpisHtml,tabelaHtml,hint,explainHtml){
+  document.getElementById('mTit').textContent=tit;
+  document.getElementById('mSub').textContent=sub;
+  const exp=document.getElementById('mExplain');
+  exp.innerHTML=explainHtml||'';
+  exp.classList.toggle('hide',!explainHtml);
+  document.getElementById('mKpis').innerHTML=kpisHtml;
+  document.getElementById('mTbl').innerHTML=tabelaHtml;
+  document.getElementById('mHint').textContent=hint;
+  const ovl=document.getElementById('ovl');
+  if(!ovl.classList.contains('on')) MODAL_ORIGEM=snapshot();
+  ovl.classList.add('on');
+  ovl.querySelector('.mbody').scrollTop=0;
+}
+function fecharModal(){document.getElementById('ovl').classList.remove('on');MODAL_ORIGEM=null;}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fecharModal();});
+
+function modalPessoa(p,destaque){
+  const fx=FXNOME(cfg.t);
+  const det=p.det.slice().sort((a,b)=>a.mi-b.mi);
+  const T={
+    mes:'Competência apurada.',
+    loja:'Loja do vínculo naquele mês. O número entre parênteses é a quantidade de pessoas na loja no mesmo mês.',
+    meta:'Meta individual do mês, conforme a planilha.',
+    venda:'Venda realizada no mês.',
+    at:'Venda dividida pela meta do mês. É este número que define a faixa da matriz.',
+    fx:'Faixa da matriz em que o atingimento do mês caiu.',
+    col:'Coluna aplicada da matriz: depende de a loja ter atingido a meta somada no mês.',
+    pct:'Percentual da célula da matriz correspondente à faixa e à coluna da linha.',
+    sim:'Venda do mês multiplicada pelo percentual simulado.',
+    pAt:'Percentual efetivo pago hoje naquele mês: comissão apurada dividida pela venda do mês.',
+    com:'Comissão apurada na planilha para aquele mês.',
+    reg:'Classificação da régua praticada no mês, inferida do percentual efetivo: piso 1%, padrão 2%, legado 3% ou 4,5% e casos acima de 5%, em geral garantias mínimas.',
+    var:'Comissão simulada menos comissão atual no mês. É aqui que se enxerga a origem da variação total.'
+  };
+  let h='<thead><tr><th class="l" title="'+T.mes+'">Competência</th><th class="l" title="'+T.loja+'">Loja</th>'+
+        '<th title="'+T.meta+'">Meta</th><th title="'+T.venda+'">Venda</th><th title="'+T.at+'">Atingimento</th>'+
+        '<th class="l" title="'+T.fx+'">Faixa individual</th><th class="l" title="'+T.col+'">Gatilho</th><th title="'+T.pct+'">% simulado</th><th class="l">Leitura fácil</th>'+
+        '<th title="'+T.sim+'">Com. simulada</th><th title="'+T.pAt+'">% atual</th><th title="'+T.com+'">Com. atual</th>'+
+        '<th class="l" title="'+T.reg+'">Régua atual</th><th title="'+T.var+'">Variação</th></tr></thead><tbody>';
+  det.forEach((d,i)=>{const v=d.sim-d.com, pa=d.venda>0?d.com/d.venda*100:0;
+    const hi=destaque&&d.mes===destaque?' style="box-shadow:inset 3px 0 0 var(--p);background:#F2F9FD;"':'';
+    h+='<tr'+(i%2?' class="z"':'')+hi+'><td class="l">'+mesPT(d.mes)+(d.bateu?'':' <span class="badge solo">sem meta</span>')+'</td>'+
+       '<td class="l">'+d.cod+' '+d.loja+' <span class="badge '+(d.nEq>1?'':'solo')+'" title="Profissionais atuando nessa loja nesse mês">'+d.nEq+' '+rotFun(d.nEq)+'</span></td>'+
+       '<td>'+BRL.format(d.meta)+'</td><td>'+BRL.format(d.venda)+'</td><td>'+fpp(d.at)+'</td>'+
+       '<td class="l">'+fx[d.fx]+(!cfg.ind&&d.fxOriginal===3?' <span class="badge solo">limitada</span>':'')+'</td><td class="l">'+colNome(d.col)+'</td><td>'+fpp(d.pct,2)+'</td><td class="l">'+leituraAcelerador(d)+'</td>'+
+       '<td>'+BRL2.format(d.sim)+'</td><td>'+fpp(pa,2)+'</td><td>'+BRL2.format(d.com)+'</td>'+
+       '<td class="l">'+badgeRegua(pa,d.com)+'</td><td class="'+clsD(v)+'">'+sgn(v)+'</td></tr>';});
+  h+='<tr style="font-weight:500;border-top:2px solid var(--bd);"><td class="l">Total</td><td></td><td>'+BRL.format(p.meta)+'</td><td>'+BRL.format(p.venda)+'</td>'+
+     '<td>'+fpp(p.at)+'</td><td></td><td></td><td>'+fpp(p.pSim,2)+'</td><td></td><td>'+BRL.format(p.sim)+'</td><td>'+fpp(p.pAtual,2)+'</td><td>'+BRL.format(p.com)+'</td>'+
+     '<td class="l">'+badgeRegua(p.pAtual,p.com)+'</td><td class="'+clsD(p.d)+'">'+sgn(p.d)+'</td></tr></tbody>';
+  const extras=det.filter(d=>d.fx===3&&d.col===1).length;
+  const k=kpi('Meses no período',det.length,p.bateu+' com meta batida')+
+    kpi('% efetivo atual',fpp(p.pAtual,2),regua(p.pAtual,p.com).t+' | '+BRL.format(p.com))+
+    kpi('% simulado',fpp(p.pSim,2),BRL.format(p.sim))+
+    kpi('Variação','<span class="'+clsD(p.d)+'">'+sgn(p.d)+'</span>',fpp(p.com?p.d/p.com*100:0)+' sobre o atual')+
+    kpi('Aceleração do colaborador',cfg.ind?extras:'Desligada',cfg.ind?(extras?'resultado extraordinário reconhecido':'nenhuma competência com as duas condições'):'somente aceleração por loja');
+  abrirModal(p.nome,p.reg+' | '+p.fun+(p.mat?' | matrícula '+p.mat:'')+(' | loja com '+(p.nLoja||1)+' '+rotFun(p.nLoja||1)+(p.nEq>1?', até '+p.nEq+' no mesmo mês':''))+' | cenário: '+cfgNome,k,h,
+    'Passe o cursor sobre os títulos das colunas para ver como cada valor é calculado. A comissão atual é o valor apurado na planilha, que pode conter réguas legadas e garantias mínimas — por isso a variação nem sempre vem da matriz, e sim da régua de origem da praça.',
+    explicacaoRegra(cfg.ind?(extras?'<strong>'+extras+' competência'+(extras===1?'':'s')+' recebeu'+(extras===1?'':'ram')+' a aceleração individual máxima.</strong>':'Nesta seleção, nenhuma competência reuniu as duas condições da aceleração individual.'):'A ação está simulando somente a aceleração por loja.'));
+}
+function modalLoja(l){
+  const porMes={};
+  l.det.forEach(d=>{const M=porMes[d.mi]||(porMes[d.mi]={mes:d.mes,meta:0,venda:0,com:0,sim:0,pes:new Set(),det:[]});
+    M.meta+=d.meta;M.venda+=d.venda;M.com+=d.com;M.sim+=d.sim;M.pes.add(d.nome);M.det.push(d);});
+  const linhas=Object.values(porMes).sort((a,b)=>a.mes<b.mes?-1:1);
+  let h='<thead><tr><th class="l" title="Competência apurada.">Competência</th>'+
+        '<th title="Profissionais atuando na loja naquele mês. A partir de dois, o resultado coletivo é de fato compartilhado.">'+rotFun(2).charAt(0).toUpperCase()+rotFun(2).slice(1)+'</th>'+
+        '<th title="Soma das metas individuais das pessoas da loja no mês.">Meta</th>'+
+        '<th title="Soma das vendas das pessoas da loja no mês.">Venda</th>'+
+        '<th title="Venda somada dividida pela meta somada: é o número que aciona o gatilho de loja.">Atingimento</th>'+
+        '<th class="l" title="A loja libera a coluna aceleradora. Quando a opção individual está ligada, o colaborador extraordinário pode alcançar a última faixa.">Leitura do acelerador</th>'+
+        '<th title="Média ponderada dos percentuais individuais. Não é uma taxa única aplicada à loja.">% médio simulado</th>'+
+        '<th title="Soma das comissões calculadas pela matriz para as pessoas da loja no mês.">Com. simulada</th>'+
+        '<th title="Percentual efetivo pago hoje na loja naquele mês.">% atual</th>'+
+        '<th title="Soma das comissões apuradas na planilha para a loja no mês.">Com. atual</th>'+
+        '<th class="l" title="Classificação da régua praticada no mês, inferida do percentual efetivo.">Régua atual</th>'+
+        '<th title="Comissão simulada menos comissão atual no mês.">Variação</th></tr></thead><tbody>';
+  linhas.forEach((m,i)=>{const at=m.meta>0?m.venda/m.meta*100:0,v=m.sim-m.com,pa=m.venda>0?m.com/m.venda*100:0;
+    const extras=m.det.filter(d=>d.fx===3&&d.col===1).length;
+    const gatilho=m.det.some(d=>d.col===1);
+    const leitura=cfg.ind&&extras
+      ? '<span class="badge extra">'+extras+' extraordinári'+(extras===1?'a':'as')+' · aceleração individual</span>'
+      : gatilho
+        ? '<span class="badge ok">Loja atingiu · aceleração por loja</span>'
+        : '<span class="badge solo">Loja não atingiu · coluna base</span>';
+    h+='<tr'+(i%2?' class="z"':'')+'><td class="l">'+mesPT(m.mes)+'</td><td>'+m.pes.size+(m.pes.size>1?' <span class="badge">equipe</span>':'')+'</td>'+
+       '<td>'+BRL.format(m.meta)+'</td><td>'+BRL.format(m.venda)+'</td><td>'+fpp(at)+'</td>'+
+       '<td class="l">'+leitura+'</td><td>'+fpp(m.venda>0?m.sim/m.venda*100:0,2)+'</td><td>'+BRL2.format(m.sim)+'</td>'+
+       '<td>'+fpp(pa,2)+'</td><td>'+BRL2.format(m.com)+'</td><td class="l">'+badgeRegua(pa,m.com)+'</td>'+
+       '<td class="'+clsD(v)+'">'+sgn(v)+'</td></tr>';});
+  h+='<tr style="font-weight:500;border-top:2px solid var(--bd);"><td class="l">Total</td><td>'+l.pes.size+'</td><td>'+BRL.format(l.meta)+'</td>'+
+     '<td>'+BRL.format(l.venda)+'</td><td>'+fpp(l.at)+'</td><td></td><td>'+fpp(l.pSim,2)+'</td><td>'+BRL.format(l.sim)+'</td>'+
+     '<td>'+fpp(l.pAtual,2)+'</td><td>'+BRL.format(l.com)+'</td><td class="l">'+badgeRegua(l.pAtual,l.com)+'</td>'+
+     '<td class="'+clsD(l.d)+'">'+sgn(l.d)+'</td></tr></tbody>';
+  const bate=linhas.filter(m=>m.meta>0&&m.venda>=m.meta).length;
+  const meq=linhas.filter(m=>m.pes.size>1).length;
+  const extras=l.det.filter(d=>d.fx===3&&d.col===1).length;
+  const k=kpi('Meses no período',linhas.length,bate+' com a meta coletiva batida')+
+    kpi(rotFun(2).charAt(0).toUpperCase()+rotFun(2).slice(1),l.pes.size,meq+' mes'+(meq===1?'':'es')+' com dois ou mais na loja')+
+    kpi('% médio simulado',fpp(l.pSim,2),'média ponderada, não taxa única da loja')+
+    kpi('Aceleração do colaborador',cfg.ind?extras:'Desligada',cfg.ind?(extras?'competências individuais extraordinárias':'nenhuma competência individual elegível'):'somente aceleração por loja')+
+    kpi('Variação','<span class="'+clsD(l.d)+'">'+sgn(l.d)+'</span>',fpp(l.com?l.d/l.com*100:0)+' sobre o atual');
+  abrirModal(l.cod+' '+l.nome,l.reg+' | '+l.pes.size+' '+rotFun(l.pes.size)+' no período'+(l.nEq>1?', até '+l.nEq+' no mesmo mês':'')+' | '+[...l.pes].sort().join(', '),k,h,
+    'Passe o cursor sobre os títulos das colunas para ver como cada valor é calculado. O percentual médio da loja é a comissão simulada total dividida pelas vendas totais. Para ver a faixa de cada profissional, volte à análise, clique na loja e abra o detalhe individual.',
+    explicacaoRegra('Nesta loja, o gatilho coletivo foi liberado em <strong>'+bate+' de '+linhas.length+' meses</strong>.'+(cfg.ind?' <strong>'+extras+(extras===1?' competência individual':' competências individuais')+'</strong> reuniu'+(extras===1?'':'ram')+' também a faixa extraordinária.':' A aceleração individual está desligada.')));
+}
+
+/* ================= análise executiva ================= */
+function premissa(id){const n=parseFloat(document.getElementById(id).value);return isFinite(n)?Math.max(0,n):0;}
+function escopoAtual(){
+  const lojas=!FILTRO_LOJAS.size?'Todas as lojas':FILTRO_LOJAS.size===1?(()=>{const c=[...FILTRO_LOJAS][0],l=LOJAS.find(x=>x.cod===c);return l?c+' '+l.nome:c;})():FILTRO_LOJAS.size+' lojas selecionadas';
+  const reguas=!FILTRO_REGUAS.size?'Todas as réguas atuais':FILTRO_REGUAS.size===1?[...FILTRO_REGUAS][0]:[...FILTRO_REGUAS].join(', ');
+  const regional=document.getElementById('fReg').value||'Todas as regionais';
+  const funcao=document.getElementById('fFunc').value||'Todas as funções';
+  const equipe={multi:'Lojas com 2+ no mesmo mês',solo:'Lojas com apenas 1 por mês'}[document.getElementById('fEquipe').value]||'Todas as composições';
+  return regional+' | '+lojas+' | '+equipe+' | '+reguas+' | '+funcao+' | '+mesPT(MESES[per.a])+' a '+mesPT(MESES[per.b]);
+}
+function desenharDecisao(){
+  const el=document.getElementById('relatorioDecisao');if(!el||!CACHE||!MESES.length)return;
+  const R=resumoFiltrado(),t=R.t,d=t.sim-t.com;
+  const margem=premissa('aMargem')/100,carga=premissa('aCarga')/100,lift=premissa('aLift')/100;
+  const custoCarregado=d*(1+carga),receitaLift=t.venda*lift,margemLift=receitaLift*margem;
+  const vendaBE=d>0&&margem>0?custoCarregado/margem:0,liftBE=t.venda>0?vendaBE/t.venda:0,saldo=margemLift-custoCarregado;
+  const ganham=R.pessoas.filter(p=>p.d>1),perdem=R.pessoas.filter(p=>p.d<-1),estaveis=R.pessoas.length-ganham.length-perdem.length;
+  const extras=R.pessoas.reduce((s,p)=>s+p.det.filter(x=>x.fx===3&&x.col===1).length,0);
+  const lojasSolo=R.lojas.filter(l=>l.nEq<2).length,lojasEquipe=R.lojas.length-lojasSolo;
+  const regraMax=cfg.ind
+    ? 'A loja libera a coluna aceleradora e o percentual máximo fica restrito ao colaborador extraordinário.'
+    : 'A aceleração individual está desligada; a ação reconhece somente o atingimento da loja.';
+  const ganhoTotal=ganham.reduce((s,p)=>s+p.d,0),top5=ganham.slice().sort((a,b)=>b.d-a.d).slice(0,5).reduce((s,p)=>s+p.d,0);
+  const concentracao=ganhoTotal>0?top5/ganhoTotal:0;
+  let classe='warn',status='DECISÃO CONDICIONADA',texto='Confirme as premissas financeiras e o comportamento que se deseja incentivar antes da implantação.';
+  if(!R.pessoas.length){classe='risk';status='SEM BASE PARA DECISÃO';texto='Os filtros atuais não retornam profissionais. Ajuste o recorte antes de avaliar o plano.';}
+  else if(d<=-1){classe='risk';status='REVISAR IMPACTO REMUNERATÓRIO';texto='O cenário reduz a remuneração variável frente ao histórico. Antes de avançar, avalie perda individual, retenção, comunicação e segurança jurídica.';}
+  else if(d<=1){classe='ok';status='CUSTO PRATICAMENTE ESTÁVEL';texto='A simulação não altera materialmente o custo no recorte, mas ainda é necessário validar equidade, comportamento e governança.';}
+  else if(margem<=0){classe='warn';status='INFORME A MARGEM PARA DECIDIR';texto='Existe aumento de custo, mas não é possível calcular o crescimento mínimo de vendas sem a margem de contribuição.';}
+  else if(lift+1e-9>=liftBE){classe='ok';status='PREMISSA COBRE O INVESTIMENTO';texto='Com as premissas informadas, a margem incremental estimada cobre o aumento carregado da remuneração variável. A decisão ainda depende dos testes de equidade e comportamento.';}
+  else {classe='warn';status='CRESCIMENTO ESPERADO NÃO COBRE O CUSTO';texto='Aprovar somente se houver um plano capaz de elevar as vendas em pelo menos '+fpp(liftBE*100,2)+' no recorte, ou se o investimento tiver objetivo estratégico adicional claramente assumido.';}
+
+  const alertas=[];
+  alertas.push(d>1?'O custo direto aumenta '+BRL.format(d)+'; com a carga informada, o investimento incremental estimado é '+BRL.format(custoCarregado)+'.':'Não há aumento direto relevante de custo neste recorte.');
+  alertas.push(cfg.ind
+    ? extras+' competência'+(extras===1?'':'s')+' recebeu'+(extras===1?'':'ram')+' a aceleração individual por reunir resultado extraordinário e loja acima da meta.'
+    : 'A aceleração extraordinária por colaborador está desligada; nenhuma competência utiliza a última faixa da matriz.');
+  if(lojasSolo)alertas.push(lojasSolo+' loja'+(lojasSolo===1?'':'s')+' teve'+(lojasSolo===1?'':'ram')+' apenas uma profissional no mesmo mês; nelas, a meta da loja coincide com a entrega individual.');
+  if(perdem.length)alertas.push(perdem.length+(perdem.length===1?' profissional teria redução frente à comissão atual e precisa':' profissionais teriam redução frente à comissão atual e precisam')+' de análise individual.');
+  if(concentracao>.5)alertas.push('As cinco maiores variações concentram '+fpp(concentracao*100,1)+' de todo o ganho, indicando benefício concentrado.');
+
+  const passos=[
+    'Validar com Finanças a margem de contribuição e o orçamento total carregado.',
+    'Confirmar se a aceleração por loja alcançará também unidades com apenas um colaborador.',
+    cfg.ind?'Definir formalmente a faixa extraordinária e o limite da aceleração por colaborador.':'Registrar que a ação não terá aceleração individual extraordinária.',
+    'Testar meses de alta e baixa venda para evitar conclusão baseada em um período atípico.',
+    'Definir tratamento de devoluções, descontos, admissões, desligamentos, férias e afastamentos.',
+    'Executar piloto e medir venda incremental, margem, colaboração e concentração do pagamento.'
+  ];
+  const top=R.pessoas.slice().sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,12);
+  const fx=FXNOME(cfg.t);
+  const taxaMatriz=(i,j)=>!cfg.ind&&i===3?'Desligada':fpp(cfg.m[i][j],1);
+  const data=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  el.innerHTML=
+    '<div class="report-head"><div><h2>Relatório executivo de remuneração variável</h2><p>'+esc(escopoAtual())+'<br>Cenário: '+esc(cfgNome)+' | Base: '+esc(ARQ_ATUAL)+'</p></div><p>Gerado em '+esc(data)+'<br>Uso interno — simulação gerencial</p></div>'+
+    '<div class="decision-banner '+classe+'"><div class="status">'+status+'</div><p>'+texto+'</p></div>'+
+    '<div class="report-kpis">'+
+      kpi('Vendas analisadas',BRL.format(t.venda),R.pessoas.length+' profissionais | '+R.lojas.length+' lojas')+
+      kpi('Variação direta',sgn(d),fpp(t.com?d/t.com*100:0,1)+' sobre a comissão atual')+
+      kpi('Custo incremental carregado',BRL.format(custoCarregado),'premissa adicional de '+fpp(carga*100,1))+
+      kpi('Crescimento mínimo',d>1&&margem>0?fpp(liftBE*100,2):'—',d>1?BRL.format(vendaBE)+' em vendas incrementais':'sem aumento a financiar')+
+      kpi('Margem incremental esperada',BRL.format(margemLift),'lift de '+fpp(lift*100,1)+' × margem de '+fpp(margem*100,1))+
+      kpi('Saldo após o investimento','<span class="'+clsD(saldo)+'">'+sgn(saldo)+'</span>','margem incremental menos custo carregado')+
+      kpi('Ganham × perdem',ganham.length+' × '+perdem.length,estaveis+' sem variação relevante')+
+      kpi('Aceleração por colaborador',cfg.ind?extras:'Desligada',cfg.ind?'competências individuais extraordinárias':'somente aceleração por loja')+
+    '</div>'+
+    '<div class="decision-grid"><div class="decision-block"><h3>Leitura para a decisão</h3><ul>'+alertas.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>'+
+    '<div class="decision-block"><h3>Condições antes de aprovar</h3><ul>'+passos.map(x=>'<li>'+x+'</li>').join('')+'</ul></div></div>'+
+    '<div class="decision-grid"><div class="decision-block"><h3>Equidade e desenho</h3><ul><li>'+lojasEquipe+' lojas com equipe e '+lojasSolo+' com uma profissional no mesmo mês.</li><li>Top 5 variações representam '+fpp(concentracao*100,1)+' do ganho total.</li><li>'+regraMax+'</li></ul></div>'+
+    '<div class="decision-block"><h3>Teste financeiro</h3><ul><li>Venda adicional esperada: '+BRL.format(receitaLift)+'.</li><li>Margem incremental esperada: '+BRL.format(margemLift)+'.</li><li>Custo carregado incremental: '+BRL.format(custoCarregado)+'.</li><li>Saldo estimado: '+sgn(saldo)+'.</li></ul></div></div>'+
+    '<div class="report-title">Matriz da ação</div><table><thead><tr><th>Faixa do colaborador</th><th>'+esc(colNome(0))+'</th><th>'+esc(colNome(1))+'</th></tr></thead><tbody>'+fx.map((x,i)=>'<tr><td>'+esc(x)+'</td><td>'+taxaMatriz(i,0)+'</td><td>'+taxaMatriz(i,1)+'</td></tr>').join('')+'</tbody></table>'+
+    '<div class="report-title">Maiores impactos individuais no recorte</div><table><thead><tr><th>Profissional</th><th>Loja(s)</th><th>% atual</th><th>% médio simulado</th><th>Variação</th><th>Leitura</th></tr></thead><tbody>'+top.map(p=>{const ex=p.det.filter(x=>x.fx===3&&x.col===1).length;return '<tr><td>'+esc(p.nome)+'</td><td>'+esc([...p.lojas].join(', '))+'</td><td>'+fpp(p.pAtual,2)+'</td><td>'+fpp(p.pSim,2)+'</td><td class="'+clsD(p.d)+'">'+sgn(p.d)+'</td><td>'+(ex?ex+' extraordinária'+(ex===1?'':'s'):p.d>1?(cfg.ind?'ganho sem máximo':'ganho por loja'):p.d<-1?'redução':'estável')+'</td></tr>';}).join('')+'</tbody></table>'+
+    '<div class="method"><strong>Como interpretar:</strong> o atingimento do colaborador posiciona a linha da matriz e o resultado somado da loja escolhe a coluna base ou aceleradora. A opção individual apenas libera ou bloqueia a última faixa extraordinária. O percentual médio da loja é uma média ponderada das comissões individuais, não uma taxa única. Margem, carga trabalhista e crescimento esperado devem ser validados com Finanças, Payroll e Jurídico antes da decisão.</div>';
+}
+function ordenarParaImpressao(lista,tipo){
+  const st=SORT[tipo],a=lista.slice();
+  a.sort((x,y)=>{const vx=x[st.k],vy=y[st.k],r=typeof vx==='string'?vx.localeCompare(vy,'pt-BR'):(vx-vy);return st.asc?r:-r;});
+  return a;
+}
+function gerarTabelaImpressao(tipo){
+  if(tipo==='regionais'){
+    const dados=ordenarParaImpressao(filtrar(CACHE.regionais,'regionais').map(r=>({...r,nLojas:r.lojas.size,nPessoas:r.pes.size})),'regionais');
+    const linhas=dados.map(r=>'<tr><td>'+esc(r.reg)+'</td><td>'+r.lojas.size+'</td><td>'+r.pes.size+'</td><td>'+r.nMeses+'</td><td>'+BRL.format(r.venda)+'</td><td>'+BRL.format(r.mVenda)+'</td><td>'+BRL.format(r.vendaFonoMes)+'</td><td>'+BRL.format(r.meta)+'</td><td>'+fpp(r.at,1)+'</td><td>'+fpp(r.taxaMeta,0)+'</td><td>'+BRL.format(r.mCom)+'</td><td>'+fpp(r.pAtual,2)+'</td><td>'+BRL.format(r.mSim)+'</td><td class="'+clsD(r.d)+'">'+sgn(r.d)+'</td></tr>').join('');
+    return '<p class="count" style="margin:0 0 7px;">Tabela completa — '+dados.length+' regiona'+(dados.length===1?'l':'is')+' no recorte selecionado.</p><table class="print-data"><thead><tr><th>Regional</th><th>Lojas</th><th>Fonos</th><th>Meses</th><th>Vendas</th><th>Venda média/mês</th><th>Venda/fono/mês</th><th>Meta</th><th>Ating.</th><th>Meses meta batida</th><th>Com. média/mês</th><th>% atual</th><th>Com. sim. média/mês</th><th>Variação</th></tr></thead><tbody>'+linhas+'</tbody></table>';
+  }
+  if(tipo==='pessoas'){
+    const dados=ordenarParaImpressao(filtrar(CACHE.pessoas,'pessoas').map(p=>({...p,lojaTxt:[...p.lojas][0]||'',nm:p.meses.size,extras:p.det.filter(d=>d.fx===3&&d.col===1).length})),'pessoas');
+    const linhas=dados.map(p=>'<tr><td>'+esc(p.nome)+'</td><td class="l">'+esc(p.reg)+'</td><td class="l">'+esc([...p.lojas].join(' / '))+'</td><td>'+p.meses.size+'</td><td>'+BRL.format(p.venda)+'</td><td>'+BRL.format(p.meta)+'</td><td>'+fpp(p.at,1)+'</td><td>'+p.extras+'</td><td>'+BRL.format(p.com)+'</td><td>'+fpp(p.pAtual,2)+'</td><td class="l">'+esc(regua(p.pAtual,p.com).t)+'</td><td>'+fpp(p.pSim,2)+'</td><td>'+BRL.format(p.sim)+'</td><td class="'+clsD(p.d)+'">'+sgn(p.d)+'</td></tr>').join('');
+    return '<p class="count" style="margin:0 0 7px;">Tabela completa — '+dados.length+' '+rotFun(dados.length)+' no recorte selecionado.</p><table class="print-data"><thead><tr><th>Pessoa</th><th>Regional</th><th>Loja(s)</th><th>Meses</th><th>Vendas</th><th>Meta</th><th>Ating.</th><th>Acel. colaborador</th><th>Com. atual</th><th>% atual</th><th>Régua atual</th><th>% sim.</th><th>Com. sim.</th><th>Variação</th></tr></thead><tbody>'+linhas+'</tbody></table>';
+  }
+  const dados=ordenarParaImpressao(filtrar(CACHE.lojas,'lojas').map(l=>({...l,np:l.pes.size,extras:l.det.filter(d=>d.fx===3&&d.col===1).length})),'lojas');
+  const linhas=dados.map(l=>'<tr><td>'+esc(l.cod+' '+l.nome)+'</td><td class="l">'+esc(l.reg)+'</td><td>'+l.pes.size+'</td><td>'+l.nEq+'</td><td>'+BRL.format(l.venda)+'</td><td>'+BRL.format(l.meta)+'</td><td>'+fpp(l.at,1)+'</td><td>'+l.extras+'</td><td>'+BRL.format(l.com)+'</td><td>'+fpp(l.pAtual,2)+'</td><td class="l">'+esc(regua(l.pAtual,l.com).t)+'</td><td>'+fpp(l.pSim,2)+'</td><td>'+BRL.format(l.sim)+'</td><td class="'+clsD(l.d)+'">'+sgn(l.d)+'</td></tr>').join('');
+  return '<p class="count" style="margin:0 0 7px;">Tabela completa — '+dados.length+' loja'+(dados.length===1?'':'s')+' no recorte selecionado.</p><table class="print-data"><thead><tr><th>Loja</th><th>Regional</th><th>Prof.</th><th>Máx./mês</th><th>Vendas</th><th>Meta</th><th>Ating.</th><th>Acel. colaborador</th><th>Com. atual</th><th>% atual</th><th>Régua atual</th><th>% sim.</th><th>Com. sim.</th><th>Variação</th></tr></thead><tbody>'+linhas+'</tbody></table>';
+}
+let TITULO_IMPRESSAO=document.title;
+function limparModoImpressao(){
+  document.body.classList.remove('printing','print-resumo','print-regionais','print-pessoas','print-lojas','print-decisao');
+  document.title=TITULO_IMPRESSAO;
+}
+function imprimirAba(tipo){
+  const ativo=document.querySelector('.tab.active');
+  tipo=tipo||(ativo?ativo.dataset.t:'resumo');
+  if(!['resumo','regionais','pessoas','lojas','decisao'].includes(tipo))tipo='resumo';
+  if(tipo==='decisao')desenharDecisao();
+  if(tipo==='resumo')desenharResumo();
+  const nomes={resumo:'Resumo executivo da base',regionais:'Análise por regionais',pessoas:'Análise por profissionais',lojas:'Análise por lojas',decisao:'Análise executiva para decisão'};
+  const R=resumoFiltrado(),agora=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  document.getElementById('printHeader').innerHTML='<div class="print-head"><div><h2>'+nomes[tipo]+' — Remuneração Variável</h2><p>'+esc(escopoAtual())+'<br>Cenário: '+esc(cfgNome)+'</p></div><p>Base: '+esc(ARQ_ATUAL)+'<br>'+R.pessoas.length+' profissionais | '+R.lojas.length+' lojas<br>Gerado em '+esc(agora)+'</p></div>';
+  document.getElementById('printContent').innerHTML=['resumo','decisao'].includes(tipo)?'':gerarTabelaImpressao(tipo);
+  limparModoImpressao();
+  document.body.classList.add('printing','print-'+tipo);
+  document.title='RV_Sonova_'+tipo+'_'+MESES[per.a]+'_a_'+MESES[per.b];
+  setTimeout(()=>window.print(),120);
+}
+window.addEventListener('afterprint',limparModoImpressao);
+
+/* ================= abas, exportação, boot ================= */
+function trocarAba(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.t===t));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id==='p-'+t));
+  if(t==='pessoas'&&chart)setTimeout(()=>chart.resize(),0);
+}
+document.querySelectorAll('.tab').forEach(x=>x.onclick=()=>trocarAba(x.dataset.t));
+
+function exportar(tipo){
+  const dec=v=>String(Number(v||0).toFixed(2)).replace('.',',');
+  let linhas;
+  if(tipo==='regionais'){
+    linhas=[['Regional','Lojas','Fonos','Meses','Vendas','Venda média por mês','Venda média por fono/mês','Meta','Atingimento %','Meses com meta batida %','Comissão atual','Comissão atual média/mês','% atual','Comissão simulada','Comissão simulada média/mês','Variação']];
+    filtrar(CACHE.regionais,'regionais').forEach(r=>linhas.push([r.reg,r.lojas.size,r.pes.size,r.nMeses,dec(r.venda),dec(r.mVenda),dec(r.vendaFonoMes),dec(r.meta),dec(r.at),dec(r.taxaMeta),dec(r.com),dec(r.mCom),dec(r.pAtual),dec(r.sim),dec(r.mSim),dec(r.d)]));
+  }else if(tipo==='pessoas'){
+    linhas=[['Pessoa','Regional','Função','Loja(s)','Profissionais na loja','Máximo no mesmo mês','Meses','Meses com meta batida','Vendas','Venda média por mês','Meta','Atingimento %','Meses com meta batida %','Competências com aceleração por colaborador','Comissão atual','Comissão média por mês','% atual','Régua atual','% médio simulado','Comissão simulada','Variação']];
+    filtrar(CACHE.pessoas,'pessoas').forEach(p=>linhas.push([p.nome,p.reg,p.fun,[...p.lojas].join(' / '),p.nLoja||1,p.nEq,p.meses.size,p.bateu,
+      dec(p.venda),dec(p.mVenda),dec(p.meta),dec(p.at),dec(p.taxaMeta),p.det.filter(d=>d.fx===3&&d.col===1).length,dec(p.com),dec(p.mCom),dec(p.pAtual),regua(p.pAtual,p.com).t,dec(p.pSim),dec(p.sim),dec(p.d)]));
+  }else{
+    linhas=[['Código','Loja','Regional','Pessoas','Máximo no mesmo mês','Fonos médios por mês','Equipe','Vendas','Venda média por mês','Venda média por fono/mês','Meta','Atingimento %','Meses com meta batida %','Competências com aceleração por colaborador','Comissão atual','Comissão média por mês','% atual','Régua atual','% médio simulado','Comissão simulada','Variação']];
+    filtrar(CACHE.lojas,'lojas').forEach(l=>linhas.push([l.cod,l.nome,l.reg,l.pes.size,l.nEq,dec(l.fonoMes),l.nEq>1?'Sim':'Não',
+      dec(l.venda),dec(l.mVenda),dec(l.vendaFonoMes),dec(l.meta),dec(l.at),dec(l.taxaMeta),l.det.filter(d=>d.fx===3&&d.col===1).length,dec(l.com),dec(l.mCom),dec(l.pAtual),regua(l.pAtual,l.com).t,dec(l.pSim),dec(l.sim),dec(l.d)]));
+  }
+  const csv='\uFEFF'+linhas.map(l=>l.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='simulacao_rv_'+tipo+'_'+MESES[per.a]+'_a_'+MESES[per.b]+'.csv';
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+(function wave(){
+  const alturas=[7,12,18,22,18,12,7];
+  document.getElementById('wave').innerHTML=alturas.map(h=>'<i style="height:'+h+'px"></i>').join('');
+})();
+document.getElementById('file').addEventListener('change',e=>{if(e.target.files[0])lerArquivo(e.target.files[0]);});
+const ld=document.getElementById('loader');
+['dragenter','dragover'].forEach(ev=>ld.addEventListener(ev,e=>{e.preventDefault();ld.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>ld.addEventListener(ev,e=>{e.preventDefault();ld.classList.remove('drag');}));
+ld.addEventListener('drop',e=>{if(e.dataTransfer.files[0])lerArquivo(e.dataTransfer.files[0]);});
+bindSim();
+carregarCfg();
+if(lerMemoria()) usarMemoria(); else checarMemoria();
+</script>
+</body>
+</html>

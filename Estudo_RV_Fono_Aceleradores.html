@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RV Fonoaudiologia — Estudo de Aceleradores | Sonova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --p:#0083CA; --dk:#003C64; --md:#005A64; --lt:#6EB4DC;
+  --ac:#7D0041; --ac2:#8C321E; --tx:#333333; --tx2:#646464;
+  --bd:#CCCCCC; --thbg:#E8F3FA; --ok:#2E7D32;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:'Roboto',Arial,sans-serif; font-weight:300; color:var(--tx); background:#FFFFFF; font-size:14px;}
+h1,h2,h3,h4{font-family:'Rufina',Georgia,serif; font-weight:700;}
+
+/* Header / Footer bars */
+.topbar{background:var(--p); color:#FFF; padding:16px 28px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;}
+.topbar h1{font-size:21px; color:#FFF;}
+.topbar .sub{font-size:12px; font-weight:300; opacity:.92; margin-top:3px;}
+.topbar .brand{font-family:'Rufina',Georgia,serif; font-size:17px; letter-spacing:.5px; white-space:nowrap;}
+.footbar{background:var(--p); color:#FFF; padding:10px 28px; font-size:11.5px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-top:34px;}
+
+/* Toolbar */
+.toolbar{display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:12px 28px; border-bottom:1px solid var(--bd); background:#FAFAFA;}
+.toolbar label{font-size:12px; color:var(--tx2);}
+.toolbar select{padding:5px 8px; border:1px solid var(--bd); border-radius:4px; font-family:inherit; font-size:13px; color:var(--tx); background:#FFF;}
+.qbtn{padding:5px 12px; border:1px solid var(--p); background:#FFF; color:var(--p); border-radius:4px; cursor:pointer; font-size:12px; font-family:inherit;}
+.qbtn:hover{background:var(--p); color:#FFF;}
+.scope{margin-left:auto; font-size:11.5px; color:var(--tx2);}
+
+/* Tabs */
+.tabs{display:flex; gap:2px; padding:0 28px; border-bottom:2px solid var(--p); margin-top:14px; flex-wrap:wrap;}
+.tab{padding:9px 18px; cursor:pointer; font-size:13.5px; color:var(--tx2); border:1px solid transparent; border-bottom:none; border-radius:6px 6px 0 0; background:#F2F2F2;}
+.tab:hover{color:var(--dk);}
+.tab.active{background:var(--p); color:#FFF; font-weight:400;}
+.panel{display:none; padding:22px 28px;}
+.panel.active{display:block;}
+
+/* Cards & KPIs */
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; margin-bottom:20px;}
+.card{border:1px solid var(--bd); border-radius:8px; padding:14px 16px; background:#FFF;}
+.card .lbl{font-size:11.5px; color:var(--tx2); text-transform:uppercase; letter-spacing:.4px;}
+.card .val{font-family:'Rufina',Georgia,serif; font-size:23px; color:var(--dk); margin-top:4px;}
+.card .det{font-size:12px; color:var(--tx2); margin-top:3px;}
+.card .det b{font-weight:500;}
+.pos{color:var(--ok);} .neg{color:var(--ac);}
+.callout{border-left:4px solid var(--p); background:#FAFAFA; border:1px solid var(--bd); border-left:4px solid var(--p); border-radius:0 8px 8px 0; padding:13px 16px; font-size:13.5px; line-height:1.55; margin-bottom:20px;}
+.callout.warn{border-left-color:var(--ac);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+@media(max-width:980px){.grid2{grid-template-columns:1fr;}}
+.chartbox{border:1px solid var(--bd); border-radius:8px; padding:14px 16px;}
+.chartbox h3{font-size:15px; color:var(--dk); margin-bottom:10px;}
+.chartbox .hint{font-size:11.5px; color:var(--tx2); margin-top:8px; line-height:1.5;}
+.cwrap{position:relative; height:300px;}
+.cwrap.tall{height:360px;}
+
+section h2{font-size:18px; color:var(--dk); margin:6px 0 14px;}
+section h3.blk{font-size:15px; color:var(--dk); margin:22px 0 8px;}
+p.txt{line-height:1.6; margin-bottom:10px; max-width:1000px;}
+
+/* Simulador */
+.simwrap{display:grid; grid-template-columns:430px 1fr; gap:20px;}
+@media(max-width:1080px){.simwrap{grid-template-columns:1fr;}}
+.matrix{width:100%; border-collapse:collapse; font-size:13px;}
+.matrix th{background:var(--thbg); color:var(--dk); font-weight:500; padding:7px 8px; border:1px solid var(--bd); text-align:center;}
+.matrix td{border:1px solid var(--bd); padding:5px 6px; text-align:center;}
+.matrix td.rowlbl{text-align:left; font-size:12.5px; background:#FAFAFA; white-space:nowrap;}
+.matrix input{width:64px; padding:4px 5px; border:1px solid var(--bd); border-radius:4px; text-align:center; font-family:inherit; font-size:13px;}
+.matrix input:focus{outline:1.5px solid var(--p);}
+.thres{display:flex; gap:12px; flex-wrap:wrap; margin:12px 0;}
+.thres .fld{font-size:12px; color:var(--tx2);}
+.thres input{width:58px; padding:4px 5px; border:1px solid var(--bd); border-radius:4px; text-align:center; font-family:inherit; margin-left:5px;}
+.presets{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;}
+.pbtn{padding:6px 12px; border-radius:4px; border:1px solid var(--bd); background:#F2F2F2; color:var(--tx); cursor:pointer; font-size:12px; font-family:inherit;}
+.pbtn.primary{background:var(--p); border-color:var(--p); color:#FFF;}
+.pbtn.secondary{background:var(--lt); border-color:var(--lt); color:#FFF;}
+.pbtn:hover{filter:brightness(.95);}
+.simtag{display:inline-block; font-size:11px; padding:2px 9px; border-radius:10px; background:var(--thbg); color:var(--dk); border:1px solid var(--lt); margin-left:8px; vertical-align:middle;}
+
+/* Tables */
+.tblwrap{border:1px solid var(--bd); border-radius:8px; overflow:auto; max-height:560px;}
+table.data{width:100%; border-collapse:collapse; font-size:12.5px; min-width:900px;}
+table.data th{background:var(--thbg); color:var(--dk); font-weight:500; padding:8px 9px; position:sticky; top:0; cursor:pointer; user-select:none; text-align:right; white-space:nowrap; border-bottom:1px solid var(--bd);}
+table.data th.l{text-align:left;}
+table.data th .arr{font-size:10px; margin-left:3px; color:var(--p);}
+table.data td{padding:6px 9px; border-bottom:1px solid #EEE; text-align:right; white-space:nowrap;}
+table.data td.l{text-align:left; white-space:normal;}
+table.data tr.z{background:#F7F7F7;}
+table.data tr:hover{background:#EFF7FC;}
+table.data tr.click{cursor:pointer;}
+.badge{display:inline-block; font-size:10.5px; padding:1px 8px; border-radius:9px; color:#FFF;}
+.badge.up{background:var(--ok);} .badge.down{background:var(--ac);} .badge.flat{background:var(--tx2);}
+.badge.multi{background:var(--md);}
+.filters{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+.filters select,.filters input[type=text]{padding:6px 9px; border:1px solid var(--bd); border-radius:4px; font-family:inherit; font-size:13px;}
+.filters input[type=text]{min-width:220px;}
+.count{font-size:12px; color:var(--tx2);}
+
+/* Leitura */
+.read{max-width:1050px;}
+.read table{width:100%; border-collapse:collapse; font-size:13px; margin:10px 0 18px;}
+.read th{background:var(--thbg); color:var(--dk); font-weight:500; padding:8px 10px; text-align:left; border:1px solid var(--bd);}
+.read td{padding:7px 10px; border:1px solid var(--bd); vertical-align:top; line-height:1.5;}
+.read ol,.read ul{margin:6px 0 14px 22px; line-height:1.65;}
+.num{font-family:'Rufina',Georgia,serif; color:var(--dk);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>RV Fonoaudiologia — Estudo de Aceleradores por Meta de Loja</h1>
+    <div class="sub" id="subHeader">Comissão individual combinada ao resultado coletivo da loja</div>
+  </div>
+  <div class="brand">SONOVA</div>
+</div>
+
+<div class="toolbar">
+  <label>Período: de <select id="selFrom"></select></label>
+  <label>até <select id="selTo"></select></label>
+  <button class="qbtn" onclick="setPeriod(0,11)">12 meses</button>
+  <button class="qbtn" onclick="setPeriod(6,11)">Últimos 6 meses</button>
+  <span class="scope" id="scopeInfo"></span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-t="exec">Visão Executiva</div>
+  <div class="tab" data-t="sim">Simulador da Matriz</div>
+  <div class="tab" data-t="lojas">Lojas</div>
+  <div class="tab" data-t="fonos">Fonoaudiólogos(as)</div>
+  <div class="tab" data-t="read">Leitura e Riscos</div>
+</div>
+
+<!-- ================= VISÃO EXECUTIVA ================= -->
+<div class="panel active" id="p-exec">
+  <div class="callout" id="execCallout"></div>
+  <div class="kpis" id="execKpis"></div>
+  <div class="grid2">
+    <div class="chartbox">
+      <h3>Custo mensal de comissão — atual × propostas</h3>
+      <div class="cwrap"><canvas id="chMes"></canvas></div>
+      <div class="hint">Atual = comissão efetivamente apurada na base (inclui percentuais legados e garantias). Proposta 2 (Teams) aplica a matriz com gatilho de loja; Proposta 1 (arquivo) aplica a régua individual 1% / 2% / 2,5%.</div>
+    </div>
+    <div class="chartbox">
+      <h3>Distribuição de fono-mês por faixa de atingimento</h3>
+      <div class="cwrap"><canvas id="chFaixa"></canvas></div>
+      <div class="hint" id="hintFaixa"></div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:18px;">
+    <div class="chartbox">
+      <h3>Variação de custo por regional — Proposta 2 (Teams) × atual</h3>
+      <div class="cwrap"><canvas id="chRegExec"></canvas></div>
+      <div class="hint">A proposta é quase neutra no agregado, mas redistribui: regionais com réguas legadas acima do padrão (BSB/GO em 3% / 4,5% e garantias em MT/MS) concentram a redução, enquanto as demais recebem o acréscimo dos aceleradores.</div>
+    </div>
+    <div class="chartbox">
+      <h3>Contexto do pacote de RV</h3>
+      <div id="ctxCards"></div>
+      <div class="hint">O Incentivo (prêmio por atingimento) é rubrica separada e não é alterado por nenhuma das propostas deste estudo. As simulações tratam exclusivamente do percentual de comissão sobre vendas.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SIMULADOR ================= -->
+<div class="panel" id="p-sim">
+  <h2>Simulador da matriz de comissão <span class="simtag" id="simTag">Proposta 2 — Matriz Teams</span></h2>
+  <div class="simwrap">
+    <div>
+      <div class="presets">
+        <button class="pbtn primary" onclick="applyPreset('teams')">Proposta 2 — Matriz Teams</button>
+        <button class="pbtn secondary" onclick="applyPreset('arquivo')">Proposta 1 — Régua individual</button>
+        <button class="pbtn" onclick="applyPreset('padrao')">Padrão CDC 1% / 2%</button>
+      </div>
+      <table class="matrix">
+        <tr><th>Atingimento individual</th><th>Loja não atinge</th><th>Loja atinge / supera</th></tr>
+        <tr><td class="rowlbl" id="lblF0"></td><td><input type="number" step="0.1" id="m00"></td><td><input type="number" step="0.1" id="m01"></td></tr>
+        <tr><td class="rowlbl" id="lblF1"></td><td><input type="number" step="0.1" id="m10"></td><td><input type="number" step="0.1" id="m11"></td></tr>
+        <tr><td class="rowlbl" id="lblF2"></td><td><input type="number" step="0.1" id="m20"></td><td><input type="number" step="0.1" id="m21"></td></tr>
+        <tr><td class="rowlbl" id="lblF3"></td><td><input type="number" step="0.1" id="m30"></td><td><input type="number" step="0.1" id="m31"></td></tr>
+      </table>
+      <div class="thres">
+        <span class="fld">Corte faixa 1 (%)<input type="number" id="t1" step="1"></span>
+        <span class="fld">Corte faixa 2 (%)<input type="number" id="t2" step="1"></span>
+        <span class="fld">Corte faixa 3 (%)<input type="number" id="t3" step="1"></span>
+        <span class="fld">Gatilho da loja (%)<input type="number" id="tg" step="1"></span>
+      </div>
+      <div class="callout" style="margin-bottom:0;">Valores em % sobre a venda do mês. Meta da loja = soma das metas individuais dos fonos da loja no mês; a loja "atinge" quando a soma das vendas alcança o gatilho. Alterou qualquer valor, todo o dash (Lojas e Fonos inclusive) recalcula com o cenário simulado.</div>
+    </div>
+    <div>
+      <div class="kpis" id="simKpis"></div>
+      <div class="chartbox">
+        <h3>Variação por regional — cenário simulado × atual</h3>
+        <div class="cwrap"><canvas id="chRegSim"></canvas></div>
+      </div>
+      <div class="chartbox" style="margin-top:16px;">
+        <h3>Resumo por faixa de atingimento (cenário simulado)</h3>
+        <div class="tblwrap" style="max-height:none;">
+          <table class="data" id="tblFaixaSim" style="min-width:640px;"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= LOJAS ================= -->
+<div class="panel" id="p-lojas">
+  <h2>Lojas <span class="simtag" id="simTagLojas"></span></h2>
+  <div class="filters">
+    <select id="fLojaReg"><option value="">Todas as regionais</option></select>
+    <input type="text" id="fLojaBusca" placeholder="Buscar loja ou código">
+    <label style="font-size:12.5px;"><input type="checkbox" id="fLojaMulti"> Somente lojas com 2 ou mais fonos</label>
+    <span class="count" id="cntLojas"></span>
+  </div>
+  <div class="tblwrap"><table class="data" id="tblLojas"></table></div>
+  <div class="hint" style="font-size:11.5px;color:var(--tx2);margin-top:8px;">Clique em uma loja para abrir a equipe dela na aba Fonoaudiólogos(as). "Meses bate" considera o gatilho de loja do simulador. Atingimento da loja = soma de vendas / soma de metas dos fonos no período.</div>
+</div>
+
+<!-- ================= FONOS ================= -->
+<div class="panel" id="p-fonos">
+  <h2>Fonoaudiólogos(as) <span class="simtag" id="simTagFonos"></span></h2>
+  <div class="filters">
+    <select id="fFonoReg"><option value="">Todas as regionais</option></select>
+    <select id="fFonoLoja"><option value="">Todas as lojas</option></select>
+    <input type="text" id="fFonoBusca" placeholder="Buscar por nome">
+    <span class="count" id="cntFonos"></span>
+  </div>
+  <div class="tblwrap"><table class="data" id="tblFonos"></table></div>
+  <div class="chartbox" style="margin-top:20px;">
+    <h3>Régua proposta × prática atual — cada ponto é um fono-mês</h3>
+    <div class="cwrap tall"><canvas id="chScatter"></canvas></div>
+    <div class="hint">Eixo X: atingimento individual no mês (limitado a 200% para leitura; pontos acima aparecem na borda). Eixo Y: percentual efetivo pago (comissão / venda). As linhas em degrau mostram a matriz do simulador (loja atinge e loja não atinge). Pontos em vinho: percentual efetivo acima de 5% — em geral garantias mínimas ou réguas legadas (concentrados em BSB/GO, MT/MS e NE), justamente o que a régua única elimina.</div>
+  </div>
+</div>
+
+<!-- ================= LEITURA ================= -->
+<div class="panel" id="p-read">
+  <div class="read">
+    <h2>Leitura executiva</h2>
+    <p class="txt" id="readResumo"></p>
+
+    <h3 class="blk">Racional da matriz proposta (Proposta 2 — Teams)</h3>
+    <table>
+      <tr><th style="width:26%;">Elemento</th><th>Racional</th></tr>
+      <tr><td>Piso de 1,0%</td><td>Preserva o que já existe e não desmotiva quem está abaixo da meta a continuar vendendo.</td></tr>
+      <tr><td>Faixa 70% a 99,9% com loja batendo (1,3%)</td><td>Reconhece a contribuição ao resultado coletivo mesmo sem meta individual, com gatilho de 70% para não premiar quem ficou muito aquém.</td></tr>
+      <tr><td>Acelerador de loja (2,0% para 2,3%)</td><td>Ao bater 100% individual com a loja batendo, recompensa o crescimento conjunto do time.</td></tr>
+      <tr><td>Faixa de superação (120% ou mais)</td><td>Mantém o incentivo a vender após atingir 100%, evitando a desaceleração no fim do mês.</td></tr>
+      <tr><td>Acelerador duplo (2,8%)</td><td>Teto de ganho condicionado à combinação de performance individual forte e loja performando: estimula indicação cruzada, cobertura de agenda e colaboração.</td></tr>
+    </table>
+
+    <h3 class="blk">Premissas do estudo</h3>
+    <ol>
+      <li>Universo: apenas registros de FONOAUDIOLOGO(A) — 1.984 fono-mês, 222 profissionais, 134 lojas, abr/2025 a mar/2026. Assistentes Comerciais ficaram fora (meta em unidades e régua distinta) e merecem estudo próprio.</li>
+      <li>Meta da loja = soma das metas individuais dos fonos da loja no mês, coerente com o exemplo prático da proposta. Loja "atinge" quando a soma das vendas alcança o gatilho (padrão 100%) e a soma de metas é maior que zero.</li>
+      <li>Fono-mês com meta zero (107 registros, em geral alocações em CDC regional) classificado na faixa mais baixa, mesmo critério da base original.</li>
+      <li>Comissão atual = valor efetivamente apurado na Base RV, incluindo réguas legadas (BSB/GO em 3% / 4,5%) e garantias mínimas pontuais (MT/MS, NE). As simulações aplicam a matriz diretamente sobre as vendas e, por definição, não replicam essas exceções.</li>
+      <li>Lojas normalizadas pelo código do CDC: 77 códigos apareciam com mais de uma grafia na base e foram unificados para o cálculo correto da meta coletiva.</li>
+      <li>O Incentivo (prêmio por atingimento; R$ 3,59 milhões nos 12 meses) é rubrica à parte e não é alterado pelas propostas.</li>
+    </ol>
+
+    <h3 class="blk">Principais achados</h3>
+    <ul id="readAchados"></ul>
+
+    <h3 class="blk">Riscos e pontos de atenção jurídica</h3>
+    <table>
+      <tr><th style="width:30%;">Risco</th><th>Detalhe e mitigação sugerida</th></tr>
+      <tr><td>Redução de percentual para contratos vigentes</td><td>Comissões integram a remuneração (CLT art. 457, § 1º; CF art. 7º, VI — irredutibilidade). Reduzir o percentual de quem já trabalha nas réguas legadas (BSB/GO em 3% / 4,5%; garantias em MT/MS) configura alteração contratual lesiva vedada pelo art. 468 da CLT, com risco de passivo por diferenças e reflexos. Mitigação: aplicar a matriz nova aos novos admitidos e, para o quadro atual dessas praças, preservar o percentual como condição pessoal ou instituir garantia de transição com prazo e regra de absorção definidos em política escrita.</td></tr>
+      <tr><td>Ausência de política formal de RV</td><td>Formalizar documento com vigência, base de cálculo, regra de apuração da meta de loja, tratamento de afastamentos, admissões e desligamentos no mês, e competência de pagamento. Verificar previsões das CCTs aplicáveis a cada CNPJ antes da publicação.</td></tr>
+      <tr><td>Degrau em 100% individual</td><td>O salto de 1,0% (ou 1,3%) para 2,0% (ou 2,3%) ao cruzar 100% dobra o percentual sobre toda a venda do mês. Isso incentiva o represamento de vendas entre meses para concentrar atingimento. Monitorar a concentração de fechamentos na janela de 100% a 105% após a implantação.</td></tr>
+      <tr><td>Meta de loja em equipes pequenas</td><td>Em 66% dos loja-mês há um único fono: nesses casos meta individual e meta de loja coincidem e o acelerador vira aumento automático ao bater a meta (2,0 para 2,3 e 2,3 para 2,8). O efeito colaborativo pretendido alcança de fato as lojas com duas ou mais fonos, onde estão 53% dos registros.</td></tr>
+      <tr><td>Composição da meta coletiva</td><td>Definir se a meta da loja considera apenas fonos ou também Assistentes Comerciais, e como tratar fono atuando em mais de uma loja no mesmo mês (hoje há casos, cada vínculo com meta própria).</td></tr>
+    </table>
+
+    <h3 class="blk">Recomendações de implantação</h3>
+    <table>
+      <tr><th style="width:6%;">Nº</th><th style="width:30%;">Ação</th><th>Descrição</th></tr>
+      <tr><td>1</td><td>Aprovar a matriz com regra de transição</td><td>Adotar a Proposta 2 como régua nacional para novos admitidos e para as praças que já operam em 1% / 2%; definir tratamento específico e formalizado para BSB/GO e para as garantias de MT/MS antes de qualquer comunicação.</td></tr>
+      <tr><td>2</td><td>Publicar política escrita de RV</td><td>Documento único com matriz, gatilhos, base de apuração da meta de loja, exceções e vigência, validado pelo jurídico e aderente às CCTs de cada CNPJ.</td></tr>
+      <tr><td>3</td><td>Piloto de um trimestre</td><td>Rodar a matriz em paralelo (cálculo sombra) em duas regionais de impacto neutro, por exemplo RJ e SPI, comparando custo, atingimento e comportamento de fechamento antes do rollout.</td></tr>
+      <tr><td>4</td><td>Governança trimestral</td><td>Acompanhar custo de comissão como % das vendas (referência atual de 2,2%), distribuição por faixa e concentração de fechamentos próxima a 100%, com revisão formal das faixas a cada ciclo.</td></tr>
+      <tr><td>5</td><td>Estudo espelho para Assistentes Comerciais</td><td>Replicar a lógica de acelerador coletivo para a régua de AC, hoje baseada em unidades, garantindo coerência de incentivos dentro da mesma loja.</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="footbar">
+  <span>Estudo interno RH — Sonova Brasil | Base: Base RV abr/2025 a mar/2026 (1.984 fono-mês)</span>
+  <span>Elaboração: Anderson Souza — RH | 21/07/2026 | Simulação indicativa: não substitui a apuração da folha</span>
+</div>
+
+<script>
+const DATA = {"months":["2025-04","2025-05","2025-06","2025-07","2025-08","2025-09","2025-10","2025-11","2025-12","2026-01","2026-02","2026-03"],"seasonal":[0,0,1,0,0,1,0,0,0,0,0,1],"regionais":["BSB/GO","MG1","MG2","MT/MS","NE","PR","RJ","SC/RS","SPC1","SPC2","SPI"],"lojas":[{"c":"411000","n":"REGIONAL RJ ES","r":6},{"c":"411100","n":"LOJA RJ CENTRO","r":6},{"c":"411110","n":"LOJA MEIER","r":6},{"c":"411130","n":"LOJA VOLTA REDONDA","r":6},{"c":"411140","n":"LOJA MADUREIRA","r":6},{"c":"411150","n":"LOJA CABO FRIO","r":6},{"c":"411160","n":"LOJA NITEROI CENTRO","r":6},{"c":"411170","n":"LOJA CAMPOS DOS GOYTACASES","r":1},{"c":"411180","n":"LOJA ILHA DO GOVERNADOR","r":6},{"c":"411190","n":"LOJA BARRA SHOPPING","r":6},{"c":"411200","n":"LOJA COPACABANA","r":6},{"c":"411210","n":"LOJA VITORIA ES","r":1},{"c":"411220","n":"LOJA VILA VELHA ES","r":1},{"c":"411230","n":"LOJA RJ - JACAREPAGUÁ/FREGUESIA","r":6},{"c":"411240","n":"LOJA LEBLON","r":6},{"c":"411250","n":"LOJA BANGU","r":6},{"c":"411300","n":"LOJA IPANEMA","r":6},{"c":"411400","n":"LOJA BARRA","r":6},{"c":"411500","n":"LOJA TIJUCA","r":6},{"c":"411600","n":"LOJA NITEROI","r":6},{"c":"411700","n":"LOJA BOTAFOGO","r":6},{"c":"411800","n":"LOJA CAMPO GRANDE","r":6},{"c":"411900","n":"LOJA NOVA IGUACU","r":6},{"c":"412110","n":"LOJA SANTO AMARO (ADOLFO PINHEIROS)","r":8},{"c":"412120","n":"LOJA MOOCA","r":8},{"c":"412130","n":"LOJA GUARULHOS","r":10},{"c":"412140","n":"LOJA HIGIENOPOLIS","r":9},{"c":"412170","n":"LOJA MOEMA","r":9},{"c":"412180","n":"LOJA LAPA","r":8},{"c":"412190","n":"LOJA SAPOPEMBA","r":8},{"c":"412200","n":"LOJA ITAIM","r":8},{"c":"412210","n":"LOJA IPIRANGA","r":8},{"c":"412220","n":"LOJA PACAEMBU","r":9},{"c":"412230","n":"LOJA CAMPO BELO","r":9},{"c":"412240","n":"LOJA SHOPPING TUCURUVI","r":8},{"c":"412250","n":"LOJA OSASCO","r":8},{"c":"412400","n":"LOJA TATUAPE","r":8},{"c":"412500","n":"LOJA PINHEIROS","r":8},{"c":"412800","n":"LOJA ANA ROSA","r":8},{"c":"412900","n":"LOJA SANTANA","r":8},{"c":"413110","n":"LOJA PRADO","r":1},{"c":"413200","n":"LOJA SAVASSI","r":1},{"c":"413400","n":"LOJA IPATINGA","r":1},{"c":"413500","n":"LOJA SANTA EFIGENIA","r":1},{"c":"413910","n":"LOJA PAMPULHA","r":1},{"c":"414100","n":"LOJA OSVALDO CRUZ","r":5},{"c":"414110","n":"LOJA PRESIDENTE PRUDENTE","r":5},{"c":"414120","n":"LOJA CURITIBA AGUA VERDE","r":5},{"c":"414130","n":"LOJA GLEBA PALHANO","r":5},{"c":"414140","n":"LOJA POA ANDRADAS","r":7},{"c":"414150","n":"LOJA POA INDEPENDENCIA","r":7},{"c":"414160","n":"LOJA POA MENINO DEUS","r":7},{"c":"414180","n":"LOJA PASSO FUNDO","r":7},{"c":"414190","n":"LOJA PELOTAS","r":7},{"c":"414200","n":"LOJA MARINGA","r":5},{"c":"414210","n":"LOJA PORTO ALEGRE MOINHOS","r":7},{"c":"414220","n":"LOJA SÃO LEOPOLDO","r":7},{"c":"414300","n":"LOJA CURITIBA CENTRO","r":5},{"c":"414400","n":"LOJA LONDRINA","r":5},{"c":"414500","n":"LOJA ALTO DA GLORIA","r":5},{"c":"414600","n":"LOJA PONTA GROSSA","r":5},{"c":"414700","n":"LOJA CASCAVEL","r":5},{"c":"415100","n":"LOJA RIBEIRAO PRETO","r":10},{"c":"415120","n":"LOJA SANTOS","r":10},{"c":"415130","n":"LOJA ALPHAVILLE","r":10},{"c":"415140","n":"LOJA SANTO ANDRE","r":10},{"c":"415160","n":"LOJA MARILIA","r":5},{"c":"415180","n":"LOJA SUZANO","r":10},{"c":"415190","n":"LOJA SHOPPING RIBEIRAO PRETO","r":10},{"c":"415200","n":"LOJA SAO JOSE DO RIO PRETO","r":10},{"c":"415210","n":"LOJA ARAÇATUBA","r":5},{"c":"415220","n":"LOJA MOGI DAS CRUZES","r":10},{"c":"415230","n":"LOJA SPI - PRAIA GRANDE","r":10},{"c":"415240","n":"LOJA SÃO BERNARDO DO CAMPO","r":10},{"c":"415250","n":"LOJA SÃO CAETANO DO SUL","r":10},{"c":"415300","n":"LOJA CAMPINAS","r":10},{"c":"415400","n":"LOJA SOROCABA","r":10},{"c":"415500","n":"LOJA PIRACICABA","r":10},{"c":"415600","n":"LOJA GUANABARA - CAMPINAS","r":10},{"c":"415700","n":"LOJA SAO JOSE DOS CAMPOS","r":10},{"c":"415900","n":"LOJA JUNDIAI","r":10},{"c":"417100","n":"LOJA JOINVILLE GETÚLIO","r":7},{"c":"417110","n":"LOJA ITAJAÍ","r":7},{"c":"417200","n":"LOJA BALNEARIO CAMBORIU - DINA LIMA","r":7},{"c":"417300","n":"LOJA CHAPECO","r":7},{"c":"417400","n":"LOJA CRICIUMA","r":7},{"c":"417500","n":"LOJA FLORIANOPOLIS DINIL","r":7},{"c":"417600","n":"LOJA BLUMENAU","r":7},{"c":"417700","n":"LOJA FLORIANOPOLIS ESTREITO","r":7},{"c":"417800","n":"LOJA JOINVILLE - SC AUDIUM","r":7},{"c":"417900","n":"LOJA JARAGUÁ DO SUL","r":7},{"c":"418100","n":"LOJA MATRIZ ASA SUL SEEMED","r":0},{"c":"418110","n":"LOJA PATIO CAPITAL","r":0},{"c":"418200","n":"LOJA PATIO BRASIL SEEMED","r":0},{"c":"418300","n":"LOJA GILBERTO SALOMÃO SEEMED","r":0},{"c":"418400","n":"LOJA ASA NORTE","r":0},{"c":"418600","n":"LOJA ED VITRIUM OUVIRBEM","r":0},{"c":"418700","n":"LOJA TAGUATINGA PARAOUVIR","r":0},{"c":"418900","n":"LOJA GOIANIA","r":0},{"c":"419100","n":"LOJA UBERLANDIA MATRIZ","r":1},{"c":"419110","n":"LOJA UBERLANDIA ALTAMIRA","r":1},{"c":"419200","n":"LOJA UBERABA","r":1},{"c":"419300","n":"LOJA ARAGUARI","r":1},{"c":"419400","n":"LOJA GOIANIA (SETOR BUENO)","r":0},{"c":"419500","n":"LOJA GOIANIA (SETOR OESTE)","r":0},{"c":"419600","n":"LOJA ITUMBIARA","r":0},{"c":"419700","n":"LOJA CATALAO","r":0},{"c":"419800","n":"LOJA RIO VERDE","r":0},{"c":"420120","n":"BF - GUARULHOS","r":9},{"c":"420200","n":"AKOUSIS - HIGIENÓPOLIS","r":9},{"c":"420300","n":"BF - MATRIZ - JARDINS","r":9},{"c":"420400","n":"AKOUSIS - MOEMA","r":9},{"c":"420500","n":"AKOUSIS - MORUMBI","r":9},{"c":"420600","n":"AKOUSIS - MATRIZ - SANTO AMARO","r":9},{"c":"420700","n":"AKOUSIS - SANTANA","r":9},{"c":"420800","n":"BF - TATUAPÉ","r":9},{"c":"420900","n":"AKOUSIS - VILA MARIANA","r":9},{"c":"421000","n":"REGIONAL SERGIPE","r":4},{"c":"421100","n":"AUDIO SERGIPE","r":4},{"c":"421200","n":"OUVIR CERTO - MACEIÓ","r":4},{"c":"422101","n":"AER - MATRIZ PASTEUR SALES LOCAL","r":2},{"c":"422102","n":"AER - MATRIZ PASTEUR STORE","r":2},{"c":"422103","n":"A&R - UBERLÂNDIA","r":2},{"c":"422104","n":"AER - BARREIRO","r":2},{"c":"422105","n":"AER - IPATINGA","r":2},{"c":"422107","n":"AER - VENDA NOVA","r":2},{"c":"422108","n":"AER - CONTAGEM","r":2},{"c":"422109","n":"AER - POÇOS DE CALDAS","r":2},{"c":"422110","n":"AER - CONTORNO","r":2},{"c":"422112","n":"AER - GOVERNADOR VALADARES","r":2},{"c":"423100","n":"UNIAUDIO MS","r":3},{"c":"423200","n":"AUDIOCLIN MT","r":3},{"c":"423300","n":"CONECT MT","r":3},{"c":"423400","n":"LOJA MS - DOURADO","r":3}],"fonos":["ADRIANA ELISA DE OLIVEIRA FREITAS","AGATHA MAGGESISSI OUVERNEY","ALESSANDRA MARINHO DA SILVA","ALESSANDRA THAIS BERALDO","ALETHEIA BILO BAIO","ALETHIA INGRID ALVES DA SILVA","ALICE STEPHANIE DE FREITAS MOREIRA","ALICE TEIXEIRA DE OLIVEIRA","ALINE ANGELINO DE OLIVEIRA","ALINE CRISTINA DOS SANTOS FEISTAUER URBAN","ALINE LOUISE TOLENTINO FERREIRA","ALINE PISANESCHI ALVES","ALINE SILVA FERREIRA","ALINE VIEIRA","ALLEXYA AMANDA VIEIRA DA SILVA","AMANDA BEZERRA DE ARAUJO DANTAS","AMANDA CAROLINA DE SOUZA DE MELLO","AMANDA DA SILVA OLIVEIRA","AMANDA MONTEIRO DE OLIVEIRA","ANA JULIA ALMEIDA BIAGE FREITAS","ANA LUIZA DE FARIA LUIZ","ANA LUIZA MAGALHAES EVARISTO","ANA PAULA VINCI","ANDREA KLING HENAUT","ANDREA PRADO GIACOMINI","ANDREA VIGGIANI LEITE NEVES","ANDRESSA BRINHOSA DEPARIS","ANDRESSA FORLEVISE SBOMPATO VIANA","ANDRESSA GALVAO FERREIRA DA SILVA","ANDYARA GONÇALVES VENTURA OLIVEIRA","ANNA CLAUDIA RIBEIRO NEVES","ANNA ELISA DOS ANJOS ROCHA","ARIELI BASTOS DA SILVEIRA","BEATRIZ DAMIAO DA SILVA","BIANCA CONTINI","BIANCA COZARO DE SOUZA","BIANCA RODRIGUES LIMA","BIANCA STHEFANI CORREA DA CRUZ","BRENA ELISA LUCAS","BRUNA BORTOLOTTO GAVA","BRUNA DELLA TORRE","CAIO VINICIUS NEVES FERREIRA DA PAIXAO","CAMILA BEAL LICKS","CAMILA COSTA DE OLIVEIRA","CAMILA INDRUSIAK BULSING","CAMILA RODRIGUES COSTA","CARLA FIGUEREDO LAURIA","CARLOS AUTONELLI SOMBRA SOUSA","CAROLINA IZABELA DE OLIVEIRA MAGALHAES","CAROLINA RIBEIRO DE JESUS MEDEIROS","CAROLINA ROSSINI VENEROSO","CAROLINE SILVA TAVARES DE MELO","CAROLINE SOUSA RIBEIRO FELICIO","CLARA MARIA FIDELES MARTINS","CLAUDIA CARVALHO DE SOUZA","CLEITON FARIAS MACHADO","CRISTIANE GALLES FLORENCIO","CRISTIANE SAMPAIO CASTELAR","CRISTIANE SANT'ANA MELLO VIEIRA","CYNTHIA AROUCK LOURENCO","DAIANE FERNANDES KESKI","DAIANE PILZ","DANIELA MARIA FREITAS BURATO","DANIELE AZEVEDO DA SILVEIRA","DANIELE SANTANA DE LIMA SILVA","DANILO LEANDRO CARDOSO SOARES","DENISE APARECIDA DA SILVA SALDANHA","DENISE FLAVIA DA SILVA","DENISE HENRIQUE DOS SANTOS","DENYSE AUXILIADORA TORRES DIAS","EDUARDA VIEIRA GUIMARAES","ELETICIA JULIETE DA SILVA","ELUANNA ELENA SANTOS GALVAO","FABIANA DE FATIMA CAVALHEIRO","FABIANA FIORIO RIBEIRO","FABIANA LOPES DA SILVA","FABIANA MENSEN DA SILVA","FABIOLA CARNEIRO PEREIRA DE ARAUJO","FERNANDA BRANDAO MARTINS CARAZZA","FERNANDA BRITO DA SILVA","FERNANDA GERKEN DE GOUVEA BRAGA","FERNANDA JOSE DE MELLO RIGUEIRA","FERNANDA RIBEIRO DE ASSIS","FERNANDA ROCHA DE OLIVEIRA","FERNANDA RODRIGUES PINTO","FERNANDA SOUZA DE CILLO","FILLIPE ALBERTO CARDOSO CUSTODIO","FLAVIA SILVA DE OLIVEIRA RODRIGUES","FLAVIO ALEIXO DINIZ","FRANCIELLY GUIMARAES DE OLIVEIRA LIPPEL","FRANCINE MEDEIROS LEAL","GEOVANNA BIANCHI PERIN","GESIQUELLE DOURADO FRANCA DE NOVAES","GIOVANNA ALBERTONI CARICATI","GISELE DE SOUZA GIRARDELI","GRACIELLE ALMEIDA DOS ANJOS","GUILHERME DOS SANTOS SILVESTRE","HILLARY LORENI GUI CAMARGOS DE SOUSA","ISAAC SANTOS BATISTA DA SILVA","ISABELA ASSUNCAO MIRANDA","ISABELA FERNANDES DOS SANTOS DIAS","ISABELA MOULIN LIMA","ISABELLA MOULIN LIMA","ISABELLA TOSCANO DE AZEVEDO CARDOSO","IVETE FARIAS DA SILVA","IZABELA CRISTIANE DOS SANTOS SILVA","IZABELLA DE OLIVEIRA E SILVA","JAINE CAMILA PEREIRA BORGES","JAIR DA SILVA SANTOS","JANAINA DA CRUZ","JANAÍNA DAS GRAÇAS BRUNO PASTORIN","JESSICA BEATRIZ PERIZZOLO","JESSICA CAROLINA JAGAS DA SILVA","JOAO SILVERIO GONCALVES","JULIA MANFRO PIMENTEL","JULIANA GOUVEIA VALENTONI POIANI","JULIANA MARINHO DE FREITAS","JULIANA PERUGINI BACELAR","JULIANA SAYURI SASAKI UENO","JULIANA VESSONI CHAVES","KARIN CRISTINA SCHIESSL","KARIN JOHANNA SCHMIDT","KEITE MAIARA ROSA","KELLY PIRES MAFORTE","LAIS ITELVINA DA SILVA DOS SANTOS","LAIS PEREIRA DA SILVA NASCIMENTO","LAIZA JAQUELINE CUNHA","LARISSA AMANDA DA SILVA SOUZA","LARISSA FREITAS LIMA LOPES","LAURA TIMOTEO GALVAO DE SOUZA","LEDA DONADEL","LIDIANE CARDOZO DOS SANTOS","LIESE LOUREIRO WEIGERT","LILIANE DA SILVA POGGI","LILIANE LEAO DA SILVA","LORRENE ARCENIO DOS SANTOS MONTEIRO","LUANA MARTINS MASS OLIVEIRA","LUANA TEIXEIRA FONSECA","LUANI CASTANHO VILHARBA DE CASTRO","LUCAS MARQUES SILVA","LUCIANA ALVES CASTRO","LUCIANA DE MELO NETO","LUCIANA DE PAULA BERNARDO","LUCIANA MARTINEZ MENDES","LUCIANA NUNES DE SOUSA FONSECA","LUCIANA RAMOS LOPES","LUCIANA REZENDE SANTANA","LUISA DA CUNHA MARTINS SALVADOR","MAICON SUEL RAMOS DA SILVA","MARCELLE OUVERNEY BRAYNER MAIA","MARCIA CRISTINA DA SILVA","MARCIO ADEMAR SANTOS DE BORBA","MARIA LUDIA DA SILVA CORREIA","MARIANA ALVARENGA DA SILVA JEREZ","MARIANA PEREIRA ROCHA","MARIANA PONTES VIEIRA","MARIANE RIBEIRO OLIVEIRA DE LIMA","MARIANNA BERTOLETTI MORAIS","MARIELLE MOREIRA SANTOS BENATTI","MARILIA RODRIGUES CARVALHO","MARISOL PACHECO DOS SANTOS","MARJANE BORDINHAO LEWIS","MAURA ROCHA TEIXEIRA","MAYANE SARAH SOARES MIRANDA","MAYARA PEREIRA ARAGÃO","MICHELE LUBE HONORATO FURTADO","MILENA BIONDI JOERKE","MONICA TAVARES LOPES","MONIQUE MACEDO DE OLIVEIRA GONCALVES","MONIQUE SENNA DE CASTRO BRETTAS","NATALIA DE LIMA BARBOSA DA SILVA","NATALIA FREITAS DE SOUZA MAGALHAES","NATHALYA COELHO TREVISAN MARQUES","NAYARA ALESSANDRA SILVESTRE AKIHISSA","PATRICIA BOEN ZIOLLI","PATRICIA CUNHA ANGELIM","PATRICIA DE SOUZA MENDANHA","PATRICIA PARANHOS FIOROTO PORTILHO","PATRICIA ROSWADOSKI","PAULA ANDREA BARAO DINI MARTINS","PAULA ARAUJO SILVA","PRISCILA MARCOS BARBOSA FARIA","PRISCILA SOUTO DA ROSA E SILVA","RAFAELA FERRAZ BRITO","RAPHAEL MARINHO ALEIXO SILVA","RAQUEL INACIO DA SILVA ARRUDA","REBECA CAMARGO DEBIAGI","REBEKKA GIL AFONSO RODRIGUES","RENATA DOS SANTOS SILVA","RENATA GOULART FAGUNDES SOUZA","RENATA REIS MARTINS","RHAIANY RAMOS DOS SANTOS","ROGERIO SILVA BEZERRA","ROMARIO CARPES JUNIOR","ROSENILDA DE SOUZA FEITOSA","SABRINA BERNARDO SILVA","SABRINA VILANOVA CARDOSO","SANDRA PAULA GOMES LOPES DA SILVA DE SANTANA","SILVANA VASCONCELOS DE BRITO","SILVIA ALVES CARRIZO","SINEILA SILVA DA ROCHA","STELLA MITIKO UENO ROCHA","SUSANA DA LUZ MACIEL","TAMIRIS SANTOS PINTO","TATHYANE DENISE VESOHOSKI","TATIANA PEREIRA LEAL","TATIANA RITA GOMES FILIPPE","TATIANE LISBOA DE SOUZA","TENISA ALMEIDA GOMES DE FREITAS","THABATA KRISHNA FRANCO LAGES","THAYSE BENIGNA DUTRA","THIAGO DE CARVALHO SILVA","TINAIARA DOS SANTOS CAMPOS RODRIGUES","TISSIANE PRETO DE MOURA","VANESSA ANDREA GUERREIRO","VANESSA FIGUEIRA VIEIRA","VANESSA LOPES DE SOUZA","VERA HELENA DE CAMPOS","VICTORIA WALL DE ALMEIDA","VITORIA DO ROZARIO CUNHA MELO","VITORIA MARIA SANTOS SILVA","YONARA BANDEIRA AZEVEDO MALVEIRA"],"rows":[[0,67,0,0.0,534.09,10.68],[0,111,0,0.0,0.0,0.0],[1,74,0,90000.0,90766.45,1815.33],[2,195,0,35000.0,80223.86,1604.48],[2,165,0,35000.0,55389.23,1107.78],[3,160,0,85000.0,21425.62,214.26],[4,131,0,90000.0,98291.83,1965.84],[5,145,0,70000.0,74167.81,1483.36],[6,144,0,80000.0,51054.08,510.54],[7,153,0,70000.0,16128.51,161.29],[8,57,0,85000.0,92145.67,1842.91],[9,135,0,135000.0,132214.63,1322.15],[10,55,0,120000.0,57410.66,574.11],[10,182,0,120000.0,52088.19,520.88],[11,69,0,110000.0,26671.35,266.71],[11,77,0,128000.0,77623.68,776.24],[12,91,0,100000.0,19404.3,194.04],[16,46,0,137500.0,228222.84,4564.46],[16,139,0,137500.0,72356.63,723.57],[17,21,0,110000.0,131086.84,2621.74],[18,58,0,88000.0,-1032.68,0.0],[18,23,0,88000.0,53337.93,533.38],[19,171,0,150544.0,290258.37,5805.17],[20,150,0,130000.0,131268.45,2625.37],[21,12,0,67500.0,54582.29,545.82],[21,79,0,67500.0,28002.99,280.03],[22,149,0,67500.0,42112.46,421.12],[22,1,0,67500.0,20430.04,204.3],[23,61,0,138768.0,141097.05,2821.94],[24,104,0,100845.0,96484.22,964.84],[25,107,0,55000.0,2007.61,20.08],[26,176,0,72197.0,42632.32,426.32],[27,180,0,72197.0,86044.29,1720.89],[28,49,0,130845.0,36802.69,368.03],[29,66,0,80845.0,101071.66,2021.43],[30,130,0,0.0,25722.84,257.23],[30,33,0,110845.21,137452.36,2749.05],[31,76,0,75845.0,19603.5,196.03],[32,30,0,63160.0,15623.82,156.24],[33,155,0,26058.5,5879.67,58.8],[33,129,0,26058.5,60164.68,1203.29],[34,16,0,82845.0,47552.31,475.52],[36,190,0,101107.5,112368.39,2247.37],[37,7,0,90422.5,191350.68,3827.01],[37,96,0,90422.5,168755.95,3375.12],[37,88,0,0.0,7346.7,146.93],[38,98,0,138768.0,145466.17,2909.32],[39,179,0,100845.0,104309.27,2086.19],[40,127,0,96000.0,-205.2,0.0],[41,10,0,122000.0,207835.94,4156.72],[42,12,0,98000.0,58750.55,587.51],[42,29,0,98000.0,65862.05,658.62],[43,184,0,120000.0,38289.82,382.9],[43,31,0,68000.0,15424.46,154.24],[44,95,0,96000.0,43806.76,438.07],[45,22,0,96053.73,186863.13,3737.26],[45,73,0,96053.73,110586.99,2211.74],[46,3,0,45000.0,1493.26,14.93],[46,6,0,45000.0,27400.82,274.01],[47,94,0,67500.0,3867.49,38.67],[47,172,0,67500.0,70808.26,1416.17],[48,71,0,65000.0,82229.51,1644.59],[49,151,0,92000.0,59114.88,591.15],[50,202,0,80000.0,92725.56,1854.51],[50,62,0,50389.0,70381.02,1189.79],[51,42,0,92000.0,34655.79,346.56],[52,114,0,72000.0,30654.53,306.55],[53,9,0,92000.0,113802.63,2276.05],[54,112,0,75000.0,11566.25,115.66],[54,97,0,75000.0,22770.84,227.71],[55,212,0,92000.0,81122.92,811.23],[56,62,0,12000.0,70381.02,108.91],[57,196,0,85000.0,32278.66,322.79],[58,27,0,85000.0,130510.44,1305.1],[58,156,0,85000.0,3271.33,0.0],[59,126,0,91000.0,106287.14,2125.74],[59,35,0,91000.0,111804.04,2236.08],[60,60,0,99000.0,130697.06,2613.94],[61,204,0,90000.0,111160.25,2223.21],[62,20,0,80000.0,55510.59,555.11],[63,137,0,125000.0,202917.73,4058.35],[63,143,0,125000.0,102022.11,1020.22],[64,17,0,90000.0,20165.49,201.65],[64,121,0,90000.0,27634.02,276.34],[65,138,0,90000.0,57528.81,575.29],[65,11,0,90000.0,61004.27,610.04],[66,38,0,63000.0,87235.96,1744.72],[67,40,0,40404.42,108522.57,2170.45],[68,24,0,65000.0,82727.88,1654.56],[69,177,0,90000.0,92089.39,1841.79],[70,140,0,63000.0,19802.6,198.03],[75,185,0,85000.0,81.85,0.82],[75,211,0,85000.0,42698.49,426.98],[76,136,0,95000.0,207.17,2.07],[76,148,0,95000.0,148371.91,2967.44],[77,50,0,45000.0,8080.34,80.8],[77,19,0,45000.0,82173.0,1643.46],[78,37,0,110000.0,47032.44,470.32],[79,118,0,120000.0,157020.13,3140.4],[80,174,0,90000.0,61379.16,613.79],[81,178,0,92000.0,78604.54,2358.14],[81,90,0,92000.0,66498.73,664.99],[83,0,0,90000.0,-12835.84,0.0],[83,214,0,90000.0,155019.11,5425.67],[84,26,0,72000.0,17080.28,170.8],[85,206,0,72000.0,48897.56,488.98],[86,89,0,90000.0,173789.95,5213.7],[86,152,0,90000.0,109651.23,2193.02],[87,32,0,80000.0,80603.83,1612.08],[87,15,0,80000.0,68428.69,684.29],[88,39,0,92000.0,99640.1,2989.2],[89,197,0,70000.0,80031.18,2400.94],[90,194,0,72000.0,38107.01,381.07],[91,103,0,98503.0,109452.98,4925.38],[91,198,0,49251.5,66773.47,2003.2],[91,68,0,49251.5,72444.06,2173.32],[92,65,0,90000.0,22625.56,678.77],[93,200,0,90534.25,112984.69,5084.31],[93,192,0,90534.25,14867.63,446.03],[91,8,0,98503.0,14018.9,420.57],[94,44,0,145000.0,200063.34,9002.85],[95,70,0,90000.0,160254.73,7211.46],[96,109,0,80000.0,84831.02,3393.24],[97,164,0,86211.03,102425.04,4609.13],[98,54,0,101623.07,116758.9,5254.15],[99,52,0,118000.0,161490.42,0.0],[100,146,0,95000.0,109187.65,0.0],[100,84,0,35000.0,54602.69,217.89],[101,99,0,70000.0,4085.96,0.0],[102,116,0,61203.0,56410.02,0.0],[103,28,0,45000.0,43538.82,1523.86],[104,53,0,93467.88,94103.61,2823.11],[105,83,0,53388.72,111740.48,0.0],[106,116,0,45594.15,29326.01,0.0],[107,167,0,58603.51,69797.15,3140.87],[108,4,0,35000.0,100060.26,2478.32],[109,43,0,72197.0,38937.32,1147.5],[110,115,0,78549.0,87098.42,2429.44],[111,59,0,61662.0,82115.0,2463.45],[112,85,0,0.0,4756.36,139.49],[113,105,0,61622.0,62528.26,1838.46],[114,18,0,100000.0,12459.84,124.6],[115,205,0,63160.0,76094.9,2211.0],[116,4,0,80623.0,100060.26,2524.69],[118,159,0,89101.65,9073.77,7469.14],[118,207,0,89101.65,96193.63,2987.66],[118,36,0,89101.65,111170.63,2987.66],[118,220,0,89101.65,77408.29,2987.66],[119,14,0,68334.31,110042.8,5564.43],[119,170,0,68334.31,89323.04,4522.26],[119,72,0,68334.31,38374.89,1948.71],[121,110,0,60000.0,0.0,0.0],[121,189,0,60000.0,82035.59,3398.01],[121,25,0,60000.0,27669.82,1122.41],[122,84,0,33682.24,54602.69,2268.53],[123,80,0,26500.0,27808.04,1145.34],[123,128,0,26500.0,72863.65,3038.77],[124,87,0,33682.0,1648.31,82.06],[125,117,0,53000.0,59371.61,2479.42],[126,181,0,60000.0,80216.94,3323.76],[128,48,0,60000.0,67105.21,2696.36],[129,78,0,60000.0,68104.0,2780.16],[131,166,0,84258.0,0.0,0.0],[131,5,0,84258.0,1400.0,0.0],[130,41,0,85000.0,100676.7,0.0],[132,120,0,57004.66,0.0,0.0],[0,67,1,0.0,19896.45,397.93],[0,111,1,120000.0,131239.9,2624.8],[1,74,1,124000.0,152966.0,3059.32],[2,195,1,54666.67,108779.42,2175.59],[2,165,1,54666.67,41157.29,411.57],[2,139,1,65602.0,124310.8,2486.22],[3,160,1,80000.0,69887.66,698.88],[4,131,1,143695.0,51693.35,516.93],[5,145,1,110000.0,71214.43,712.14],[6,144,1,110000.0,25542.74,255.43],[7,153,1,65000.0,6900.9,69.01],[8,57,1,115000.0,-14198.36,0.0],[9,135,1,170000.0,174010.44,3480.21],[10,55,1,124000.0,216235.44,4324.71],[10,182,1,124000.0,160493.63,3209.87],[11,69,1,72000.0,99824.35,1759.78],[11,77,1,150000.0,184086.74,3148.5],[12,91,1,50000.0,2801.38,28.01],[16,46,1,180000.0,214535.4,4290.71],[17,21,1,145000.0,180685.61,3613.71],[18,58,1,121500.0,121542.94,2430.86],[18,23,1,121500.0,120869.84,1208.7],[19,171,1,200000.0,318997.47,6379.95],[20,150,1,90000.0,90333.32,1806.67],[21,12,1,87000.0,86940.6,1740.01],[21,79,1,87000.0,78698.58,786.99],[22,149,1,82000.0,104371.89,2087.44],[22,1,1,82000.0,82410.11,1648.2],[23,61,1,130000.0,148817.95,2976.36],[23,88,1,130000.0,101623.04,1016.23],[24,104,1,90000.0,174568.14,3491.36],[25,107,1,100000.0,2332.0,23.32],[26,176,1,95000.0,203437.35,4068.75],[27,180,1,95000.0,95000.0,949.67],[28,49,1,100000.0,133601.12,2672.02],[28,119,1,60000.0,73845.65,1476.91],[29,66,1,67614.12,80489.97,1609.8],[30,33,1,115000.0,121158.35,2423.17],[30,92,1,50000.0,30509.57,305.1],[31,76,1,41622.67,109302.7,2186.05],[32,30,1,66939.0,69932.07,1398.64],[33,129,1,85000.0,116496.71,2329.93],[34,16,1,61038.65,67252.8,1345.06],[36,190,1,130000.0,135991.38,2719.83],[37,7,1,130000.0,151897.83,3037.96],[37,96,1,130000.0,229081.91,4581.64],[38,98,1,120000.0,162715.75,3254.31],[39,179,1,100000.0,65606.49,656.06],[39,82,1,50000.0,18995.1,189.95],[40,127,1,80000.0,32076.37,320.76],[41,10,1,125000.0,271447.98,5428.96],[42,12,1,100000.0,106396.56,2127.93],[42,29,1,100000.0,155395.17,3107.9],[43,184,1,125000.0,133473.87,2669.48],[43,31,1,100000.0,73970.97,739.71],[44,95,1,63000.0,96860.43,1937.21],[45,22,1,130029.65,152620.65,3052.41],[45,73,1,130029.65,36619.2,366.19],[46,3,1,72500.0,-6497.28,0.0],[46,6,1,72500.0,42015.44,420.15],[47,94,1,80000.0,107357.49,2147.15],[47,172,1,80000.0,93138.73,1862.77],[48,71,1,80000.0,15542.32,155.42],[49,151,1,80000.0,99693.47,1993.87],[50,202,1,95000.0,185312.82,3706.26],[50,62,1,70744.03,66358.48,1211.08],[51,42,1,90000.0,120204.24,2404.08],[52,114,1,68000.0,19354.39,193.54],[53,9,1,90000.0,139460.95,2789.22],[54,112,1,85000.0,13066.8,130.67],[54,97,1,85000.0,83097.18,830.97],[55,212,1,90000.0,53912.78,539.13],[57,196,1,90000.0,92370.31,1847.41],[58,27,1,105000.0,118342.92,2366.86],[58,156,1,105000.0,117428.14,0.0],[59,126,1,125000.0,145991.24,2919.82],[59,35,1,125000.0,85717.7,857.18],[60,60,1,120000.0,146469.8,2929.4],[61,204,1,115000.0,128474.39,2569.49],[62,20,1,100000.0,65237.6,652.38],[63,137,1,160000.0,193080.71,3861.61],[63,143,1,160000.0,188331.23,3766.62],[64,17,1,100000.0,131543.71,2630.87],[64,121,1,100000.0,78364.18,783.64],[65,138,1,100000.0,44912.23,449.12],[65,11,1,100000.0,118153.1,2363.06],[66,38,1,70000.0,93083.63,1861.67],[67,40,1,20237.33,188749.85,3775.0],[68,24,1,100000.0,66697.92,666.98],[69,177,1,100000.0,91564.69,915.65],[70,140,1,70000.0,83229.09,1664.58],[75,211,1,110000.0,196659.49,3933.19],[75,50,1,110000.0,63568.39,635.68],[76,136,1,106000.0,562.38,5.62],[76,148,1,106000.0,73131.54,731.32],[77,19,1,100000.0,113915.07,2278.3],[78,37,1,65000.0,14824.26,148.24],[78,174,1,65000.0,54585.65,545.86],[79,118,1,130000.0,162460.79,3249.22],[79,47,1,20000.0,34607.19,692.14],[80,173,1,100000.0,120979.47,2419.59],[81,178,1,105000.0,144572.4,2891.45],[81,90,1,105000.0,70613.65,1066.5],[83,0,1,75000.0,81462.53,1629.25],[83,214,1,104000.0,115582.07,2311.64],[84,26,1,68000.0,77206.38,1544.13],[85,206,1,68000.0,27412.1,274.12],[86,89,1,105000.0,135689.8,2713.8],[86,152,1,105000.0,102498.55,1024.99],[87,32,1,35000.0,-27692.59,0.0],[87,15,1,70000.0,116169.08,2323.38],[88,39,1,105000.0,116534.47,2330.69],[89,197,1,80000.0,73031.88,730.32],[90,194,1,68000.0,81743.22,1634.86],[91,103,1,132111.15,40407.64,1212.23],[91,198,1,132111.15,169500.93,7627.54],[91,68,1,132111.15,111917.72,3357.53],[92,65,1,106547.67,139245.76,6266.06],[93,200,1,76191.77,82682.81,3307.31],[93,192,1,76191.77,47180.52,1415.42],[93,8,1,76191.77,36181.61,1085.45],[94,44,1,214540.94,217327.15,8693.09],[95,70,1,99010.93,83679.64,2510.39],[96,109,1,139251.27,36125.94,1083.78],[97,164,1,98081.09,108635.7,4888.61],[98,54,1,150400.17,232967.52,10483.54],[99,52,1,150000.0,170055.57,0.0],[99,146,1,150000.0,183798.59,0.0],[100,84,1,108000.0,63609.8,636.1],[101,99,1,110000.0,163078.12,0.0],[102,116,1,86044.0,78138.26,0.0],[103,28,1,45531.42,40733.08,1425.66],[104,53,1,116264.03,86572.01,2597.16],[105,83,1,67823.74,51871.2,0.0],[107,167,1,85102.88,65896.59,1976.9],[108,4,1,45000.08,88196.1,1292.5],[109,43,1,35000.0,15549.0,444.0],[110,115,1,100000.0,99478.78,2936.97],[111,59,1,95000.0,51917.95,1476.91],[113,105,1,95000.0,114595.52,3380.1],[114,18,1,66000.0,42415.6,424.16],[115,205,1,95000.0,52869.42,1581.0],[116,4,1,100000.0,88196.1,3067.5],[118,159,1,145712.16,177136.64,11026.65],[118,207,1,145712.16,135027.09,4410.66],[118,36,1,145712.16,123984.12,4410.66],[119,14,1,83543.33,116928.59,5912.26],[119,170,1,83543.33,118209.92,5944.34],[119,72,1,83543.33,38377.31,1956.65],[121,110,1,84424.0,90514.14,3708.45],[121,189,1,84424.0,88232.8,3596.45],[121,25,1,84424.0,73403.56,2994.4],[123,80,1,42282.0,10008.27,405.73],[123,128,1,42282.0,36501.59,1529.78],[124,87,1,46708.0,36376.0,1509.55],[125,117,1,75516.0,51104.66,0.0],[126,181,1,84424.0,129761.84,5298.91],[128,48,1,84424.0,51948.42,2136.64],[129,78,1,84424.0,123476.49,5020.36],[130,166,1,104369.51,0.0,0.0],[131,5,1,0.0,1400.0,0.0],[131,41,1,105288.62,158374.38,0.0],[132,120,1,70611.5,322.24,0.0],[0,67,2,0.0,476.0,9.52],[1,74,2,115000.0,131471.7,2629.43],[2,195,2,93000.0,105083.35,2101.67],[2,131,2,93000.0,27224.6,272.25],[3,160,2,90000.0,97813.68,1956.27],[4,168,2,86250.0,94356.55,1887.13],[5,144,2,90000.0,10238.96,102.39],[6,58,2,115000.0,148024.13,2960.48],[7,153,2,65000.0,44958.02,449.58],[8,165,2,57500.0,43311.07,433.11],[8,57,2,57500.0,-12401.0,0.0],[9,135,2,160000.0,188085.92,3761.72],[10,55,2,115217.03,45913.05,459.13],[10,182,2,115217.03,175069.18,3501.38],[11,77,2,160000.0,127089.77,1270.9],[16,46,2,165000.0,184014.51,3680.29],[16,111,2,135000.0,155655.91,2763.54],[17,139,2,75000.0,51499.04,514.99],[17,21,2,75000.0,116953.73,2339.07],[18,81,2,101500.0,0.0,0.0],[18,23,2,101500.0,109528.31,2190.57],[19,145,2,50000.0,43318.14,433.18],[19,171,2,150000.0,234603.27,4692.07],[19,63,2,50000.0,1140.9,11.41],[20,150,2,145000.0,209323.62,4186.47],[21,12,2,72500.0,74854.25,1497.09],[21,79,2,72500.0,74710.88,1494.22],[22,149,2,79000.0,41328.49,413.28],[22,1,2,79000.0,40043.51,400.44],[23,61,2,140000.0,125550.5,1255.51],[24,104,2,34000.0,39154.57,783.09],[24,92,2,68000.0,84063.17,0.0],[25,107,2,92083.0,3443.7,34.44],[26,176,2,85000.0,71359.5,713.6],[27,180,2,75000.0,34802.2,348.02],[28,49,2,92500.0,106609.59,869.26],[28,119,2,92500.0,106355.34,2127.11],[29,66,2,72000.0,87603.88,1752.08],[30,33,2,140000.0,165230.03,3304.6],[31,76,2,64000.0,74944.07,1498.88],[32,30,2,60000.0,57964.13,579.64],[33,155,2,0.0,0.0,0.0],[33,129,2,85000.0,42318.3,423.18],[34,16,2,68169.44,85210.87,1704.22],[36,190,2,140000.0,185958.35,3719.17],[37,7,2,111340.04,154676.21,2961.1],[37,88,2,111340.04,137137.15,2742.74],[38,98,2,140000.0,200444.55,4008.89],[39,179,2,92500.0,46172.49,461.72],[39,82,2,92500.0,52175.05,0.0],[40,127,2,85000.0,29536.13,295.36],[41,10,2,150000.0,180542.44,3610.85],[42,12,2,100000.0,22243.27,222.43],[42,29,2,100000.0,117291.03,2345.82],[43,184,2,90000.0,49063.86,490.64],[43,31,2,125000.0,82673.23,826.73],[44,95,2,85000.0,87897.04,721.01],[45,22,2,117500.0,165281.7,3305.63],[45,73,2,117500.0,70747.53,707.48],[46,75,2,70029.86,91442.44,0.0],[46,6,2,70029.86,14178.66,141.79],[47,94,2,87000.0,48361.67,483.62],[47,172,2,87000.0,61071.3,610.71],[48,71,2,72000.0,43141.76,431.42],[49,151,2,72500.0,55782.78,557.83],[50,202,2,120000.0,211203.03,4224.06],[51,42,2,92500.0,85745.14,857.45],[52,114,2,70000.0,19769.48,197.69],[53,9,2,100000.0,116622.6,2332.45],[54,3,2,50000.0,50705.65,1014.11],[56,62,2,85000.0,112091.35,2241.83],[57,196,2,90000.0,109832.12,2196.64],[54,97,2,80000.0,117468.75,2349.38],[58,27,2,105000.0,123596.37,2471.93],[58,156,2,105000.0,106001.02,0.0],[59,126,2,112500.0,127452.36,2549.05],[59,35,2,112500.0,123539.46,2470.79],[60,60,2,110000.0,120889.98,2417.8],[61,204,2,110000.0,123747.6,2474.95],[62,20,2,80000.0,106932.89,2138.66],[63,137,2,156041.5,114096.77,1140.97],[63,143,2,156041.5,41980.76,419.81],[64,17,2,96823.5,85848.08,858.48],[64,121,2,96823.5,62492.01,624.92],[65,138,2,96823.5,125016.53,2500.33],[65,11,2,96823.5,22925.78,229.26],[66,38,2,72000.0,19637.94,196.38],[67,40,2,42500.84,181728.04,3634.56],[68,24,2,92083.0,117624.53,2352.49],[69,177,2,55000.0,37135.16,371.35],[70,140,2,72000.0,64066.05,640.66],[75,211,2,106041.5,113254.67,2265.09],[75,50,2,106041.5,147321.3,2946.43],[76,136,2,110000.0,0.0,0.0],[76,148,2,110000.0,197063.67,3941.27],[77,19,2,92083.0,103324.3,2066.49],[78,37,2,61041.5,28476.75,284.77],[78,174,2,61041.5,167091.84,3341.84],[79,118,2,97600.0,165337.02,3306.74],[79,47,2,24600.0,32322.08,0.0],[80,173,2,92083.0,42588.15,425.88],[81,178,2,105000.0,63756.43,1912.69],[81,90,2,105000.0,17712.35,177.12],[83,0,2,97500.0,139999.07,2924.48],[83,214,2,97500.0,124260.75,4349.13],[84,26,2,70000.0,83221.1,1491.88],[85,32,2,65000.0,90032.53,1800.65],[86,89,2,105000.0,113234.38,3397.03],[86,152,2,105000.0,124853.7,2497.07],[87,15,2,100000.0,85135.3,851.35],[88,39,2,105000.0,56928.28,1707.85],[89,197,2,105000.0,101344.29,3040.33],[90,194,2,63577.0,29572.66,295.73],[91,103,2,128785.0,175235.07,7885.58],[91,198,2,128785.0,113759.29,3412.78],[91,68,2,128785.0,108418.31,3252.55],[92,65,2,90313.5,72391.74,2171.75],[93,200,2,89500.0,185588.38,8351.48],[93,192,2,89500.0,29830.15,894.9],[94,44,2,188000.0,267756.38,12049.04],[95,70,2,81000.0,47217.66,1416.53],[96,109,2,89200.0,120126.76,5405.7],[96,8,2,65000.0,37142.15,1114.26],[97,164,2,110000.0,68511.34,2055.34],[98,54,2,89656.0,142006.05,6390.27],[99,52,2,140000.0,187051.05,3741.02],[99,146,2,140000.0,210088.07,4201.76],[100,84,2,100000.0,25944.93,259.45],[101,99,2,130000.0,65702.07,657.02],[102,116,2,66911.66,80720.9,1614.42],[103,28,2,30000.0,8781.69,307.36],[103,221,2,30000.0,0.0,0.0],[104,53,2,69530.0,52837.29,1585.12],[105,83,2,69922.0,76542.8,2057.04],[106,116,2,68250.0,75312.0,1614.42],[107,167,2,77061.0,116273.03,5232.29],[108,124,2,45000.0,15641.93,156.42],[109,43,2,64956.03,97027.96,2910.84],[110,115,2,90000.0,63838.73,1915.16],[111,59,2,75000.0,26600.0,798.0],[112,199,2,45000.0,65998.0,1319.96],[113,105,2,85000.0,57962.1,1738.86],[114,18,2,40000.0,26227.25,262.27],[115,205,2,73000.0,23223.54,696.71],[116,4,2,90000.0,80382.73,4019.14],[118,159,2,143333.33,66487.56,7842.35],[118,207,2,143333.33,127264.22,3136.94],[118,36,2,143333.33,99526.42,3136.94],[119,14,2,79668.67,94799.1,4447.97],[119,170,2,79668.67,47593.5,2980.15],[119,72,2,79668.67,23050.65,1184.97],[121,110,2,78000.0,103789.97,4282.44],[121,189,2,78000.0,14997.09,620.32],[121,25,2,78000.0,15299.8,640.33],[123,80,2,67643.0,21995.93,886.64],[123,128,2,67643.0,30446.14,1245.77],[124,87,2,67643.0,33236.9,1366.96],[126,181,2,78000.0,62369.75,2640.53],[128,48,2,78000.0,58650.65,2391.06],[129,78,2,78000.0,72722.46,2937.06],[130,166,2,140500.0,0.0,2629.43],[131,5,2,70262.33,1400.0,9.52],[131,41,2,70262.33,33658.79,866.22],[132,120,2,80750.0,-18821.6,0.0],[12,101,2,0.0,39774.76,0.0],[99,52,3,155000.0,121535.66,1215.36],[99,146,3,155000.0,193113.27,3862.27],[101,99,3,100000.0,118572.82,2371.46],[105,83,3,98000.0,64508.65,1935.26],[102,116,3,30000.0,102707.54,2054.15],[9,67,3,0.0,24718.55,494.37],[1,74,3,120478.04,69292.48,692.92],[2,195,3,85949.16,42396.33,423.96],[8,165,3,112500.0,33060.76,330.61],[3,160,3,80867.0,104015.57,2080.31],[2,131,3,85949.16,39042.89,390.43],[5,145,3,0.0,0.0,0.0],[7,153,3,65000.0,33807.23,338.07],[9,135,3,154000.0,214338.72,4286.77],[10,55,3,130433.5,159519.25,3190.39],[10,182,3,130433.5,153764.25,3075.29],[11,77,3,105000.0,109982.87,2199.66],[12,91,3,0.0,2363.0,0.0],[16,46,3,150000.0,182289.72,3645.79],[9,139,3,0.0,0.0,0.0],[17,21,3,82500.0,96036.85,1920.74],[6,58,3,112500.0,154043.2,3080.86],[18,23,3,102520.2,149259.84,2985.2],[19,171,3,168000.0,212337.47,4246.75],[20,150,3,120867.0,165623.86,3312.48],[21,12,3,71433.5,88505.96,1770.12],[21,79,3,71433.5,44692.92,446.93],[22,149,3,62210.82,64672.95,1293.46],[22,1,3,62210.82,89248.5,1784.97],[23,61,3,100000.0,118910.19,2378.2],[24,104,3,130000.0,36521.0,365.21],[25,107,3,80000.0,1704.77,17.05],[28,49,3,90000.0,103234.44,2064.69],[29,66,3,85000.0,83585.47,835.85],[31,76,3,63000.0,78649.79,1573.0],[36,190,3,100000.0,104756.48,2095.13],[37,7,3,100000.0,111947.45,2238.95],[38,98,3,135000.0,149202.73,2984.05],[39,179,3,50000.0,69277.42,1385.55],[41,127,3,20000.0,5572.08,55.72],[41,147,3,0.0,3674.75,0.0],[42,12,3,110000.0,86883.15,868.83],[42,29,3,85000.0,104194.03,2083.88],[43,184,3,105000.0,31230.52,312.31],[44,95,3,34759.0,87307.69,1746.15],[45,22,3,104500.0,157943.72,3158.87],[45,73,3,104500.0,130715.62,2614.31],[57,3,3,0.0,2319.27,46.39],[46,75,3,67500.0,79116.43,1582.33],[47,94,3,80000.0,84006.49,1680.13],[47,172,3,80000.0,1402.1,14.02],[48,71,3,65000.0,74561.29,1491.23],[49,151,3,85200.0,29676.48,296.76],[50,202,3,130200.0,177104.84,3542.1],[50,62,3,40200.0,21210.9,212.11],[51,42,3,89279.0,160218.48,3204.37],[53,9,3,81200.0,111378.98,2227.58],[54,97,3,101250.0,163207.32,3264.15],[58,27,3,97000.0,112616.91,2252.34],[58,156,3,97000.0,123415.48,2468.31],[59,126,3,101000.0,123273.35,2465.47],[59,35,3,101000.0,7998.15,79.98],[60,60,3,101256.0,127592.5,2551.85],[61,204,3,95000.0,51692.37,516.92],[62,20,3,80000.0,100848.94,2016.98],[63,137,3,114500.0,165850.99,3317.02],[63,143,3,114500.0,166067.83,3321.36],[64,17,3,75000.0,43217.26,432.17],[64,121,3,75000.0,3337.03,33.37],[65,138,3,90000.0,155532.61,3110.65],[66,38,3,65000.0,101378.08,2027.56],[65,11,3,90000.0,128297.3,2565.95],[67,40,3,45000.0,52425.74,1048.51],[68,24,3,75000.0,107889.81,2157.8],[70,140,3,60000.0,71568.16,1431.36],[69,177,3,0.0,121086.13,2421.72],[75,211,3,99500.0,56148.35,561.48],[76,136,3,0.0,0.0,0.0],[76,148,3,99500.0,225787.57,4515.75],[75,50,3,99500.0,108253.39,2165.07],[77,19,3,80000.0,54700.06,547.0],[78,37,3,48000.0,42698.83,426.99],[79,118,3,38500.0,60220.47,1204.41],[81,178,3,100200.0,103913.45,3117.4],[81,90,3,100200.0,106736.69,2134.73],[83,0,3,90200.0,121877.46,3656.32],[83,214,3,90200.0,83456.16,2920.97],[84,26,3,72200.0,12734.39,127.34],[86,218,3,70200.0,48972.08,489.72],[86,89,3,80200.0,104706.05,3141.18],[87,15,3,90200.0,68642.75,686.43],[88,39,3,80200.0,91434.38,2743.03],[89,197,3,100200.0,137899.68,4136.99],[90,194,3,72200.0,27053.41,270.53],[91,103,3,39000.0,56612.86,2547.58],[91,198,3,129000.0,141325.92,5653.04],[91,68,3,122000.0,110405.41,3312.16],[92,65,3,105942.73,117005.9,5265.27],[93,200,3,63000.0,65150.03,2606.0],[94,44,3,193000.0,244948.87,11022.7],[93,192,3,118000.0,92441.45,2773.24],[95,70,3,95000.0,97403.56,3896.14],[96,109,3,95000.0,48106.37,1443.19],[97,164,3,31269.61,52726.25,2372.68],[98,54,3,148000.0,111694.7,3350.84],[103,28,3,37500.0,32209.23,966.28],[97,8,3,66000.0,20331.95,609.96],[104,53,3,101000.0,44616.88,1338.51],[107,167,3,82000.0,89626.48,3585.06],[41,10,3,125000.0,166573.22,3331.46],[46,6,3,67500.0,1042.34,10.42],[78,174,3,32000.0,85902.83,1718.06],[16,111,3,150000.0,55218.26,552.18],[80,173,3,80000.0,150834.24,3016.68],[34,16,3,53933.9,92269.92,1845.4],[86,152,3,90200.0,10588.49,105.88],[43,31,3,125000.0,16053.68,160.54],[37,88,3,150000.0,138520.06,1385.2],[30,33,3,130000.0,143966.04,2879.32],[79,47,3,71500.0,38811.29,388.11],[100,84,3,80000.0,21934.31,219.34],[40,169,3,65000.0,10704.62,107.05],[20,63,3,0.0,32795.37,655.91],[18,81,3,68346.8,111462.07,2229.24],[55,34,3,60200.0,115322.1,2306.44],[4,168,3,110867.0,130001.88,2600.04],[103,221,3,37500.0,43205.09,1944.23],[8,51,3,0.0,72425.48,1448.51],[54,186,3,40500.0,545.6,5.46],[52,13,3,0.0,709.37,14.19],[39,82,3,81000.0,54865.62,548.66],[36,92,3,60000.0,67095.63,1341.91],[28,119,3,90000.0,99916.97,1998.34],[11,187,3,95000.0,92784.11,927.84],[12,102,3,85000.0,141059.34,2821.19],[43,127,3,20000.0,4456.42,44.56],[44,127,3,51000.0,2362.89,23.63],[106,116,3,83000.0,68801.19,2064.04],[23,92,3,30000.0,59413.28,1188.27],[87,32,3,20200.0,357.46,3.57],[85,32,3,52000.0,424.19,4.24],[88,218,3,20000.0,602.82,6.03],[56,62,3,52000.0,16946.75,169.47],[40,127,3,0.0,8755.16,175.1],[85,0,3,0.0,73832.77,2214.98],[19,63,3,112000.0,88460.6,884.61],[5,149,3,0.0,15716.85,314.34],[17,139,3,82500.0,102628.72,2052.57],[118,159,3,114895.85,152404.31,3810.11],[118,207,3,114895.85,156254.13,1562.54],[118,36,3,114895.85,41738.44,417.38],[119,14,3,72037.45,114689.52,5734.48],[119,170,3,72037.45,96197.89,4809.89],[119,72,3,72037.45,57509.69,2875.48],[120,110,3,0.0,137654.55,5506.18],[120,25,3,0.0,11607.35,464.29],[123,128,3,67741.0,44221.0,1768.84],[124,87,3,67741.0,102442.35,4097.69],[126,181,3,67741.0,124727.48,4989.1],[128,48,3,67741.0,28512.32,1140.49],[129,78,3,67741.0,21847.0,873.88],[120,189,3,0.0,138668.0,5546.72],[26,176,3,84800.0,107457.67,2149.15],[27,180,3,84800.0,101044.66,2020.89],[32,30,3,60000.0,-8183.63,0.0],[33,129,3,80000.0,19182.52,191.83],[110,115,3,83000.0,103679.69,2073.59],[111,59,3,80000.0,89763.52,1795.27],[113,105,3,50000.0,11051.78,110.52],[115,205,3,70000.0,97105.1,1942.1],[116,4,3,50000.0,18554.09,185.54],[114,18,3,40195.0,169.42,1.69],[112,199,3,60000.0,85603.45,1712.07],[108,124,3,40200.0,17908.35,179.08],[131,41,3,146300.15,151135.48,0.0],[106,116,4,60293.02,68441.69,3079.88],[36,92,4,100000.0,27731.59,277.32],[86,218,4,80000.0,103810.96,3114.33],[50,62,4,40000.0,31374.85,313.75],[83,0,4,50000.0,43681.17,1310.44],[17,139,4,75000.0,34680.79,346.81],[99,52,4,155000.0,175547.5,3510.95],[99,146,4,117000.0,133927.71,2678.55],[101,99,4,110848.0,59362.39,593.62],[105,83,4,61606.45,72671.08,3270.2],[9,67,4,0.0,26256.85,525.14],[1,74,4,30000.0,98550.34,1971.01],[2,195,4,85448.0,53972.77,539.73],[8,165,4,0.0,198.0,3.96],[3,160,4,84108.0,86081.97,1721.64],[2,131,4,85448.0,51348.6,513.49],[5,145,4,0.0,0.0,0.0],[7,153,4,68638.0,9680.89,96.81],[9,135,4,160000.0,255491.97,5109.84],[10,55,4,110000.0,41352.01,413.52],[10,182,4,110000.0,157765.33,3155.31],[11,77,4,130000.0,85560.52,855.61],[12,91,4,0.0,0.0,0.0],[16,46,4,139000.0,211503.63,4230.07],[17,21,4,75000.0,164665.21,3293.3],[6,58,4,105000.0,104279.45,1042.79],[18,23,4,100000.0,119659.33,2393.19],[19,171,4,156000.0,222935.71,4458.71],[20,150,4,76353.0,30890.78,308.91],[21,12,4,70000.0,43412.93,434.13],[21,79,4,70000.0,48603.09,486.03],[5,149,4,79000.0,74357.66,743.58],[22,1,4,78000.0,89135.93,1782.72],[23,61,4,140000.0,236637.9,4732.76],[24,104,4,117000.0,133053.73,2661.07],[25,107,4,77856.0,2636.63,26.37],[28,49,4,104000.0,35256.88,352.57],[29,66,4,85932.12,87222.97,1744.46],[31,76,4,72529.88,29990.3,299.9],[36,190,4,100000.0,130688.5,2613.77],[37,7,4,117500.0,150346.68,3006.93],[38,98,4,160000.0,190398.27,3807.97],[39,179,4,75000.0,79420.28,1588.41],[41,147,4,0.0,3674.75,0.0],[42,12,4,62500.0,926.01,9.26],[42,29,4,112500.0,182108.37,3642.17],[43,184,4,125000.0,34559.3,345.59],[44,95,4,92848.0,59027.36,590.27],[45,22,4,110649.0,163681.96,3273.64],[45,73,4,110649.0,17869.57,178.7],[57,3,4,85000.0,96165.88,1923.32],[46,75,4,70000.0,84772.21,1695.44],[47,94,4,70000.0,13962.86,139.63],[47,172,4,70000.0,102667.86,2053.36],[48,71,4,70000.0,5042.95,50.43],[49,151,4,85500.0,105655.4,2113.11],[50,202,4,115000.0,171681.05,3433.62],[51,42,4,80000.0,113381.4,2267.63],[53,9,4,105000.0,155943.97,3118.88],[54,97,4,80000.0,42096.95,420.97],[58,27,4,105000.0,106275.56,2125.51],[58,156,4,105000.0,54897.5,548.98],[59,126,4,107500.0,18469.15,184.69],[59,35,4,107500.0,118396.34,2367.93],[60,60,4,110000.0,137926.77,2758.54],[61,204,4,105000.0,120956.89,2419.14],[62,20,4,99495.2,107050.33,2141.01],[63,137,4,132500.0,178965.06,3579.3],[63,143,4,132500.0,86984.0,869.84],[64,17,4,82500.0,41731.44,417.31],[64,121,4,82500.0,38743.7,387.44],[65,138,4,109000.0,24654.13,246.54],[66,38,4,70000.0,10377.48,103.77],[65,11,4,109000.0,126670.85,2533.42],[67,40,4,66000.0,12133.58,121.34],[68,24,4,65587.39,70262.36,1405.25],[70,140,4,70000.0,77034.72,1540.69],[69,177,4,103000.0,93648.3,936.48],[75,211,4,107500.0,10841.84,108.42],[76,136,4,0.0,0.0,0.0],[76,148,4,128511.27,167599.14,3351.98],[75,50,4,107500.0,11642.41,116.42],[77,19,4,110000.0,112345.02,2246.9],[78,37,4,57750.0,66382.37,1327.65],[79,118,4,113750.0,68023.84,680.24],[81,178,4,120000.0,132873.19,3986.2],[81,90,4,100000.0,54172.09,541.72],[83,214,4,105000.0,195862.73,6855.2],[84,26,4,70000.0,76494.93,1529.9],[86,89,4,90000.0,98811.74,2964.35],[87,15,4,90636.0,77620.54,776.21],[88,39,4,90000.0,102942.23,3088.27],[89,197,4,105000.0,131995.71,3959.87],[90,194,4,70000.0,11191.52,111.92],[91,103,4,108305.6,137214.24,6174.64],[91,198,4,108305.6,117756.03,4710.24],[91,68,4,108305.6,202647.3,9119.13],[92,65,4,111500.0,30529.43,915.88],[93,200,4,99449.93,124726.82,5612.71],[94,44,4,181750.0,225993.21,10169.69],[93,192,4,99449.93,125233.55,5635.51],[95,70,4,39397.0,56586.6,2546.4],[96,109,4,125911.39,137732.22,5509.29],[97,164,4,86460.06,77303.41,2319.1],[98,54,4,141000.0,172220.31,7749.91],[103,28,4,30039.55,52814.29,2376.64],[97,8,4,0.0,9916.07,446.22],[104,53,4,88676.47,47432.75,1422.98],[107,167,4,72368.15,106895.91,4810.32],[41,10,4,150848.0,195486.31,3909.73],[46,6,4,70000.0,1153.3,11.53],[78,174,4,107250.0,111470.97,2229.42],[16,111,4,139000.0,157850.02,3157.0],[80,173,4,115000.0,116613.91,2332.28],[34,16,4,81993.77,17869.09,178.69],[86,152,4,90000.0,55369.91,553.7],[43,31,4,125000.0,41681.32,416.81],[37,88,4,117500.0,121739.12,2434.78],[30,33,4,147100.0,59134.7,591.35],[79,47,4,61250.0,2558.1,25.58],[100,84,4,115000.0,62269.89,622.7],[18,81,4,100000.0,150514.35,3010.29],[55,34,4,85500.0,84783.3,1695.67],[4,168,4,115000.0,124384.65,2487.69],[103,221,4,30039.55,45807.54,2061.34],[8,51,4,105000.0,47551.13,475.51],[54,186,4,80000.0,17751.29,177.51],[52,13,4,60000.0,81382.81,1627.66],[39,82,4,75000.0,67564.35,675.64],[28,119,4,104000.0,54285.02,542.85],[11,187,4,105848.0,24499.07,244.99],[12,102,4,105848.0,106199.33,2123.99],[20,63,4,76353.0,2035.11,20.35],[26,176,4,85000.0,106791.18,2135.82],[27,180,4,80000.0,62490.82,624.91],[32,30,4,65000.0,52779.49,527.79],[33,129,4,70000.0,88734.24,1774.68],[110,115,4,50000.0,73594.35,1471.89],[27,59,4,80000.0,50574.05,505.74],[113,105,4,70000.0,137604.41,2752.09],[115,205,4,75000.0,80380.5,1607.61],[114,18,4,20000.0,1185.01,11.85],[112,199,4,65000.0,80862.08,1617.24],[108,124,4,40469.0,25377.21,253.77],[22,125,4,52000.0,39.0,0.39],[72,142,4,0.0,0.0,0.0],[102,116,4,72500.0,83740.84,1674.82],[88,218,4,10000.0,204.87,6.15],[56,62,4,60000.0,34125.1,341.25],[19,63,4,104000.0,47818.98,478.19],[1,139,4,0.0,13909.89,278.2],[121,189,4,81706.67,42248.8,422.49],[121,110,4,81706.67,72905.0,729.05],[121,25,4,81706.67,35995.35,359.95],[123,128,4,70000.0,22925.89,229.26],[124,87,4,70000.0,14155.53,141.56],[126,181,4,0.0,98055.24,1961.1],[128,48,4,81706.67,100355.24,2007.1],[129,78,4,0.0,49694.67,993.89],[118,159,4,123333.33,50507.28,505.07],[118,207,4,123333.33,146339.89,2926.8],[118,36,4,123333.33,113821.75,1138.22],[119,14,4,81658.33,106209.28,2124.19],[119,170,4,81658.33,112551.31,2251.03],[119,72,4,81658.33,43764.48,437.64],[66,27,4,0.0,20113.37,402.27],[27,199,4,0.0,11829.64,236.59],[85,0,4,0.0,70553.25,2116.6],[99,52,5,295000.0,276089.19,2760.89],[99,146,5,295000.0,328102.05,6562.04],[101,99,5,250000.0,161452.31,1614.52],[105,83,5,119218.86,141416.56,6363.75],[81,178,5,190000.0,125430.81,3762.92],[83,214,5,190000.0,234494.91,8207.32],[86,89,5,155000.0,203878.86,6116.37],[88,39,5,180000.0,307596.85,9227.91],[89,197,5,190000.0,237738.41,7132.15],[103,28,5,46520.57,97638.63,4393.74],[102,116,5,150000.0,147757.52,1477.58],[88,218,5,155000.0,170444.91,5113.35],[85,0,5,190000.0,246918.13,7407.54],[36,92,5,215000.0,109578.81,1095.79],[1,74,5,220000.0,323600.71,6472.01],[2,195,5,0.0,-10454.62,0.0],[8,165,5,112000.0,89062.32,890.62],[3,160,5,167317.65,203024.33,4060.49],[2,131,5,168000.0,245413.2,4908.26],[5,145,5,0.0,0.0,0.0],[7,153,5,105645.0,46793.12,467.93],[9,135,5,299114.0,385369.85,7707.4],[10,55,5,215000.0,283172.08,5663.44],[10,182,5,215000.0,319821.95,6396.44],[11,77,5,240000.0,272144.53,5442.89],[12,91,5,0.0,0.0,0.0],[16,46,5,325000.0,518709.38,10374.19],[17,21,5,250000.0,308211.77,6164.24],[6,58,5,200000.0,231763.25,4635.26],[18,23,5,200000.0,335036.05,6700.72],[19,171,5,252000.0,331388.8,6627.78],[20,150,5,299000.0,335853.72,6717.07],[21,12,5,110000.0,172312.23,3446.24],[21,79,5,110000.0,57963.08,579.63],[5,149,5,180000.0,174088.38,3481.77],[22,1,5,110000.0,111588.97,2231.78],[23,61,5,360000.0,471232.37,9424.65],[24,104,5,230000.0,209307.6,2093.08],[25,107,5,133571.0,151503.12,3030.06],[28,49,5,215000.0,241218.3,4824.37],[29,66,5,178000.0,184993.77,3699.88],[31,76,5,159000.0,134283.11,1342.83],[36,190,5,215000.0,244365.14,4887.3],[37,7,5,250000.0,351309.76,7026.2],[38,98,5,361215.63,508436.09,10168.72],[39,179,5,187500.0,292748.02,5854.96],[41,147,5,0.0,3674.75,0.0],[42,12,5,162500.0,186233.07,3724.66],[42,29,5,162500.0,181852.58,3637.05],[43,184,5,150000.0,186454.68,3729.09],[44,95,5,175000.0,225931.13,4518.62],[45,22,5,215000.0,360574.79,7211.5],[45,73,5,215000.0,98196.59,981.97],[57,3,5,150000.0,43411.45,434.11],[46,75,5,105000.0,210055.66,4201.11],[47,94,5,112739.5,155611.55,3112.23],[47,172,5,112739.5,138412.53,2768.25],[48,71,5,100000.0,153032.44,3060.65],[49,151,5,170000.0,109499.65,1095.0],[50,202,5,210000.0,327503.87,6550.08],[51,42,5,190000.0,270798.26,5415.97],[53,9,5,190000.0,234045.15,4680.9],[54,97,5,110000.0,49173.82,491.74],[58,156,5,175000.0,213849.5,4276.99],[59,126,5,207500.0,236889.37,4737.79],[59,35,5,207500.0,229954.44,4599.09],[60,60,5,225000.0,258977.12,5179.54],[61,204,5,200000.0,115412.67,1154.13],[62,20,5,193571.0,254977.78,5099.56],[63,137,5,226785.5,338054.67,6761.09],[63,143,5,226785.5,164372.78,1643.73],[64,17,5,176785.5,177685.74,3553.71],[64,121,5,176785.5,184099.4,3681.99],[65,138,5,211785.5,296745.81,5934.92],[66,38,5,95000.0,131053.59,2621.07],[65,11,5,211785.5,224340.45,4486.81],[67,40,5,118571.0,52328.23,523.28],[68,24,5,123571.0,111189.68,1111.9],[70,140,5,95000.0,115779.71,2315.59],[69,177,5,193571.0,113453.54,1134.54],[75,211,5,216785.5,273569.72,5471.39],[76,136,5,191925.0,0.0,0.0],[76,148,5,191925.0,439524.75,8790.5],[75,50,5,216785.5,251913.95,5038.28],[77,19,5,193571.0,204840.95,4096.82],[78,37,5,117174.8,126359.48,2527.19],[79,118,5,212142.6,285207.77,5704.16],[81,90,5,190000.0,52782.86,527.83],[84,26,5,0.0,-3519.83,0.0],[87,15,5,190000.0,142218.75,1422.19],[90,194,5,145000.0,111887.69,1118.88],[91,103,5,235391.8,272451.48,12260.32],[91,198,5,235391.8,371999.91,16740.0],[91,68,5,235391.8,254757.72,10190.31],[92,65,5,193496.97,241230.19,10855.36],[93,200,5,384904.7,226351.13,6790.53],[94,44,5,403981.48,486882.76,21909.72],[93,192,5,206018.12,270924.16,12191.59],[95,70,5,181387.37,309699.7,13936.49],[96,109,5,229000.0,155677.66,4670.33],[97,164,5,0.0,1407.61,0.0],[98,54,5,242211.0,117760.96,3532.83],[97,8,5,54000.0,26769.14,803.07],[104,53,5,210308.26,287333.29,12930.0],[107,167,5,140044.55,31652.23,949.57],[41,10,5,295000.0,383238.33,7664.77],[46,6,5,105000.0,37.2,0.37],[78,174,5,216450.0,258154.45,5163.09],[16,111,5,325000.0,349383.91,6987.68],[80,173,5,183571.0,257208.78,5144.18],[34,16,5,180000.0,188937.99,3778.76],[86,152,5,155000.0,162575.33,3251.51],[43,31,5,150000.0,227226.03,4544.52],[37,88,5,250000.0,209149.49,2091.49],[30,33,5,361215.63,367037.19,7340.74],[79,47,5,141428.4,44617.36,446.17],[100,84,5,162000.0,83579.15,835.79],[18,81,5,200000.0,286273.39,5725.47],[55,34,5,165000.0,194951.43,3899.03],[4,168,5,200000.0,208903.7,4178.07],[103,221,5,46520.57,60520.5,2723.42],[8,51,5,200000.0,204035.54,4080.71],[54,186,5,110000.0,73982.16,739.82],[52,13,5,104226.0,147677.49,2953.55],[39,82,5,168895.0,68329.71,683.3],[28,119,5,215000.0,180791.24,1807.91],[11,187,5,240000.0,150880.02,1508.8],[12,102,5,240000.0,116209.48,1162.09],[26,176,5,192690.0,204109.0,4082.18],[27,180,5,159395.0,227972.47,4559.45],[32,30,5,112690.0,120068.93,2401.38],[33,129,5,192690.0,239781.29,4795.63],[110,115,5,192690.0,202508.78,4050.18],[27,59,5,159395.0,260868.07,5217.36],[113,105,5,189518.0,139386.69,1393.87],[115,205,5,192690.0,196045.68,3920.91],[114,18,5,56395.0,55727.53,557.28],[108,124,5,109738.0,44519.58,445.2],[22,125,5,110000.0,34908.09,349.08],[72,142,5,0.0,0.0,0.0],[56,62,5,140000.0,65869.17,658.69],[19,63,5,168000.0,168548.79,3370.98],[1,139,5,100000.0,45387.66,453.88],[121,189,5,136167.75,63329.17,633.29],[121,110,5,136167.75,154229.24,3084.58],[121,25,5,136167.75,80464.34,804.64],[123,128,5,99234.11,114551.88,2291.04],[124,87,5,99234.11,49386.57,493.87],[126,181,5,136167.75,221009.88,4420.2],[128,48,5,136167.75,157152.35,3143.05],[129,78,5,136167.75,156141.53,3122.83],[118,159,5,190000.0,215006.71,4300.13],[118,207,5,190000.0,211239.58,4224.79],[118,36,5,190000.0,105827.43,1058.27],[119,14,5,145285.33,160279.79,3205.6],[119,170,5,145285.33,162678.09,3253.56],[119,72,5,145285.33,40784.17,407.84],[66,27,5,175000.0,233178.46,4663.57],[27,199,5,0.0,0.0,0.0],[47,175,5,0.0,0.0,0.0],[113,201,5,47972.0,108051.26,2161.03],[133,123,5,0.0,0.0,0.0],[23,134,5,0.0,0.0,0.0],[118,86,5,0.0,0.0,0.0],[106,116,5,99260.62,33564.46,1006.93],[131,41,4,103004.0,106298.52,0.0],[131,41,5,133354.13,297170.42,0.0],[132,120,5,164520.56,101632.47,0.0],[130,166,5,134466.42,216330.94,0.0],[1,74,6,100000.0,131878.14,2637.56],[2,195,6,0.0,708.33,0.0],[2,131,6,107200.0,36233.68,362.34],[2,63,6,53200.0,134758.9,2695.18],[3,160,6,20000.0,61942.62,1238.85],[4,168,6,100921.0,103699.16,2073.98],[5,149,6,100000.0,102587.5,2051.75],[6,58,6,100000.0,115545.99,2310.92],[7,153,6,60000.0,17780.02,177.8],[8,51,6,100000.0,126421.43,2528.43],[9,135,6,140000.0,219586.61,4391.73],[10,55,6,208000.0,105640.02,1056.4],[10,182,6,0.0,337.43,6.75],[11,77,6,130000.0,192066.66,3841.33],[11,187,6,65000.0,7790.31,77.9],[12,91,6,0.0,0.0,0.0],[12,102,6,110000.0,171482.27,3429.65],[13,165,6,90000.0,63035.23,630.35],[16,46,6,110000.0,202783.27,4055.67],[16,111,6,110000.0,42568.37,425.68],[17,21,6,105600.0,89563.67,895.64],[18,23,6,110000.0,113106.36,2262.13],[18,81,6,110000.0,158473.39,3169.47],[19,145,6,0.0,0.0,0.0],[19,171,6,178000.0,203957.23,4079.14],[20,150,6,118000.0,25988.77,259.89],[21,12,6,128000.0,114225.47,1142.25],[21,79,6,0.0,2976.44,59.53],[22,1,6,80000.0,83794.76,1675.9],[22,125,6,100000.0,49469.7,494.7],[23,61,6,115000.0,105376.75,1053.77],[23,134,6,60000.0,34745.94,347.46],[24,104,6,100000.0,113287.6,2265.75],[25,107,6,64676.58,73858.02,1477.16],[26,176,6,90000.0,116309.54,2326.19],[27,180,6,80000.0,110213.34,2204.27],[28,49,6,82500.0,81460.09,814.6],[28,119,6,82500.0,51023.93,510.24],[29,66,6,88874.02,93883.57,1877.67],[30,33,6,110000.0,112602.08,2252.04],[31,76,6,60000.0,12726.68,127.27],[32,30,6,65000.0,15984.56,159.85],[33,129,6,85000.0,27602.25,276.02],[34,16,6,55000.0,55540.55,1110.81],[36,190,6,70000.0,114097.63,2281.95],[37,7,6,122609.99,150106.78,3002.14],[37,88,6,122609.99,157070.66,3141.41],[37,133,6,0.0,18285.94,365.72],[38,98,6,155000.0,83803.36,838.03],[39,179,6,75000.0,82745.96,1654.92],[39,82,6,75000.0,89414.61,1788.29],[40,45,6,0.0,0.0,0.0],[41,10,6,130000.0,136829.04,2736.58],[42,12,6,100000.0,107156.03,2143.12],[42,29,6,100000.0,82688.52,826.89],[43,184,6,130000.0,27794.03,277.94],[43,31,6,130000.0,41379.58,413.8],[44,95,6,61301.0,61300.02,613.0],[45,22,6,93567.0,155165.57,3103.31],[45,73,6,93567.0,104928.04,2098.56],[46,75,6,75000.0,102080.85,2041.62],[47,94,6,65000.0,75569.28,1511.39],[47,172,6,65000.0,647.88,6.48],[47,186,6,65000.0,51786.26,517.86],[47,175,6,34000.0,72297.14,1445.94],[48,71,6,65000.0,36071.43,360.71],[50,202,6,130000.0,191933.59,3838.67],[51,42,6,103000.0,113372.06,2267.44],[52,13,6,78000.0,90419.68,1808.39],[53,9,6,103000.0,166844.41,3336.89],[54,97,6,65000.0,64660.79,1293.22],[55,34,6,90000.0,54368.67,543.69],[56,62,6,78000.0,58449.8,584.5],[57,3,6,34000.0,1363.71,13.64],[58,156,6,80000.0,105829.49,2116.59],[58,27,6,80000.0,104764.36,2095.29],[59,126,6,90000.0,29685.84,296.86],[59,35,6,90000.0,106634.13,2132.68],[60,60,6,95000.0,121097.17,2421.94],[61,204,6,90000.0,93318.58,1866.37],[62,20,6,107070.3,83799.99,838.0],[63,137,6,145594.18,204392.64,4087.85],[63,143,6,145594.18,162715.47,3254.31],[64,17,6,57608.51,94712.19,1894.24],[64,121,6,57608.51,13189.43,131.89],[65,138,6,92861.26,123680.35,2473.61],[65,11,6,92861.26,79153.37,791.53],[66,38,6,65000.0,89518.65,1790.37],[67,40,6,62451.58,67948.58,1358.97],[68,24,6,80500.0,117497.4,2349.95],[69,177,6,113931.48,72891.11,728.91],[70,140,6,60000.0,26893.29,268.93],[71,162,6,0.0,0.0,0.0],[72,142,6,0.0,0.0,0.0],[73,210,6,0.0,0.0,0.0],[75,211,6,26560.05,17825.96,178.26],[75,50,6,61973.45,48020.59,480.21],[76,136,6,120987.42,0.0,0.0],[76,148,6,120987.42,149333.38,2986.67],[77,19,6,103887.23,33876.22,338.76],[78,37,6,61207.19,48572.75,485.73],[78,174,6,91810.78,129261.14,2585.22],[79,118,6,75530.0,70810.0,708.1],[79,47,6,32370.0,47043.98,940.88],[80,173,6,107149.6,139086.32,2781.73],[81,178,6,110000.0,133140.71,3994.22],[81,90,6,100000.0,56467.58,564.68],[83,214,6,103000.0,134804.21,4718.15],[84,213,6,50000.0,63468.07,1415.65],[85,0,6,103000.0,68896.92,2066.91],[85,193,6,50000.0,17187.8,171.88],[86,89,6,90000.0,130373.16,3911.19],[86,152,6,90000.0,34281.0,342.81],[87,15,6,78000.0,86082.21,1721.64],[88,39,6,103000.0,115181.31,3236.0],[88,218,6,90000.0,92222.9,2766.69],[89,197,6,65619.0,48687.94,1460.64],[90,194,6,78000.0,41525.39,415.25],[91,103,6,132000.0,152933.99,6882.03],[91,198,6,50000.0,40995.35,1229.86],[91,68,6,133000.0,114877.79,3446.33],[92,65,6,95000.0,34026.22,1020.79],[93,200,6,145000.0,164873.47,7419.31],[93,192,6,25000.0,42694.5,1921.25],[94,44,6,155000.0,180342.19,8115.4],[95,70,6,100000.0,145446.38,6545.09],[96,109,6,100000.0,176572.45,7945.76],[97,164,6,0.0,0.0,0.0],[97,8,6,95000.0,48220.55,1446.62],[98,54,6,143000.0,85534.03,2566.02],[99,52,6,65000.0,125091.98,2501.84],[99,146,6,130000.0,197737.16,3954.74],[100,84,6,60000.0,9600.85,96.01],[101,99,6,100000.0,109705.05,2194.1],[102,116,6,60000.0,87258.53,1745.17],[103,28,6,55458.5,18734.64,562.04],[103,221,6,55458.5,5264.12,157.92],[104,53,6,112500.0,74298.4,2228.95],[105,83,6,75466.98,18670.0,560.1],[106,116,6,77885.46,8270.58,248.12],[107,167,6,99058.98,63035.85,1891.08],[108,124,6,50000.0,15472.32,154.72],[109,203,6,0.0,0.0,0.0],[110,115,6,80000.0,97806.07,1956.12],[111,59,6,80000.0,82368.23,1647.36],[112,199,6,65000.0,76545.62,1530.91],[113,105,6,80000.0,163621.46,3272.43],[113,201,6,75000.0,114029.93,2280.6],[115,205,6,50000.0,45949.23,459.49],[118,159,6,95000.0,109401.12,2188.02],[118,207,6,95000.0,71959.15,719.59],[118,36,6,95000.0,126908.81,2538.18],[118,86,6,70233.0,78021.29,1560.43],[119,14,6,78000.0,87988.55,1759.77],[119,170,6,78000.0,96584.44,1931.69],[119,72,6,78000.0,126399.37,2527.99],[120,110,6,83000.0,97640.19,1952.8],[120,25,6,143500.0,54019.99,540.2],[123,128,6,63777.0,98209.26,1964.19],[124,87,6,63777.0,38230.7,382.31],[125,163,6,0.0,0.0,0.0],[126,181,6,0.0,91129.59,1822.59],[128,48,6,83000.0,88346.36,1766.93],[129,78,6,166000.0,65341.12,653.41],[130,166,6,110000.0,108168.12,9742.03],[131,41,6,130000.0,135086.6,8274.69],[132,120,6,70000.0,59366.5,5256.47],[133,123,6,0.0,0.0,2100.0],[1,74,7,126000.0,49178.84,491.79],[2,131,7,111500.0,126234.39,2524.69],[2,63,7,111500.0,131976.92,2639.54],[3,160,7,104988.45,55248.82,552.49],[4,168,7,138956.61,78271.42,782.71],[5,149,7,112000.0,14733.67,147.34],[6,58,7,112749.0,153230.61,3064.61],[7,153,7,0.0,21699.82,217.0],[8,51,7,121000.0,71951.28,719.51],[9,135,7,239755.09,112120.72,1121.21],[10,55,7,134730.93,173896.81,3477.94],[10,182,7,134730.93,158352.32,3167.05],[11,77,7,157500.0,142990.97,1429.91],[11,187,7,157500.0,101746.55,1017.47],[12,102,7,120000.0,197371.48,3947.43],[13,165,7,76540.75,107776.03,2155.52],[16,46,7,195000.0,279986.16,5599.72],[16,111,7,195000.0,121175.67,2423.51],[17,21,7,168082.0,190285.26,3805.71],[18,23,7,133133.82,206434.84,4128.7],[18,81,7,133133.82,229699.13,4593.98],[19,171,7,284023.66,343708.58,6874.17],[20,150,7,150791.09,191872.86,3837.46],[21,12,7,80056.72,81277.63,1625.55],[21,79,7,80056.72,84783.55,1695.67],[22,1,7,166000.0,89606.69,896.07],[22,125,7,0.0,16730.73,334.61],[23,61,7,160000.0,159136.21,3182.72],[23,134,7,100000.0,12521.28,125.21],[24,104,7,135000.0,105619.57,1056.2],[25,107,7,98020.74,31498.76,314.99],[26,176,7,125000.0,141844.81,2836.9],[27,180,7,115000.0,71984.11,719.84],[27,59,7,115000.0,34600.51,346.01],[28,49,7,99000.0,132352.87,2647.06],[28,119,7,99000.0,111382.91,2227.66],[29,66,7,98000.0,104826.34,2096.53],[30,33,7,185000.0,98613.65,986.14],[31,76,7,70000.0,116143.24,2322.86],[32,30,7,70000.0,86187.84,1723.76],[33,129,7,100000.0,90285.2,902.85],[34,16,7,92000.0,99110.72,1982.21],[35,88,7,52987.64,140878.66,2817.57],[36,190,7,210000.0,263895.25,5277.9],[37,7,7,160000.0,226209.71,4524.19],[37,133,7,150000.0,227752.0,4555.04],[38,98,7,210000.0,223872.45,4477.45],[39,179,7,92500.0,134195.87,2683.92],[39,82,7,92500.0,69035.62,690.36],[40,45,7,50000.0,79510.16,1590.2],[41,10,7,197500.0,283601.01,5672.02],[42,12,7,130000.0,53736.13,537.36],[42,29,7,130000.0,132871.97,2657.44],[43,184,7,150000.0,103097.55,1030.98],[43,31,7,150000.0,106127.55,1061.28],[44,95,7,125000.0,142456.69,2849.13],[45,22,7,165000.0,210258.92,4205.18],[45,73,7,165000.0,58760.67,587.61],[46,75,7,150000.0,165236.36,3304.73],[47,94,7,110000.0,129365.98,2587.32],[47,172,7,110000.0,54496.01,544.96],[54,186,7,99999.0,112720.51,0.0],[47,175,7,65000.0,52919.74,529.2],[50,202,7,155000.0,256528.88,5130.58],[51,42,7,135000.0,129578.28,1295.78],[52,13,7,110000.0,127602.12,2552.04],[53,9,7,135000.0,252473.8,5049.48],[54,97,7,99999.0,119339.01,2386.78],[55,34,7,120000.0,151638.13,3032.76],[56,62,7,92172.0,16150.88,161.51],[57,3,7,65000.0,0.0,0.0],[58,156,7,150000.0,187400.44,3748.01],[58,27,7,150000.0,171700.03,3434.0],[59,126,7,160000.0,164440.26,3288.81],[59,35,7,160000.0,123300.01,1233.0],[60,60,7,170000.0,192027.06,3840.54],[61,204,7,150000.0,49046.29,490.46],[62,20,7,135458.69,175347.19,3506.94],[63,137,7,225000.0,338837.62,6776.75],[63,143,7,225000.0,195542.54,1955.43],[64,17,7,120000.0,66142.03,661.42],[64,121,7,120000.0,99673.59,996.74],[65,138,7,194683.0,144154.9,1441.55],[65,11,7,194683.0,79982.1,799.82],[66,38,7,80000.0,27154.16,271.54],[67,40,7,72629.69,115176.57,2303.53],[68,24,7,113143.14,160417.56,3208.35],[69,177,7,155000.0,174650.56,3493.01],[70,140,7,70000.0,85372.59,1707.45],[71,162,7,54609.0,36458.51,364.59],[72,142,7,54609.0,800.55,8.01],[73,210,7,0.0,78341.55,1566.83],[75,211,7,177500.0,164337.69,1643.38],[75,50,7,177500.0,261807.3,5236.15],[76,136,7,190417.07,0.0,0.0],[76,148,7,190417.07,288237.45,5764.75],[77,19,7,190000.0,164645.13,1646.45],[78,37,7,96000.0,103194.59,2063.89],[78,174,7,144000.0,121819.41,1218.19],[79,118,7,210000.0,280096.46,5601.93],[79,47,7,90000.0,27900.61,279.01],[80,173,7,129958.35,198536.54,3970.73],[81,178,7,135000.0,203357.23,6100.72],[83,214,7,127500.0,247317.13,8656.1],[83,0,7,127500.0,59662.26,1789.87],[84,213,7,90000.0,65596.96,655.97],[85,193,7,90000.0,126847.56,2536.95],[86,89,7,121000.0,171271.4,5138.14],[86,218,7,122000.0,151409.58,4542.29],[86,152,7,121000.0,62952.79,629.53],[87,15,7,135000.0,146199.82,2924.0],[88,39,7,121000.0,164840.9,4945.23],[89,197,7,135000.0,236520.1,7095.6],[90,194,7,110000.0,50384.29,503.84],[91,103,7,172666.67,93433.28,2803.0],[91,198,7,172666.67,209621.69,9432.98],[91,68,7,172666.67,81810.81,2454.32],[92,65,7,174000.0,49300.57,1479.02],[93,200,7,193000.0,278179.35,12518.07],[94,44,7,295000.0,269130.39,8073.91],[95,70,7,155000.0,267833.95,12052.53],[96,109,7,150400.0,193669.69,8715.14],[96,8,7,37600.0,46088.81,2074.0],[97,192,7,172000.0,44615.43,1338.46],[98,54,7,177000.0,329435.09,14824.58],[100,84,7,109081.0,39264.79,392.65],[103,28,7,44000.0,60381.53,2717.17],[103,221,7,44000.0,64412.44,2898.56],[104,53,7,155000.0,105669.84,3170.1],[105,83,7,88000.0,118571.05,5335.7],[106,116,7,77068.63,86592.82,3896.68],[107,167,7,103000.0,498.67,14.96],[108,124,7,65022.0,91927.74,1838.55],[109,203,7,70000.0,49657.77,496.58],[110,115,7,110000.0,161200.16,3224.0],[112,199,7,68000.0,64171.78,641.72],[116,105,7,110000.0,161944.89,0.0],[113,201,7,110000.0,59280.57,592.81],[118,159,7,117751.16,10423.96,104.24],[118,207,7,117751.16,79656.71,796.57],[118,36,7,117751.16,35588.4,355.88],[118,86,7,117751.16,44843.34,448.43],[119,14,7,93449.21,108442.75,2168.86],[119,170,7,93449.21,106319.08,2126.38],[119,72,7,93449.21,106572.87,2131.46],[121,110,7,120000.0,197749.6,0.0],[121,25,7,120000.0,135820.66,0.0],[123,128,7,120000.0,143608.73,2872.17],[124,87,7,83278.0,58733.22,587.33],[125,163,7,90000.0,30740.44,307.4],[126,181,7,120000.0,167769.64,3355.39],[128,48,7,120000.0,198226.94,3964.54],[99,52,7,197500.0,237843.49,0.0],[99,146,7,148000.0,205745.15,0.0],[101,99,7,102000.0,112939.52,0.0],[131,41,7,140954.15,174572.51,14142.11],[132,120,7,90635.57,134012.56,12051.12],[130,166,7,140636.1,127167.08,11772.99],[102,116,7,90000.0,87704.49,0.0],[133,123,7,39248.08,48685.46,0.0],[1,74,8,89000.0,140013.55,2800.27],[2,195,8,0.0,708.33,14.17],[2,131,8,76500.0,89241.17,1784.82],[2,63,8,76500.0,106980.18,2139.6],[3,160,8,90000.0,102310.2,2046.2],[4,168,8,105000.0,110705.76,2214.12],[5,149,8,93704.0,118344.07,2366.88],[6,145,8,0.0,0.0,0.0],[6,58,8,97000.0,50663.79,506.64],[8,51,8,97000.0,62421.67,624.22],[9,135,8,148000.0,201864.9,4037.3],[10,55,8,104000.0,48660.15,486.6],[10,182,8,104000.0,38243.84,382.44],[11,77,8,120000.0,46497.74,464.98],[11,187,8,120000.0,43136.99,431.37],[12,102,8,110000.0,134347.04,2686.94],[13,165,8,68798.0,41858.74,418.59],[16,46,8,139000.0,176272.66,3525.45],[16,111,8,139000.0,100204.97,1002.05],[17,21,8,121000.0,162073.88,3241.48],[18,23,8,93350.0,27580.02,275.8],[18,81,8,93350.0,127278.66,2545.57],[19,171,8,130000.0,167111.01,3342.22],[19,125,8,28000.0,14781.39,147.81],[20,150,8,115000.0,213053.46,4261.07],[21,12,8,65000.0,66503.88,1330.08],[21,79,8,65000.0,36034.76,360.35],[22,1,8,97000.0,100475.0,2009.5],[23,61,8,150000.0,170653.76,3413.08],[23,134,8,49500.0,19339.28,193.39],[23,161,8,50000.0,53274.57,1065.49],[24,104,8,99000.0,66106.78,661.07],[25,107,8,74383.86,54148.25,541.48],[26,176,8,110000.0,53267.01,532.67],[27,180,8,100000.0,124385.25,2487.7],[27,59,8,100000.0,144674.72,2893.49],[28,49,8,0.0,-5328.74,0.0],[28,119,8,144000.0,30356.55,303.57],[29,66,8,52500.0,86622.17,1732.44],[30,33,8,110000.0,59478.15,594.78],[31,76,8,15000.0,15270.58,305.41],[32,30,8,75000.0,50836.31,508.36],[33,129,8,85000.0,8222.41,82.22],[34,16,8,66000.0,33310.09,333.1],[35,88,8,64888.96,118513.48,2370.27],[36,190,8,160000.0,188353.98,3767.08],[37,7,8,70000.0,80691.67,1613.83],[37,133,8,160000.0,164712.81,1532.67],[38,98,8,150000.0,89572.47,895.72],[39,179,8,118000.0,129955.08,2599.1],[40,45,8,90000.0,71626.93,716.27],[41,10,8,145000.0,66872.69,668.73],[41,141,8,0.0,0.0,0.0],[42,12,8,33000.0,152.12,1.52],[42,29,8,73000.0,82535.3,1650.71],[43,184,8,90000.0,9221.44,92.21],[43,31,8,95000.0,49813.9,498.14],[44,95,8,90000.0,66268.48,662.68],[45,22,8,111000.0,181783.86,3635.68],[46,75,8,95000.0,110698.88,2213.98],[47,94,8,75000.0,77085.25,1541.7],[47,172,8,75000.0,37333.77,373.34],[47,186,8,75000.0,10332.78,103.33],[47,175,8,60000.0,76026.25,1520.52],[48,71,8,0.0,596.07,0.0],[50,202,8,140000.0,222351.34,4447.03],[51,42,8,110000.0,72712.23,727.12],[52,13,8,75000.0,39863.89,398.64],[53,9,8,110000.0,126122.31,2522.45],[54,97,8,75000.0,70215.6,702.16],[55,34,8,120944.0,16109.65,161.1],[56,62,8,75000.0,9748.96,97.49],[57,3,8,85000.0,52202.34,522.02],[58,156,8,105000.0,105428.11,2108.56],[58,27,8,105000.0,132688.12,2653.76],[59,126,8,105210.0,111596.88,2231.94],[59,35,8,105210.0,-16808.25,0.0],[60,60,8,100000.0,112124.34,2242.49],[61,204,8,95000.0,96363.86,1927.28],[61,215,8,0.0,0.0,0.0],[62,20,8,86541.64,28221.99,282.22],[63,137,8,131450.0,86134.64,861.35],[63,143,8,131450.0,11051.45,110.51],[64,17,8,71083.35,38019.09,380.19],[64,121,8,71083.35,45646.18,456.46],[65,138,8,107262.5,85241.87,852.42],[65,11,8,0.0,-15774.2,0.0],[66,38,8,60000.0,102291.42,2045.83],[67,40,8,49525.0,105995.52,2119.91],[68,24,8,63375.45,34323.1,343.23],[69,177,8,93324.49,80586.61,805.87],[70,140,8,60000.0,81773.04,1635.46],[71,162,8,0.0,23294.85,465.9],[73,210,8,44330.28,33099.45,330.99],[75,211,8,97262.5,118523.01,2370.46],[75,50,8,97262.5,55703.87,557.04],[76,136,8,119816.67,157490.11,3149.8],[76,148,8,119816.67,2333.7,23.34],[77,19,8,99525.0,38959.32,389.59],[78,37,8,55563.95,27536.33,275.36],[78,174,8,83345.92,77347.34,773.47],[79,118,8,102261.82,66323.27,663.23],[79,47,8,43826.49,4426.84,44.27],[80,173,8,97145.62,137051.53,2741.03],[81,178,8,140000.0,91468.32,2744.05],[83,214,8,90000.0,110652.84,3872.85],[83,0,8,90000.0,83802.25,2514.07],[84,213,8,75000.0,57478.71,574.79],[85,193,8,75000.0,123025.7,2460.51],[86,89,8,90000.0,59636.0,1789.08],[86,218,8,90000.0,107261.63,3217.85],[86,152,8,90000.0,18969.44,189.69],[87,15,8,100000.0,103298.52,2065.97],[88,39,8,90000.0,43940.15,1318.2],[89,197,8,110000.0,72685.15,2180.55],[90,194,8,79000.0,18872.98,188.73],[91,103,8,116090.33,129682.47,5835.71],[91,198,8,116090.33,110034.02,3301.02],[91,68,8,116090.33,92399.43,2771.98],[92,65,8,97376.29,97564.62,3902.58],[93,200,8,193512.47,144029.77,4320.89],[94,44,8,197202.0,123183.47,3695.5],[95,70,8,88544.5,145508.63,6547.89],[96,109,8,90054.25,161921.41,7286.46],[96,8,8,48490.75,60763.5,2734.36],[97,192,8,103677.49,140201.39,6309.06],[97,164,8,0.0,0.0,0.0],[98,54,8,115674.0,76262.97,2287.89],[99,52,8,145000.0,160247.2,5608.65],[99,146,8,135000.0,156293.52,7814.68],[100,84,8,100000.0,25379.83,253.8],[101,99,8,105000.0,7782.7,311.31],[102,116,8,67539.0,74425.4,2214.31],[103,28,8,29264.0,52345.9,2355.57],[103,221,8,29264.0,57987.2,2609.42],[104,53,8,105835.97,27002.42,810.07],[105,83,8,65996.0,44296.19,1328.89],[106,116,8,54948.0,45079.5,3585.15],[107,167,8,74000.48,46251.66,1387.55],[108,124,8,75210.0,36490.17,364.9],[109,203,8,85000.0,99810.29,1996.21],[110,115,8,95000.0,128569.43,2571.39],[112,199,8,90000.0,134453.27,2689.07],[113,105,8,70000.0,39044.02,390.44],[118,159,8,75000.0,39032.28,390.32],[118,207,8,0.0,48032.39,0.0],[118,36,8,75000.0,43665.52,436.66],[118,86,8,75000.0,63410.19,634.1],[118,64,8,0.0,0.0,0.0],[119,14,8,72060.33,109902.64,2198.05],[119,170,8,72060.33,106928.04,2138.56],[119,72,8,72060.33,20121.45,201.21],[120,110,8,100000.0,78871.36,788.71],[120,25,8,100000.0,42113.71,421.14],[123,128,8,100000.0,70579.68,705.8],[124,87,8,65409.5,17583.35,175.83],[125,163,8,65409.5,26461.06,264.61],[126,181,8,100000.0,25573.47,255.73],[128,48,8,100000.0,56327.2,563.27],[130,166,8,112328.0,66737.13,6359.03],[131,41,8,125094.0,74254.61,6971.36],[133,123,8,0.0,10832.3,2100.0],[133,158,8,30079.0,33939.66,0.0],[0,125,9,155000.0,73987.66,739.88],[1,74,9,140000.0,147745.01,2954.9],[2,195,9,0.0,708.33,14.17],[2,131,9,175000.0,45483.54,454.84],[3,160,9,105000.0,37537.92,375.38],[4,168,9,110000.0,86489.93,864.9],[5,149,9,105000.0,4076.39,1521.99],[6,58,9,110000.0,126985.01,2539.7],[9,135,9,80000.0,169351.48,3387.03],[10,55,9,125000.0,108579.87,1085.8],[10,182,9,125000.0,125210.24,2504.2],[11,77,9,0.0,11568.6,231.37],[11,187,9,148000.0,83629.36,836.29],[12,102,9,125000.0,105785.69,1057.86],[13,165,9,107000.0,21485.88,214.86],[14,63,9,91182.0,159175.2,3183.5],[16,46,9,112000.0,48926.41,489.26],[16,111,9,168000.0,178027.35,3560.55],[17,21,9,150000.0,179956.92,3599.14],[18,23,9,84400.0,93417.17,1868.34],[18,81,9,126600.0,153677.45,3073.55],[19,171,9,95000.0,185095.46,3701.91],[20,150,9,60000.0,74684.78,1493.7],[21,12,9,10000.0,50913.74,1018.27],[21,79,9,150000.0,34764.76,347.65],[22,1,9,105000.0,125864.84,2517.3],[23,61,9,60000.0,65181.29,1303.63],[23,134,9,104796.24,138431.52,2768.63],[23,161,9,122939.78,186722.76,3734.46],[24,104,9,120217.57,124805.36,2496.11],[25,107,9,77190.33,68154.46,681.54],[26,176,9,60000.0,-7148.66,0.0],[27,180,9,0.0,671.1,13.42],[27,59,9,120000.0,194796.33,3895.93],[28,119,9,137257.11,98802.79,0.0],[29,66,9,85720.35,76639.53,766.4],[30,33,9,130671.27,149979.25,2999.59],[31,76,9,65335.64,25068.99,250.69],[32,30,9,95335.0,6898.63,68.99],[33,129,9,100000.0,76438.35,764.38],[34,16,9,83581.0,14137.75,141.38],[35,88,9,85861.95,106758.75,2135.18],[36,190,9,147397.19,153366.21,3067.32],[37,7,9,107150.44,192885.13,3857.7],[37,133,9,107150.44,102536.97,1025.37],[38,98,9,61000.0,25136.84,251.37],[39,179,9,106000.0,41461.31,414.61],[40,45,9,94000.0,29864.9,298.65],[41,10,9,150000.0,213317.69,4266.35],[41,141,9,0.0,0.0,0.0],[42,12,9,130000.0,22571.08,225.71],[42,29,9,70000.0,32922.98,329.23],[43,184,9,80000.0,44182.25,441.82],[43,31,9,120000.0,63383.16,633.83],[44,95,9,54762.0,73001.98,1460.04],[45,22,9,117000.0,132316.24,1323.16],[45,126,9,127584.5,-15495.82,0.0],[46,75,9,100000.0,105293.91,2105.88],[47,94,9,75000.0,132090.06,2641.8],[49,132,9,0.0,2486.34,0.0],[50,202,9,130000.0,62759.91,627.6],[51,42,9,90000.0,28428.74,284.29],[52,13,9,83000.0,95512.9,1910.26],[53,9,9,83000.0,136862.43,2737.25],[54,97,9,75000.0,40555.07,405.55],[54,186,9,75000.0,85235.99,1704.72],[55,34,9,110000.0,67976.75,679.77],[56,62,9,100000.0,45665.89,456.66],[57,3,9,85000.0,46333.58,463.34],[58,156,9,100000.0,119441.56,2388.83],[58,27,9,100000.0,123895.69,2477.91],[59,35,9,114556.0,124370.59,2487.41],[59,196,9,114556.0,122479.35,2449.59],[60,60,9,125000.0,135617.5,2712.35],[61,204,9,52500.0,96472.73,1929.45],[61,215,9,52500.0,0.0,0.0],[62,20,9,89840.88,114644.93,2292.9],[63,137,9,142251.08,24496.95,244.97],[63,143,9,142251.08,191607.25,3832.14],[64,17,9,81000.0,2475.82,24.76],[64,121,9,81000.0,122823.91,2456.48],[65,138,9,113171.0,1766.84,17.67],[67,40,9,49500.0,111893.96,2237.88],[68,24,9,65830.54,76437.6,1528.75],[69,177,9,96898.65,113798.14,2275.96],[70,140,9,60000.0,40707.58,407.08],[71,162,9,0.0,63137.29,1262.75],[73,210,9,52833.33,43075.19,430.75],[75,211,9,113000.0,77191.39,771.91],[75,50,9,113000.0,81388.83,813.89],[76,148,9,124568.79,146466.36,2929.33],[77,19,9,79500.0,17808.19,178.08],[78,37,9,197804.33,31132.6,311.33],[78,174,9,47700.0,90224.65,1804.49],[79,118,9,50850.0,30071.81,300.72],[79,47,9,118650.0,94244.11,942.44],[80,173,9,85000.0,13070.91,130.71],[81,178,9,63000.0,107224.76,3216.74],[83,214,9,125000.0,183282.44,6414.89],[83,0,9,123000.0,123362.32,3700.87],[84,213,9,82000.0,20267.18,202.67],[85,193,9,63023.0,18944.82,189.45],[86,89,9,72250.0,58800.59,1764.02],[86,218,9,112250.0,119991.58,3599.75],[86,152,9,112250.0,67632.21,676.32],[87,15,9,77000.0,59972.53,599.73],[88,39,9,112250.0,140728.83,4221.86],[89,197,9,123000.0,55284.97,1658.55],[90,208,9,30000.0,538.49,0.0],[91,103,9,124137.0,122975.67,3689.27],[91,198,9,124137.0,80966.72,2429.0],[91,68,9,124137.0,38473.75,1154.21],[92,65,9,105791.0,6997.44,209.92],[92,109,9,147026.0,129818.2,3894.55],[92,8,9,47588.25,41583.39,1247.5],[93,200,9,100210.0,110385.97,4967.37],[93,192,9,112637.0,130007.81,5850.35],[94,44,9,162764.75,88059.04,2641.77],[95,70,9,109972.0,101276.28,3038.29],[97,164,9,0.0,0.0,0.0],[98,54,9,132773.0,72258.42,2167.75],[98,188,9,0.0,0.0,0.0],[99,52,9,170000.0,189537.78,5647.65],[100,84,9,125000.0,56033.25,560.33],[101,99,9,109000.0,111431.29,5156.07],[102,116,9,0.0,141339.53,2105.87],[103,28,9,48446.5,41917.84,1257.54],[103,221,9,48446.5,65772.96,2959.78],[104,53,9,114982.0,40855.21,1225.66],[105,83,9,65181.0,48771.51,1463.15],[106,116,9,108270.0,141339.53,6360.28],[107,167,9,76567.0,22621.3,678.64],[108,124,9,95335.0,29991.27,299.91],[109,203,9,120000.0,140988.49,2819.77],[110,115,9,120000.0,65263.66,652.64],[112,199,9,120000.0,118077.16,1180.77],[113,105,9,60000.0,7946.85,79.47],[118,159,9,92456.5,10510.06,105.1],[118,64,9,92456.5,11018.31,110.18],[118,36,9,92456.5,62702.67,627.03],[118,86,9,92456.5,37284.25,372.84],[119,14,9,83333.33,85749.36,1714.99],[119,170,9,83333.33,88538.35,1770.77],[119,72,9,83333.33,100097.84,2001.96],[120,110,9,155000.0,48907.22,489.07],[123,128,9,78610.0,11370.1,113.7],[124,87,9,76500.2,38341.23,383.41],[126,181,9,0.0,0.0,0.0],[126,100,9,0.0,0.0,0.0],[127,122,9,0.0,185.8,0.0],[128,48,9,155000.0,72642.7,726.43],[130,166,9,75000.0,62193.43,18461.47],[130,158,9,64000.0,23608.21,6219.34],[131,41,9,122636.0,123938.0,4902.6],[133,123,9,70000.0,76670.61,2100.0],[66,38,9,60000.0,65690.12,0.0],[1,74,10,100000.0,130238.66,2604.77],[2,195,10,56167.48,19755.77,197.56],[2,131,10,56167.48,7400.52,74.01],[3,160,10,100000.0,109994.96,2199.9],[4,168,10,101898.0,51658.61,516.59],[5,149,10,88000.0,103228.14,2064.56],[6,58,10,70000.0,75470.78,1509.42],[6,125,10,30000.0,31952.14,639.04],[8,125,10,100000.0,46650.61,469.88],[9,135,10,160000.0,171538.23,3430.76],[10,55,10,0.0,14775.49,295.51],[10,182,10,212565.0,249859.39,4997.19],[11,77,10,120000.0,109998.65,1099.99],[11,187,10,120000.0,75655.25,756.55],[12,102,10,108379.0,133399.99,2668.0],[13,165,10,70000.0,42417.32,424.17],[14,63,10,58766.2,118763.5,2375.27],[15,204,10,56167.48,38068.02,380.68],[16,46,10,150000.0,188362.75,3767.25],[16,111,10,150000.0,75801.78,758.02],[17,21,10,130000.0,143658.52,2873.17],[18,23,10,0.0,137104.28,2742.09],[18,81,10,97148.0,93005.68,930.06],[19,171,10,126000.0,193879.3,3877.59],[20,150,10,140600.99,153780.35,3075.61],[21,12,10,75000.0,80708.85,1614.18],[21,79,10,75000.0,89108.47,1782.17],[22,1,10,148925.2,78230.58,782.31],[37,133,10,115000.0,136881.44,0.0],[23,61,10,110000.0,117284.7,2433.29],[23,134,10,116505.0,85574.91,855.75],[23,161,10,110000.0,167966.54,0.0],[24,104,10,74000.0,97978.81,1959.58],[25,107,10,74068.01,80571.18,1611.42],[26,176,10,115000.0,126319.11,2526.38],[27,180,10,120000.0,46580.53,465.81],[27,59,10,120000.0,208622.17,4172.44],[28,49,10,0.0,0.0,0.0],[28,119,10,126863.45,104875.49,1048.75],[29,66,10,70000.0,-23898.14,0.0],[30,33,10,130000.0,141611.18,2832.22],[31,76,10,46160.0,22336.81,223.37],[32,30,10,78932.0,28648.92,286.49],[33,129,10,100000.0,118891.11,2377.82],[34,16,10,62843.73,69160.24,1383.2],[35,88,10,78000.0,96719.82,1934.4],[36,190,10,83335.0,51971.72,519.72],[37,7,10,115000.0,181855.91,3637.12],[38,98,10,120000.0,164378.86,3287.58],[39,179,10,125000.0,93115.98,931.16],[40,45,10,80000.0,87888.25,1757.77],[41,10,10,70000.0,160036.13,3200.72],[41,141,10,120000.0,181513.87,3630.28],[42,12,10,100000.0,119577.83,2391.56],[42,29,10,100000.0,120290.59,2405.81],[43,184,10,100000.0,122289.06,2445.78],[43,31,10,100000.0,18717.92,187.18],[44,95,10,80000.0,115428.48,2308.57],[45,22,10,127584.5,173784.22,3475.68],[45,126,10,127584.5,148514.4,2970.29],[46,75,10,100000.0,110903.26,2218.07],[47,94,10,125000.0,148727.82,2974.56],[48,71,10,0.0,-20745.89,0.0],[49,132,10,70500.0,97933.11,1958.66],[50,202,10,134000.0,121087.89,1210.88],[51,42,10,120000.0,65414.33,654.14],[52,13,10,83500.0,22165.08,221.65],[53,9,10,127000.0,142191.38,2843.83],[54,97,10,80000.0,62958.19,629.58],[54,186,10,80000.0,22125.44,221.25],[55,34,10,120000.0,94017.44,940.17],[56,62,10,83000.0,51111.77,511.12],[57,3,10,80000.0,34403.63,344.04],[58,156,10,110000.0,53474.5,534.74],[58,27,10,165000.0,80237.27,802.37],[59,35,10,125000.0,137302.13,2746.04],[59,196,10,125000.0,139175.11,2783.5],[60,60,10,126000.0,140572.9,2811.46],[61,215,10,90000.0,101167.22,2023.34],[62,20,10,86901.31,136180.29,2723.61],[63,137,10,125975.93,293159.03,5863.18],[63,143,10,125975.93,-597.27,0.0],[64,17,10,95000.0,47610.39,476.1],[64,121,10,95000.0,82328.67,823.29],[65,138,10,115000.0,162088.04,3241.76],[65,11,10,0.0,0.0,0.0],[65,40,10,115000.0,126412.26,986.38],[68,24,10,62447.95,91038.56,1820.77],[69,177,10,94061.04,72908.06,729.08],[70,140,10,55000.0,73481.07,1469.62],[71,162,10,38883.2,37825.77,378.26],[72,37,10,95754.89,43158.99,431.59],[73,210,10,38883.2,89452.4,1789.05],[74,40,10,38883.2,46179.04,923.58],[75,211,10,98671.53,58066.6,580.67],[75,50,10,98671.53,151573.36,3031.47],[76,148,10,124249.57,91102.03,911.02],[77,19,10,170866.79,56615.49,566.15],[78,174,10,85307.54,136578.36,2731.57],[79,118,10,104829.57,134198.94,2683.98],[79,47,10,44926.96,73544.58,1470.89],[80,173,10,89562.0,132640.02,2652.8],[81,178,10,134000.0,141237.56,4237.13],[82,193,10,60500.0,44129.83,441.3],[83,214,10,60000.0,92050.12,3221.75],[83,0,10,125459.0,96194.0,2885.82],[84,213,10,83500.0,101866.47,2037.33],[86,89,10,125000.0,45801.05,1374.03],[86,218,10,43000.0,37033.76,1111.01],[86,152,10,125000.0,149034.88,2980.7],[87,15,10,125000.0,87078.83,870.79],[88,39,10,87000.0,65488.02,1964.64],[89,197,10,130000.0,170433.96,5113.02],[90,208,10,70500.0,19400.58,194.01],[91,103,10,129070.18,164616.69,7407.75],[91,198,10,129070.18,168501.71,7582.58],[91,68,10,129070.18,211701.6,9526.57],[92,65,10,97409.96,151403.25,6813.15],[93,200,10,122340.0,157328.72,7079.79],[94,44,10,239861.6,301602.95,13572.13],[95,70,10,162583.24,197407.44,8883.33],[96,109,10,143351.84,70504.29,2115.13],[96,8,10,77189.45,26639.68,799.19],[97,192,10,103693.2,152036.2,6841.63],[97,164,10,0.0,0.0,0.0],[98,54,10,135035.41,123352.33,3700.57],[98,188,10,0.0,28892.79,1300.18],[99,52,10,130000.0,198732.0,6043.14],[99,84,10,80000.0,84214.29,1684.29],[100,99,10,78000.0,14814.4,451.31],[101,99,10,90000.0,117049.77,4944.22],[102,116,10,80000.0,61988.15,1732.96],[103,28,10,61597.03,42696.02,1280.88],[103,221,10,61597.03,23513.0,705.39],[104,53,10,114758.84,127401.43,5733.06],[105,83,10,31320.0,54029.5,2431.33],[106,116,10,52759.18,74234.43,5448.9],[107,167,10,89162.53,151209.75,6804.44],[108,124,10,80000.0,26593.44,265.93],[109,203,10,110000.0,41035.91,410.36],[110,115,10,115000.0,132298.53,2645.97],[112,199,10,110000.0,72835.85,728.36],[113,191,10,80000.0,62548.79,625.49],[115,157,10,30000.0,1011.87,10.12],[116,105,10,115000.0,184374.18,3687.48],[117,207,10,0.0,13764.81,0.0],[118,159,10,79637.75,112320.45,2246.41],[118,64,10,79637.75,61350.91,613.51],[118,36,10,79637.75,43001.4,430.01],[118,86,10,79637.75,45677.85,456.78],[119,14,10,86666.67,112711.5,2254.23],[119,170,10,86666.67,85922.28,859.22],[119,72,10,86666.67,89077.29,1781.55],[120,110,10,62137.0,99854.93,1997.1],[121,100,10,50137.0,14000.0,140.0],[123,128,10,62137.0,153887.29,3077.75],[124,87,10,50274.0,0.0,0.0],[126,181,10,62137.0,87384.66,1747.69],[127,122,10,60000.0,62933.27,1258.67],[128,48,10,62137.0,55078.8,550.79],[130,166,10,91474.5,65292.22,6529.22],[130,158,10,91474.5,39737.42,397.37],[131,41,10,131732.0,216714.48,13002.87],[133,123,10,61040.52,36859.8,2100.0],[1,74,11,243318.0,303754.21,6075.08],[2,195,11,181439.45,205523.91,4110.48],[2,131,11,181439.0,163053.12,3261.06],[3,160,11,194585.0,227622.5,4552.45],[4,219,11,243168.0,187106.86,1871.07],[5,149,11,207896.0,235414.39,4708.29],[6,58,11,212553.0,281413.79,5628.28],[8,125,11,213262.0,155159.82,1551.6],[9,135,11,293396.0,330520.86,6610.42],[10,182,11,412936.0,469861.84,9397.24],[11,77,11,242500.0,363741.73,7274.83],[11,187,11,242500.0,142828.53,1428.29],[12,102,11,240000.0,259213.14,5184.26],[13,165,11,220029.73,115749.73,1157.5],[14,63,11,150030.0,222488.54,4449.77],[15,79,11,60021.0,73109.96,1462.2],[16,46,11,311356.0,456051.84,9121.04],[16,111,11,311356.0,311680.99,6233.62],[17,21,11,293049.0,324334.51,6486.69],[18,23,11,246347.0,320619.54,6412.39],[18,81,11,246347.0,217523.13,4350.46],[19,171,11,328928.0,417728.18,8354.56],[19,106,11,140969.0,167599.61,3351.99],[20,150,11,323447.0,499317.1,9986.34],[21,12,11,146611.0,275142.36,5502.85],[22,1,11,212756.0,232686.99,4653.74],[23,61,11,235000.0,376448.78,7528.98],[23,134,11,148000.0,68116.49,681.16],[23,161,11,235000.0,291250.32,5825.01],[24,104,11,285000.0,177011.06,1770.11],[25,107,11,156750.0,110644.47,1106.44],[26,176,11,189000.0,142498.0,1424.98],[27,180,11,189500.0,207307.53,4146.15],[27,59,11,189500.0,204396.28,4087.93],[28,119,11,227500.0,220921.43,2209.21],[28,216,11,122500.0,52930.4,529.3],[29,66,11,189000.0,186007.31,1860.07],[30,33,11,370000.0,109508.34,1095.08],[31,76,11,120000.0,213616.25,4272.32],[32,30,11,131000.0,89946.25,899.46],[33,129,11,170000.0,226155.53,4523.11],[34,16,11,150000.0,177675.71,3553.51],[35,88,11,134729.68,130125.38,1301.25],[36,190,11,266500.0,325025.71,6500.51],[37,7,11,245000.0,483531.57,9670.63],[37,133,11,245000.0,327647.76,0.0],[38,98,11,222000.0,371910.81,7438.22],[39,179,11,175500.0,199677.35,3993.55],[39,2,11,94500.0,116604.85,2332.1],[40,45,11,189000.0,72147.08,721.47],[41,10,11,250000.0,301536.48,6030.73],[41,141,11,250000.0,101865.22,1018.65],[42,12,11,210000.0,141552.5,1415.53],[42,29,11,210000.0,212443.9,4248.88],[43,184,11,210000.0,223817.05,4476.34],[43,31,11,210000.0,217082.72,4341.65],[44,95,11,189000.0,218189.3,4363.79],[45,22,11,275000.0,13057.24,130.57],[45,126,11,275000.0,32362.35,323.62],[46,75,11,270000.0,88197.42,881.97],[47,94,11,210000.0,241530.19,4830.6],[47,113,11,90000.0,0.0,0.0],[48,56,11,139621.0,30796.36,307.96],[49,132,11,200000.0,227806.21,4556.12],[50,202,11,245000.0,246215.94,4924.32],[50,183,11,0.0,198.0,3.96],[51,42,11,225000.0,156109.69,1561.1],[52,13,11,155000.0,214059.92,4281.2],[53,9,11,240000.0,279561.79,5591.24],[54,97,11,155000.0,71934.77,719.35],[54,186,11,155000.0,57274.28,572.74],[55,34,11,220000.0,304987.37,6099.75],[56,62,11,155000.0,97380.37,973.8],[57,3,11,180000.0,184956.89,3699.14],[58,156,11,240000.0,249156.12,4983.12],[58,27,11,240000.0,283862.88,5677.26],[59,35,11,270000.0,101255.07,997.46],[59,196,11,270000.0,98237.75,997.46],[60,60,11,300000.0,316036.77,6320.74],[61,204,11,250000.0,180193.95,1801.94],[62,20,11,171000.0,226501.91,4530.04],[63,137,11,280250.0,365658.82,7313.18],[63,143,11,280250.0,319093.39,6381.87],[64,17,11,185250.0,191741.99,3834.84],[64,121,11,185250.0,136028.38,1360.28],[65,138,11,228000.0,333037.74,6660.75],[65,40,11,61750.0,180564.02,2114.02],[66,154,11,105000.0,71770.74,717.71],[67,108,11,88500.0,33125.05,331.25],[68,24,11,166250.0,191969.02,3839.38],[69,177,11,204250.0,223442.4,4468.85],[70,140,11,105000.0,109523.18,2190.46],[71,162,11,68580.0,21391.25,213.91],[73,210,11,75000.0,129949.91,2599.0],[74,40,11,289803.64,180564.02,748.63],[75,211,11,213750.0,232398.48,4647.97],[75,50,11,213750.0,137401.42,1374.01],[76,148,11,228000.0,218639.86,2186.4],[76,217,11,228000.0,112326.67,1123.27],[77,19,11,242250.0,131115.13,1311.15],[78,37,11,89300.0,123277.33,2465.55],[78,174,11,133950.0,254479.32,5089.59],[79,118,11,216125.0,208589.71,2085.9],[79,47,11,116375.0,45034.88,450.35],[80,173,11,261250.0,285807.6,5716.15],[81,178,11,245000.0,321369.41,9641.08],[82,193,11,138984.0,143525.97,2870.52],[83,214,11,220000.0,254937.87,8922.83],[83,0,11,220000.0,146036.08,4381.08],[84,213,11,155000.0,98018.1,980.18],[86,89,11,186666.67,147324.89,4419.75],[86,218,11,186666.67,130467.02,3914.01],[86,152,11,186666.67,61252.77,612.53],[87,15,11,240000.0,99912.88,999.13],[88,39,11,220000.0,197814.65,5934.44],[89,197,11,245000.0,353366.88,10601.01],[90,208,11,155000.0,109813.92,1098.14],[91,103,11,270934.71,338053.4,15212.4],[91,198,11,270934.71,320830.62,14437.38],[91,68,11,270934.71,200786.18,6023.59],[92,65,11,207429.69,245281.54,11037.67],[93,200,11,300995.22,346198.42,15578.93],[94,44,11,433070.11,556122.26,25025.5],[95,70,11,204682.25,267733.16,12047.99],[96,109,11,220568.78,196581.71,5897.45],[96,8,11,118767.8,81931.43,2457.94],[97,192,11,155058.14,186236.38,8380.64],[97,164,11,162733.37,177965.75,7118.63],[98,54,11,287738.07,287623.49,8628.7],[98,188,11,0.0,97725.82,4397.66],[99,52,11,295000.0,361747.01,12661.15],[99,84,11,205000.0,91458.55,914.59],[101,99,11,380000.0,232625.19,9305.01],[102,116,11,154023.0,178168.78,5249.21],[103,28,11,68243.54,11522.33,345.67],[103,188,11,0.0,95101.81,2853.05],[104,53,11,225450.41,228789.69,9151.59],[105,83,11,141256.16,101505.82,3045.17],[106,116,11,117609.32,48210.42,6791.38],[107,167,11,157457.93,199199.35,8963.97],[108,124,11,80000.0,39830.91,398.31],[109,203,11,170000.0,150795.73,1507.96],[110,115,11,189000.0,231246.49,4624.93],[112,199,11,170000.0,220856.42,4417.13],[113,191,11,131000.0,216837.8,4336.76],[114,93,11,64847.0,37916.02,379.16],[115,157,11,119000.0,131117.91,2622.36],[116,105,11,189000.0,318051.55,6361.03],[118,159,11,177373.67,90030.96,900.31],[118,64,11,177373.67,44739.55,447.4],[118,36,11,0.0,336.0,6.72],[118,86,11,177373.67,107639.08,1076.39],[119,14,11,133333.33,165240.98,3304.82],[119,170,11,133333.33,177913.25,3558.27],[119,72,11,133333.33,61640.4,1232.81],[120,110,11,176171.83,248056.59,4961.13],[121,100,11,176171.83,4568.7,45.69],[123,128,11,176171.83,115364.82,1153.65],[124,87,11,176171.83,64715.62,647.16],[126,181,11,176171.83,181265.17,3625.3],[127,122,11,90000.0,72028.89,720.29],[128,48,11,176171.83,201425.03,4028.5],[130,166,11,142184.5,129554.41,12955.44],[130,158,11,142184.5,60891.15,608.91],[131,41,11,212692.0,88048.16,2641.44],[132,209,11,40854.58,10110.09,101.1],[133,123,11,81000.0,96868.33,2100.0]],"incentivo12m":3592650.0};
+
+/* ---------- helpers ---------- */
+const BRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const BRL2 = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2});
+const NUM = new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0});
+const fp = (v,d=1)=> (v*100).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+const fpp = (v,d=1)=> v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+const MESPT = m=>{const [y,mm]=m.split('-');const n=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+mm-1];return n+'/'+y.slice(2);};
+const clsD = d=> d>1?'pos':(d<-1?'neg':'');
+const sgn = v=> (v>0?'+':'')+BRL.format(v);
+
+/* ---------- estado ---------- */
+const PRESETS = {
+  teams:   {name:'Proposta 2 — Matriz Teams', t:[70,100,120], g:100, m:[[1.0,1.0],[1.0,1.3],[2.0,2.3],[2.3,2.8]]},
+  arquivo: {name:'Proposta 1 — Régua individual (arquivo)', t:[70,100,120], g:100, m:[[1.0,1.0],[1.0,1.0],[2.0,2.0],[2.5,2.5]]},
+  padrao:  {name:'Padrão CDC 1% / 2%', t:[70,100,120], g:100, m:[[1.0,1.0],[1.0,1.0],[2.0,2.0],[2.0,2.0]]}
+};
+let sim = JSON.parse(JSON.stringify(PRESETS.teams));
+let simName = PRESETS.teams.name;
+let per = {a:6, b:11}; // padrão: últimos 6 meses (out/25 a mar/26)
+let charts = {};
+let sortState = {};
+
+/* ---------- pré-processamento ---------- */
+const R = DATA.rows; // [loja, fono, mes, meta, venda, comAtual]
+const NF_LOJA_MES = {}; // fonos por loja-mês
+R.forEach(r=>{ const k=r[0]*12+r[2]; (NF_LOJA_MES[k]=NF_LOJA_MES[k]||new Set()).add(r[1]); });
+
+function gatesFor(gPct){
+  const agg = {};
+  R.forEach(r=>{ const k=r[0]*12+r[2]; const a=agg[k]||(agg[k]={m:0,v:0}); a.m+=r[3]; a.v+=r[4]; });
+  const out = {};
+  for(const k in agg){ const a=agg[k]; out[k] = a.m>0 && (a.v/a.m)*100 >= gPct-1e-9; }
+  return out;
+}
+function faixaOf(atPct, t){ return atPct < t[0] ? 0 : atPct < t[1] ? 1 : atPct < t[2] ? 2 : 3; }
+
+/* núcleo: computa um cenário {t,g,m} no período -> agregados completos */
+function compute(cfg){
+  const gates = gatesFor(cfg.g);
+  const tot = {venda:0, meta:0, atual:0, sim:0};
+  const porMes = DATA.months.map(()=>({venda:0, atual:0, sim:0}));
+  const porFx = [0,1,2,3].map(()=>({n:0, venda:0, atual:0, sim:0}));
+  const porReg = DATA.regionais.map(()=>({atual:0, sim:0, venda:0}));
+  const porLoja = {}; const porFono = {};
+  const scatter = []; const scOut = [];
+  R.forEach(r=>{
+    const [li,fi,mi,meta,venda,atual] = r;
+    if(mi<per.a || mi>per.b) return;
+    const atPct = meta>0 ? venda/meta*100 : 0;
+    const fx = faixaOf(atPct, cfg.t);
+    const gate = !!gates[li*12+mi];
+    const simv = venda * cfg.m[fx][gate?1:0] / 100;
+    tot.venda+=venda; tot.meta+=meta; tot.atual+=atual; tot.sim+=simv;
+    const pm=porMes[mi]; pm.venda+=venda; pm.atual+=atual; pm.sim+=simv;
+    const pf=porFx[fx]; pf.n++; pf.venda+=venda; pf.atual+=atual; pf.sim+=simv;
+    const pr=porReg[DATA.lojas[li].r]; pr.atual+=atual; pr.sim+=simv; pr.venda+=venda;
+    const L = porLoja[li]||(porLoja[li]={venda:0,meta:0,atual:0,sim:0,meses:new Set(),bate:0,fonos:new Set(),nfMax:0});
+    L.venda+=venda; L.meta+=meta; L.atual+=atual; L.sim+=simv; L.fonos.add(fi);
+    if(!L.meses.has(mi)){ L.meses.add(mi); if(gate) L.bate++; L.nfMax=Math.max(L.nfMax, NF_LOJA_MES[li*12+mi].size); }
+    const F = porFono[fi]||(porFono[fi]={venda:0,meta:0,atual:0,sim:0,lojas:new Set(),meses:new Set()});
+    F.venda+=venda; F.meta+=meta; F.atual+=atual; F.sim+=simv; F.lojas.add(li); F.meses.add(mi);
+    if(venda>0 && meta>0){
+      const p = {x:Math.min(atPct,200), y:Math.min(atual/venda*100,12), raw:atPct};
+      (atual/venda>0.05 ? scOut : scatter).push(p);
+    }
+  });
+  let up=0,down=0,flat=0;
+  for(const fi in porFono){ const d=porFono[fi].sim-porFono[fi].atual; if(d>1)up++; else if(d<-1)down++; else flat++; }
+  return {tot, porMes, porFx, porReg, porLoja, porFono, scatter, scOut, up, down, flat, cfg};
+}
+
+/* cenários fixos para a Visão Executiva */
+function computeFixed(){ return {A:compute(PRESETS.arquivo), B:compute(PRESETS.teams)}; }
+
+/* ---------- período ---------- */
+function initPeriod(){
+  const sF=document.getElementById('selFrom'), sT=document.getElementById('selTo');
+  DATA.months.forEach((m,i)=>{ sF.add(new Option(MESPT(m),i)); sT.add(new Option(MESPT(m),i)); });
+  sF.value=per.a; sT.value=per.b;
+  sF.onchange=()=>{ per.a=+sF.value; if(per.a>per.b){per.b=per.a; sT.value=per.b;} renderAll(); };
+  sT.onchange=()=>{ per.b=+sT.value; if(per.b<per.a){per.a=per.b; sF.value=per.a;} renderAll(); };
+}
+function setPeriod(a,b){ per={a,b}; document.getElementById('selFrom').value=a; document.getElementById('selTo').value=b; renderAll(); }
+
+/* ---------- simulador (inputs) ---------- */
+function loadSimInputs(){
+  ['t1','t2','t3'].forEach((id,i)=>document.getElementById(id).value=sim.t[i]);
+  document.getElementById('tg').value=sim.g;
+  for(let i=0;i<4;i++) for(let j=0;j<2;j++) document.getElementById('m'+i+j).value=sim.m[i][j];
+  updFaixaLabels();
+}
+function updFaixaLabels(){
+  const t=sim.t;
+  document.getElementById('lblF0').textContent='Abaixo de '+t[0]+'%';
+  document.getElementById('lblF1').textContent=t[0]+'% a '+(t[1]-0.1).toLocaleString('pt-BR',{minimumFractionDigits:1})+'%';
+  document.getElementById('lblF2').textContent=t[1]+'% a '+(t[2]-0.1).toLocaleString('pt-BR',{minimumFractionDigits:1})+'%';
+  document.getElementById('lblF3').textContent=t[2]+'% ou mais';
+}
+function bindSim(){
+  const read=()=>{
+    sim.t=[+document.getElementById('t1').value||0, +document.getElementById('t2').value||0, +document.getElementById('t3').value||0];
+    sim.g=+document.getElementById('tg').value||0;
+    for(let i=0;i<4;i++) for(let j=0;j<2;j++) sim.m[i][j]=+document.getElementById('m'+i+j).value||0;
+    simName='Cenário personalizado'; updFaixaLabels(); renderAll();
+  };
+  ['t1','t2','t3','tg'].forEach(id=>document.getElementById(id).addEventListener('change',read));
+  for(let i=0;i<4;i++) for(let j=0;j<2;j++) document.getElementById('m'+i+j).addEventListener('change',read);
+}
+function applyPreset(k){ sim=JSON.parse(JSON.stringify(PRESETS[k])); simName=PRESETS[k].name; loadSimInputs(); renderAll(); }
+
+/* ---------- charts util ---------- */
+function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart(document.getElementById(id), cfg); }
+Chart.defaults.font.family='Roboto';
+Chart.defaults.color='#646464';
+
+/* ---------- render ---------- */
+let LAST = null;
+function renderAll(){
+  const S = compute(sim);
+  const FX = computeFixed();
+  LAST = {S, FX};
+  renderHeader(S);
+  renderExec(S, FX);
+  renderSim(S);
+  renderLojas(S);
+  renderFonosTable(S);
+  renderScatter(S);
+  renderRead(FX);
+  document.getElementById('simTag').textContent=simName;
+  document.getElementById('simTagLojas').textContent='Cenário: '+simName;
+  document.getElementById('simTagFonos').textContent='Cenário: '+simName;
+}
+function lightRender(){ if(!LAST) return; renderLojas(LAST.S); renderFonosTable(LAST.S); }
+function renderHeader(S){
+  const m0=MESPT(DATA.months[per.a]), m1=MESPT(DATA.months[per.b]);
+  document.getElementById('subHeader').textContent =
+    'Comissão individual combinada ao resultado coletivo da loja | '+DATA.fonos.length+' fonoaudiólogos(as) | '+DATA.lojas.length+' lojas | '+m0+' a '+m1;
+  const nMes = per.b-per.a+1;
+  document.getElementById('scopeInfo').textContent = nMes+(nMes>1?' meses selecionados':' mês selecionado')+' | vendas '+BRL.format(S.tot.venda);
+}
+
+function kpi(lbl,val,det){ return '<div class="card"><div class="lbl">'+lbl+'</div><div class="val">'+val+'</div>'+(det?'<div class="det">'+det+'</div>':'')+'</div>'; }
+
+function renderExec(S, FX){
+  const t=FX.B.tot, tA=FX.A.tot;
+  const dB=t.sim-t.atual, dA=tA.sim-tA.atual;
+  document.getElementById('execCallout').innerHTML =
+    'No período selecionado, a <b>Proposta 2 (matriz Teams)</b> custaria <b>'+BRL.format(t.sim)+'</b> contra <b>'+BRL.format(t.atual)+
+    '</b> apurados hoje — variação de <b class="'+clsD(dB)+'">'+sgn(dB)+'</b> ('+fpp(dB/t.atual*100)+'). '+
+    'O agregado é quase neutro porque o acréscimo dos aceleradores nas praças em 1% / 2% é compensado pela migração das réguas legadas de BSB/GO (3% / 4,5%) e das garantias de MT/MS para a régua única. '+
+    'A decisão central, portanto, é menos de custo e mais de <b>redistribuição e transição</b>: veja a aba Leitura e Riscos.';
+  document.getElementById('execKpis').innerHTML =
+    kpi('Vendas fono no período', BRL.format(t.venda), NUM.format(FX.B.porFx.reduce((s,f)=>s+f.n,0))+' fono-mês')+
+    kpi('Comissão atual', BRL.format(t.atual), '<b>'+fp(t.atual/t.venda,2)+'</b> sobre vendas')+
+    kpi('Proposta 2 — Matriz Teams', BRL.format(t.sim), '<b class="'+clsD(dB)+'">'+sgn(dB)+'</b> | '+fp(t.sim/t.venda,2)+' s/ vendas')+
+    kpi('Proposta 1 — Régua individual', BRL.format(tA.sim), '<b class="'+clsD(dA)+'">'+sgn(dA)+'</b> | '+fp(tA.sim/tA.venda,2)+' s/ vendas')+
+    kpi('Fonos: ganham × perdem (P2)', FX.B.up+' × '+FX.B.down, FX.B.flat+' sem variação relevante')+
+    kpi('Loja-mês batendo a meta', fpp(lojaBatePct(FX.B),1), 'gatilho de 100% sobre a meta somada');
+  const lbl = DATA.months.slice(per.a, per.b+1).map(MESPT);
+  mkChart('chMes',{type:'bar',data:{labels:lbl,datasets:[
+    {label:'Atual', data:slicePM(FX.B.porMes,'atual'), backgroundColor:'#003C64'},
+    {label:'Proposta 2 (Teams)', data:slicePM(FX.B.porMes,'sim'), backgroundColor:'#0083CA'},
+    {label:'Proposta 1 (individual)', data:slicePM(FX.A.porMes,'sim'), backgroundColor:'#6EB4DC'}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},
+    scales:{y:{ticks:{callback:v=>'R$ '+NUM.format(v/1000)+' mil'}}}}});
+  const fxLbl=['Abaixo de 70%','70% a 99,9%','100% a 119,9%','120% ou mais'];
+  mkChart('chFaixa',{type:'bar',data:{labels:fxLbl,datasets:[{label:'Fono-mês',
+    data:FX.B.porFx.map(f=>f.n), backgroundColor:['#8C321E','#6EB4DC','#0083CA','#003C64']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const nTot=FX.B.porFx.reduce((s,f)=>s+f.n,0);
+  document.getElementById('hintFaixa').textContent =
+    'No período, '+fpp(FX.B.porFx[0].n/nTot*100)+' dos fono-mês ficam abaixo de 70% e '+
+    fpp(FX.B.porFx[3].n/nTot*100)+' superam 120%. A faixa intermediária de 70% a 99,9% ('+fpp(FX.B.porFx[1].n/nTot*100)+') é exatamente onde o acelerador de loja de 1,3% atua.';
+  regChart('chRegExec', FX.B);
+  const inc = DATA.incentivo12m;
+  document.getElementById('ctxCards').innerHTML = '<div class="kpis" style="margin-bottom:0;">'+
+    kpi('Incentivo (12 meses)', BRL.format(inc), 'prêmio por atingimento — rubrica à parte')+
+    kpi('Registros em loja multi-fono', '52,9%', '34% dos loja-mês têm 2 ou mais fonos (abr/25 a mar/26)')+
+    kpi('Percentual efetivo acima de 5%', '32 casos', BRL.format(218247)+' em 12m — garantias e exceções')+
+    kpi('Réguas atuais em uso', '1% / 2% padrão', 'BSB/GO em 3% / 4,5%; MG1 e SPI mediana 1%')+'</div>';
+}
+function slicePM(pm,k){ return pm.slice(per.a,per.b+1).map(o=>Math.round(o[k])); }
+function lojaBatePct(S){ let b=0,t=0; for(const li in S.porLoja){ b+=S.porLoja[li].bate; t+=S.porLoja[li].meses.size; } return t?b/t*100:0; }
+function regChart(id, S){
+  const items = DATA.regionais.map((r,i)=>({r, d:S.porReg[i].sim-S.porReg[i].atual})).sort((a,b)=>a.d-b.d);
+  mkChart(id,{type:'bar',data:{labels:items.map(i=>i.r),datasets:[{label:'Variação (R$)',
+    data:items.map(i=>Math.round(i.d)), backgroundColor:items.map(i=>i.d<0?'#7D0041':'#0083CA')}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>sgn(c.raw)}}},
+      scales:{x:{ticks:{callback:v=>'R$ '+NUM.format(v/1000)+' mil'}}}}});
+}
+
+function renderSim(S){
+  const t=S.tot, d=t.sim-t.atual;
+  document.getElementById('simKpis').innerHTML =
+    kpi('Custo simulado no período', BRL.format(t.sim), fp(t.sim/t.venda,2)+' sobre vendas')+
+    kpi('Variação × custo atual', '<span class="'+clsD(d)+'">'+sgn(d)+'</span>', fpp(d/t.atual*100)+' sobre '+BRL.format(t.atual))+
+    kpi('Fonos que ganham', String(S.up), 'variação acima de R$ 1 no período')+
+    kpi('Fonos que perdem', String(S.down), S.flat+' sem variação relevante');
+  regChart('chRegSim', S);
+  const fxLbl=['Abaixo de '+sim.t[0]+'%', sim.t[0]+'% a '+(sim.t[1]-0.1).toLocaleString('pt-BR',{minimumFractionDigits:1})+'%', sim.t[1]+'% a '+(sim.t[2]-0.1).toLocaleString('pt-BR',{minimumFractionDigits:1})+'%', sim.t[2]+'% ou mais'];
+  let h='<tr><th class="l">Faixa</th><th>Fono-mês</th><th>Vendas</th><th>Comissão atual</th><th>Comissão simulada</th><th>Variação</th></tr>';
+  S.porFx.forEach((f,i)=>{ const dd=f.sim-f.atual;
+    h+='<tr'+(i%2?' class="z"':'')+'><td class="l">'+fxLbl[i]+'</td><td>'+NUM.format(f.n)+'</td><td>'+BRL.format(f.venda)+'</td><td>'+BRL.format(f.atual)+'</td><td>'+BRL.format(f.sim)+'</td><td class="'+clsD(dd)+'">'+sgn(dd)+'</td></tr>'; });
+  document.getElementById('tblFaixaSim').innerHTML=h;
+}
+
+/* ---------- tabela genérica ordenável ---------- */
+function renderTable(elId, cols, rows, defSort){
+  const st = sortState[elId] || (sortState[elId]={k:defSort, asc:false});
+  const c = cols.find(c=>c.k===st.k) || cols[0];
+  rows.sort((a,b)=>{ const va=a[st.k], vb=b[st.k];
+    const r = (typeof va==='string') ? va.localeCompare(vb,'pt-BR') : (va-vb);
+    return st.asc?r:-r; });
+  let h='<tr>'+cols.map(c=>'<th class="'+(c.l?'l':'')+'" data-k="'+c.k+'">'+c.h+(st.k===c.k?'<span class="arr">'+(st.asc?'\u25B2':'\u25BC')+'</span>':'')+'</th>').join('')+'</tr>';
+  rows.forEach((r,i)=>{ h+='<tr class="'+(i%2?'z ':'')+(r._click?'click':'')+'"'+(r._click?' data-li="'+r._click+'"':'')+'>'+
+    cols.map(c=>'<td class="'+(c.l?'l':'')+' '+(c.cls?c.cls(r):'')+'">'+c.f(r)+'</td>').join('')+'</tr>'; });
+  const el=document.getElementById(elId); el.innerHTML=h;
+  el.querySelectorAll('th').forEach(th=>th.onclick=()=>{ const k=th.dataset.k;
+    if(st.k===k) st.asc=!st.asc; else {st.k=k; st.asc=false;} lightRender(); });
+  return el;
+}
+
+function renderLojas(S){
+  const reg=document.getElementById('fLojaReg').value;
+  const q=(document.getElementById('fLojaBusca').value||'').toLowerCase();
+  const multi=document.getElementById('fLojaMulti').checked;
+  const rows=[];
+  for(const li in S.porLoja){ const L=S.porLoja[li], lj=DATA.lojas[li];
+    if(reg && String(lj.r)!==reg) continue;
+    if(multi && L.nfMax<2) continue;
+    const nome=lj.c+' '+lj.n;
+    if(q && !nome.toLowerCase().includes(q)) continue;
+    rows.push({_click:li, nome, regional:DATA.regionais[lj.r], nf:L.nfMax, venda:L.venda, meta:L.meta,
+      ating:L.meta>0?L.venda/L.meta*100:0, bate:L.bate, meses:L.meses.size,
+      atual:L.atual, simv:L.sim, d:L.sim-L.atual});
+  }
+  document.getElementById('cntLojas').textContent=rows.length+' lojas';
+  const cols=[
+    {k:'nome',h:'Loja',l:1,f:r=>r.nome+(r.nf>=2?' <span class="badge multi">'+r.nf+' fonos</span>':'')},
+    {k:'regional',h:'Regional',f:r=>r.regional},
+    {k:'venda',h:'Vendas',f:r=>BRL.format(r.venda)},
+    {k:'meta',h:'Meta',f:r=>BRL.format(r.meta)},
+    {k:'ating',h:'Ating.',f:r=>fpp(r.ating,1),cls:r=>r.ating>=100?'pos':''},
+    {k:'bate',h:'Meses bate',f:r=>r.bate+' / '+r.meses},
+    {k:'atual',h:'Com. atual',f:r=>BRL.format(r.atual)},
+    {k:'simv',h:'Com. simulada',f:r=>BRL.format(r.simv)},
+    {k:'d',h:'Variação',f:r=>sgn(r.d),cls:r=>clsD(r.d)}
+  ];
+  const el=renderTable('tblLojas', cols, rows, 'venda');
+  el.querySelectorAll('tr.click').forEach(tr=>tr.onclick=()=>{
+    document.getElementById('fFonoLoja').value=tr.dataset.li;
+    document.getElementById('fFonoReg').value=''; document.getElementById('fFonoBusca').value='';
+    switchTab('fonos'); lightRender();
+  });
+}
+
+function renderFonosTable(S){
+  const reg=document.getElementById('fFonoReg').value;
+  const lojaF=document.getElementById('fFonoLoja').value;
+  const q=(document.getElementById('fFonoBusca').value||'').toLowerCase();
+  const rows=[];
+  for(const fi in S.porFono){ const F=S.porFono[fi]; const nome=DATA.fonos[fi];
+    const lojasArr=[...F.lojas];
+    if(reg && !lojasArr.some(li=>String(DATA.lojas[li].r)===reg)) continue;
+    if(lojaF && !F.lojas.has(+lojaF)) continue;
+    if(q && !nome.toLowerCase().includes(q)) continue;
+    const l0=DATA.lojas[lojasArr[0]];
+    rows.push({nome, loja:l0.n+(lojasArr.length>1?' (+'+(lojasArr.length-1)+')':''),
+      regional:[...new Set(lojasArr.map(li=>DATA.regionais[DATA.lojas[li].r]))].join(', '),
+      meses:F.meses.size, venda:F.venda, ating:F.meta>0?F.venda/F.meta*100:0,
+      atual:F.atual, ef:F.venda>0?F.atual/F.venda*100:0, simv:F.sim, d:F.sim-F.atual});
+  }
+  document.getElementById('cntFonos').textContent=rows.length+' profissionais';
+  const cols=[
+    {k:'nome',h:'Nome',l:1,f:r=>r.nome},
+    {k:'loja',h:'Loja',l:1,f:r=>r.loja},
+    {k:'regional',h:'Regional',f:r=>r.regional},
+    {k:'meses',h:'Meses',f:r=>r.meses},
+    {k:'venda',h:'Vendas',f:r=>BRL.format(r.venda)},
+    {k:'ating',h:'Ating. pond.',f:r=>fpp(r.ating,1),cls:r=>r.ating>=100?'pos':''},
+    {k:'atual',h:'Com. atual',f:r=>BRL.format(r.atual)},
+    {k:'ef',h:'% efetivo',f:r=>fpp(r.ef,2),cls:r=>r.ef>5?'neg':''},
+    {k:'simv',h:'Com. simulada',f:r=>BRL.format(r.simv)},
+    {k:'d',h:'Variação',f:r=>sgn(r.d)+' <span class="badge '+(r.d>1?'up':r.d<-1?'down':'flat')+'">'+(r.d>1?'ganha':r.d<-1?'perde':'neutro')+'</span>',cls:r=>clsD(r.d)}
+  ];
+  renderTable('tblFonos', cols, rows, 'venda');
+}
+
+function stepLine(col){
+  const t=sim.t, m=sim.m.map(r=>r[col]);
+  return [{x:0,y:m[0]},{x:t[0],y:m[0]},{x:t[0],y:m[1]},{x:t[1],y:m[1]},{x:t[1],y:m[2]},{x:t[2],y:m[2]},{x:t[2],y:m[3]},{x:200,y:m[3]}];
+}
+function renderScatter(S){
+  mkChart('chScatter',{type:'scatter',data:{datasets:[
+    {label:'Fono-mês (atual)', data:S.scatter, backgroundColor:'rgba(110,180,220,0.45)', pointRadius:2.6},
+    {label:'Efetivo acima de 5%', data:S.scOut, backgroundColor:'#7D0041', pointRadius:3.4},
+    {label:'Matriz — loja atinge', data:stepLine(1), type:'line', borderColor:'#003C64', borderWidth:2, pointRadius:0, fill:false, tension:0},
+    {label:'Matriz — loja não atinge', data:stepLine(0), type:'line', borderColor:'#8C321E', borderWidth:2, borderDash:[6,4], pointRadius:0, fill:false, tension:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>{
+      if(c.dataset.type==='line') return c.dataset.label+': '+fpp(c.parsed.y,1);
+      return 'atingimento '+fpp(c.raw.raw??c.parsed.x,0)+' | efetivo '+fpp(c.parsed.y,2);}}}},
+    scales:{x:{min:0,max:200,title:{display:true,text:'Atingimento individual no mês (%)'},ticks:{callback:v=>v+'%'}},
+            y:{min:0,max:12,title:{display:true,text:'Percentual efetivo pago (%)'},ticks:{callback:v=>v+'%'}}}}});
+}
+
+function renderRead(FX){
+  const t=FX.B.tot, dB=t.sim-t.atual, tA=FX.A.tot, dA=tA.sim-tA.atual;
+  document.getElementById('readResumo').innerHTML =
+    'Hoje a comissão dos fonos consome <span class="num">'+fp(t.atual/t.venda,2)+'</span> das vendas no período selecionado ('+BRL.format(t.atual)+'). '+
+    'A Proposta 2 (matriz Teams) chega a <span class="num">'+BRL.format(t.sim)+'</span> ('+sgn(dB)+', '+fpp(dB/t.atual*100)+'), praticamente neutra no agregado; '+
+    'a Proposta 1 (régua individual do arquivo) reduziria '+sgn(dA)+' ('+fpp(dA/tA.atual*100)+'), porém sem o componente coletivo. '+
+    'Em ambas, o ponto crítico não é o custo total e sim a transição das réguas legadas — detalhado abaixo.';
+  const reg = DATA.regionais.map((r,i)=>({r, d:FX.B.porReg[i].sim-FX.B.porReg[i].atual, a:FX.B.porReg[i].atual})).sort((a,b)=>a.d-b.d);
+  const worst=reg[0], worst2=reg[1], best=reg[reg.length-1];
+  document.getElementById('readAchados').innerHTML =
+    '<li>A matriz Teams redistribui em vez de encarecer: no período, <b>'+worst.r+'</b> teria variação de <b class="neg">'+sgn(worst.d)+'</b> ('+fpp(worst.d/worst.a*100)+') e <b>'+worst2.r+'</b> de <b class="neg">'+sgn(worst2.d)+'</b>, enquanto <b>'+best.r+'</b> receberia <b class="pos">'+sgn(best.d)+'</b>. As perdas se concentram onde há régua legada (3% / 4,5%) ou garantias mínimas.</li>'+
+    '<li>No detalhe individual, <b>'+FX.B.up+' fonos ganham</b> e <b>'+FX.B.down+' perdem</b> na Proposta 2 — os que perdem estão quase todos em BSB/GO e MT/MS, reforçando a necessidade de regra de transição.</li>'+
+    '<li>Cerca de metade dos loja-mês bate a meta coletiva ('+fpp(lojaBatePct(FX.B),1)+'), o que dá tração real aos aceleradores sem torná-los automáticos.</li>'+
+    '<li>O acelerador coletivo alcança de fato as lojas com 2 ou mais fonos (53% dos registros); nas lojas de um único fono ele funciona como acréscimo automático ao bater a meta individual.</li>'+
+    '<li>A faixa de 70% a 99,9% com loja batendo (1,3%) atende um contingente relevante e barato: é o principal mecanismo novo de reconhecimento ao resultado coletivo.</li>';
+}
+
+/* ---------- tabs & filtros ---------- */
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.t===t));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id==='p-'+t));
+}
+document.querySelectorAll('.tab').forEach(x=>x.onclick=()=>switchTab(x.dataset.t));
+
+function initFilters(){
+  const r1=document.getElementById('fLojaReg'), r2=document.getElementById('fFonoReg'), lj=document.getElementById('fFonoLoja');
+  DATA.regionais.forEach((r,i)=>{ r1.add(new Option(r,i)); r2.add(new Option(r,i)); });
+  DATA.lojas.map((l,i)=>({i,n:l.c+' '+l.n})).sort((a,b)=>a.n.localeCompare(b.n,'pt-BR'))
+    .forEach(o=>lj.add(new Option(o.n,o.i)));
+  ['fLojaReg','fFonoReg','fFonoLoja'].forEach(id=>document.getElementById(id).onchange=lightRender);
+  document.getElementById('fLojaMulti').onchange=lightRender;
+  ['fLojaBusca','fFonoBusca'].forEach(id=>document.getElementById(id).oninput=lightRender);
+}
+
+/* ---------- boot ---------- */
+initPeriod(); initFilters(); loadSimInputs(); bindSim(); renderAll();
+</script>
+</body>
+</html>
