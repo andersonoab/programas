@@ -1,0 +1,428 @@
+Option Explicit
+
+'==================================================================
+'  UNIFICADOR DE PLANILHAS V3.1  -  CSV / TXT / XLS / XLSX / XLSM / XLSB
+'  Consolida varios arquivos em uma unica aba e salva (.xlsx ou .csv)
+'  NOVO: permite selecionar arquivos manualmente (mouse) OU pasta inteira
+'==================================================================
+
+' ---- OPCOES (ajuste conforme necessario) ----
+Private Const SO_PRIMEIRO_CABECALHO As Boolean = True   ' mantem cabecalho apenas do 1o arquivo
+Private Const ADICIONAR_COLUNA_ORIGEM As Boolean = True ' cria coluna "Origem" com o nome do arquivo
+Private Const DELIMITADOR_CSV As String = ";"           ' delimitador de CSV/TXT (1 caractere)
+Private Const CHARSET_CSV As String = "UTF-8"           ' ou "Windows-1252" para arquivos ANSI
+Private Const ABA_ALVO As String = ""                   ' "" = 1a aba visivel; ou nome fixo (ex: "Plan1")
+Private Const ORDENAR_ARQUIVOS As Boolean = True        ' False = respeita a ordem de selecao
+
+Private mFso As Object
+
+'------------------------------------------------------------------
+Public Sub UnificarPlanilhas_V3()
+    Dim pasta As String, outPath As String
+    Dim fld As Object, f As Object
+    Dim arquivos() As String, ext As String
+    Dim i As Long, n As Long, pulados As Long
+    Dim modo As VbMsgBoxResult
+    Dim itm As Variant
+    Dim selRaw As Collection
+
+    ' 1) Escolher COMO selecionar os arquivos
+    modo = MsgBox("Como deseja selecionar os arquivos?" & vbCrLf & vbCrLf & _
+                  "SIM      = escolher arquivos manualmente (com o mouse)" & vbCrLf & _
+                  "NAO      = pegar TODOS os arquivos de uma pasta" & vbCrLf & _
+                  "CANCELAR = sair", _
+                  vbYesNoCancel + vbQuestion, "Unificador de Planilhas V3")
+    If modo = vbCancel Then Exit Sub
+
+    Set selRaw = New Collection
+
+    If modo = vbYes Then
+        ' ---- SELECAO MANUAL (mouse: Ctrl / Shift para varios) ----
+        With Application.FileDialog(msoFileDialogFilePicker)
+            .Title = "Selecione os arquivos (use Ctrl ou Shift para varios)"
+            .AllowMultiSelect = True
+            .Filters.Clear
+            .Filters.Add "Planilhas e textos", _
+                         "*.csv;*.txt;*.xls;*.xlsx;*.xlsm;*.xlsb;*.xltx;*.xltm"
+            .Filters.Add "Todos os arquivos", "*.*"
+            If .Show <> -1 Then Exit Sub
+            For Each itm In .SelectedItems
+                selRaw.Add CStr(itm)
+            Next itm
+        End With
+        pasta = FSO.GetParentFolderName(selRaw(1)) & "\"
+    Else
+        ' ---- PASTA INTEIRA (comportamento original) ----
+        With Application.FileDialog(msoFileDialogFolderPicker)
+            .Title = "Selecione a pasta com os arquivos"
+            If .Show <> -1 Then Exit Sub
+            pasta = .SelectedItems(1)
+        End With
+        If Right$(pasta, 1) <> "\" Then pasta = pasta & "\"
+        Set fld = FSO.GetFolder(pasta)
+        For Each f In fld.Files
+            selRaw.Add f.path
+        Next f
+    End If
+
+    ' 2) Arquivo de saida
+    With Application.FileDialog(msoFileDialogSaveAs)
+        .Title = "Salvar arquivo unificado"
+        .InitialFileName = pasta & "unificado.xlsx"
+        If .Show <> -1 Then Exit Sub
+        outPath = .SelectedItems(1)
+    End With
+
+    ' 3) Filtrar: so suportados, sem temporarios (~$) e diferente do arquivo de saida
+    For Each itm In selRaw
+        ext = LCase$(FSO.GetExtensionName(CStr(itm)))
+        If ExtSuportada(ext) Then
+            If InStr(1, FSO.GetFileName(CStr(itm)), "~$") = 0 Then
+                If StrComp(CStr(itm), outPath, vbTextCompare) <> 0 Then
+                    n = n + 1
+                    ReDim Preserve arquivos(1 To n)
+                    arquivos(n) = CStr(itm)
+                End If
+            End If
+        End If
+    Next itm
+
+    If n = 0 Then
+        MsgBox "Nenhum arquivo suportado selecionado." & vbCrLf & _
+               "(csv, txt, xls, xlsx, xlsm, xlsb)", vbExclamation
+        Exit Sub
+    End If
+
+    ' 4) Ordenar para previsibilidade (desative com ORDENAR_ARQUIVOS = False)
+    If ORDENAR_ARQUIVOS Then QuickSortStrings arquivos, 1, n
+
+    ' 5) Preparar consolidacao
+    Dim wbOut As Workbook, wsOut As Worksheet
+    Dim antesScreen As Boolean, antesEvents As Boolean, antesCalc As XlCalculation
+    antesScreen = Application.ScreenUpdating
+    antesEvents = Application.EnableEvents
+    antesCalc = Application.Calculation
+    Application.ScreenUpdating = False
+    Application.EnableEvents = False
+    Application.Calculation = xlCalculationManual
+    Application.DisplayAlerts = False
+
+    On Error GoTo FIM_COM_ERRO
+    Set wbOut = Workbooks.Add(xlWBATWorksheet)
+    Set wsOut = wbOut.Worksheets(1)
+    wsOut.Name = "Unificado"
+
+    Dim nextRow As Long, colOff As Long
+    Dim primeiro As Boolean, dados As Variant, ehTexto As Boolean
+    Dim nLin As Long, nCol As Long, startR As Long, linhas As Long
+    Dim bloco As Variant, r As Long, orig() As String, nomeArq As String
+
+    nextRow = 1
+    colOff = IIf(ADICIONAR_COLUNA_ORIGEM, 1, 0)
+    primeiro = True
+
+    For i = 1 To n
+        dados = LerArquivo(arquivos(i), ehTexto)
+        If IsEmpty(dados) Then
+            pulados = pulados + 1
+            GoTo Prox
+        End If
+
+        nLin = UBound(dados, 1)
+        nCol = UBound(dados, 2)
+
+        startR = 1
+        If Not primeiro And SO_PRIMEIRO_CABECALHO Then startR = 2
+        If startR > nLin Then primeiro = False: GoTo Prox   ' arquivo so tinha cabecalho
+
+        linhas = nLin - startR + 1
+        If startR = 1 Then
+            bloco = dados
+        Else
+            bloco = FatiaLinhas(dados, startR, nLin)
+        End If
+
+        ' preserva texto literal (zeros a esquerda, sem conversao de data) para CSV/TXT
+        If ehTexto Then _
+            wsOut.Cells(nextRow, 1 + colOff).Resize(linhas, nCol).NumberFormat = "@"
+
+        wsOut.Cells(nextRow, 1 + colOff).Resize(linhas, nCol).Value = bloco
+
+        If ADICIONAR_COLUNA_ORIGEM Then
+            nomeArq = FSO.GetFileName(arquivos(i))
+            ReDim orig(1 To linhas, 1 To 1)
+            For r = 1 To linhas
+                orig(r, 1) = nomeArq
+            Next r
+            wsOut.Cells(nextRow, 1).Resize(linhas, 1).Value = orig
+        End If
+
+        nextRow = nextRow + linhas
+        primeiro = False
+Prox:
+    Next i
+
+    If nextRow = 1 Then
+        wbOut.Close SaveChanges:=False
+        MsgBox "Nenhum dado foi extraido dos arquivos.", vbExclamation
+        GoTo Cleanup
+    End If
+
+    If SO_PRIMEIRO_CABECALHO And ADICIONAR_COLUNA_ORIGEM Then wsOut.Cells(1, 1).Value = "Origem"
+
+    ' 6) Salvar no formato correto conforme a extensao escolhida
+    SalvarComo wbOut, outPath
+    wbOut.Close SaveChanges:=False
+
+    MsgBox "Concluido." & vbCrLf & _
+           "Arquivos lidos: " & (n - pulados) & " de " & n & _
+           IIf(pulados > 0, "  (pulados: " & pulados & ")", "") & vbCrLf & _
+           "Linhas geradas: " & (nextRow - 1) & vbCrLf & _
+           "Saida: " & outPath, vbInformation
+
+Cleanup:
+    Application.ScreenUpdating = antesScreen
+    Application.EnableEvents = antesEvents
+    Application.Calculation = antesCalc
+    Application.DisplayAlerts = True
+    Exit Sub
+
+FIM_COM_ERRO:
+    On Error Resume Next
+    If Not wbOut Is Nothing Then wbOut.Close SaveChanges:=False
+    MsgBox "Erro ao unificar: " & Err.Description, vbCritical
+    Resume Cleanup
+End Sub
+
+'------------------------------------------------------------------
+' Dispatcher: decide como ler cada arquivo
+'------------------------------------------------------------------
+Private Function LerArquivo(ByVal path As String, ByRef ehTexto As Boolean) As Variant
+    Select Case LCase$(FSO.GetExtensionName(path))
+        Case "csv", "txt"
+            ehTexto = True
+            LerArquivo = LerTextoDelimitado(path, DELIMITADOR_CSV, CHARSET_CSV)
+        Case "xls", "xlsx", "xlsm", "xlsb", "xltx", "xltm"
+            ehTexto = False
+            LerArquivo = LerExcel(path, ABA_ALVO)
+        Case Else
+            ehTexto = False
+            LerArquivo = Empty
+    End Select
+End Function
+
+'------------------------------------------------------------------
+' Leitura de arquivo Excel (abre, le intervalo usado, fecha)
+'------------------------------------------------------------------
+Private Function LerExcel(ByVal path As String, ByVal abaAlvo As String) As Variant
+    Dim wb As Workbook, ws As Worksheet, sh As Worksheet, cel As Range, rng As Range
+    Dim lr As Long, lc As Long, v As Variant
+
+    On Error GoTo falha
+    Set wb = Workbooks.Open(Filename:=path, ReadOnly:=True, UpdateLinks:=0, AddToMRU:=False)
+
+    Set ws = Nothing
+    If Len(abaAlvo) > 0 Then
+        On Error Resume Next
+        Set ws = wb.Worksheets(abaAlvo)
+        On Error GoTo falha
+    End If
+    If ws Is Nothing Then
+        For Each sh In wb.Worksheets
+            If sh.Visible = xlSheetVisible Then Set ws = sh: Exit For
+        Next sh
+        If ws Is Nothing Then Set ws = wb.Worksheets(1)
+    End If
+
+    Set cel = ws.Cells.Find("*", ws.Cells(1, 1), xlFormulas, , xlByRows, xlPrevious)
+    If cel Is Nothing Then
+        wb.Close SaveChanges:=False
+        LerExcel = Empty
+        Exit Function
+    End If
+    lr = cel.Row
+    lc = ws.Cells.Find("*", ws.Cells(1, 1), xlFormulas, , xlByColumns, xlPrevious).Column
+
+    Set rng = ws.Range(ws.Cells(1, 1), ws.Cells(lr, lc))
+    If rng.Cells.Count = 1 Then
+        Dim A(1 To 1, 1 To 1) As Variant
+        A(1, 1) = rng.Value
+        v = A
+    Else
+        v = rng.Value
+    End If
+
+    wb.Close SaveChanges:=False
+    LerExcel = v
+    Exit Function
+
+falha:
+    On Error Resume Next
+    If Not wb Is Nothing Then wb.Close SaveChanges:=False
+    LerExcel = Empty
+End Function
+
+'------------------------------------------------------------------
+' Leitura de CSV/TXT como texto puro (preserva zeros/acentos)
+'------------------------------------------------------------------
+Private Function LerTextoDelimitado(ByVal path As String, ByVal delim As String, ByVal charset As String) As Variant
+    Dim stm As Object, txt As String
+    Dim linhas() As String, campos() As String, parsed() As Variant
+    Dim ub As Long, r As Long, c As Long, maxC As Long
+    Dim outArr() As String
+
+    On Error GoTo falha
+    Set stm = CreateObject("ADODB.Stream")
+    stm.Type = 2: stm.charset = charset: stm.Open
+    stm.LoadFromFile path
+    txt = stm.ReadText(-1)
+    stm.Close
+
+    If Len(txt) = 0 Then LerTextoDelimitado = Empty: Exit Function
+    If Left$(txt, 1) = ChrW$(&HFEFF) Then txt = Mid$(txt, 2)   ' remove BOM residual
+    txt = Replace(txt, vbCrLf, vbLf)
+    txt = Replace(txt, vbCr, vbLf)
+
+    linhas = Split(txt, vbLf)
+    ub = UBound(linhas)
+    Do While ub >= 0
+        If Len(linhas(ub)) = 0 Then ub = ub - 1 Else Exit Do
+    Loop
+    If ub < 0 Then LerTextoDelimitado = Empty: Exit Function
+
+    ReDim parsed(0 To ub)
+    maxC = 0
+    For r = 0 To ub
+        campos = ParseCSVLinha(linhas(r), delim)
+        parsed(r) = campos
+        If UBound(campos) + 1 > maxC Then maxC = UBound(campos) + 1
+    Next r
+
+    ReDim outArr(1 To ub + 1, 1 To maxC)
+    For r = 0 To ub
+        campos = parsed(r)
+        For c = 0 To UBound(campos)
+            outArr(r + 1, c + 1) = campos(c)
+        Next c
+    Next r
+
+    LerTextoDelimitado = outArr
+    Exit Function
+
+falha:
+    On Error Resume Next
+    If Not stm Is Nothing Then stm.Close
+    LerTextoDelimitado = Empty
+End Function
+
+'------------------------------------------------------------------
+' Parser de uma linha CSV com suporte a aspas ("campo; com; delim")
+'------------------------------------------------------------------
+Private Function ParseCSVLinha(ByVal linha As String, ByVal delim As String) As String()
+    Dim res() As String, campo As String, ch As String
+    Dim i As Long, k As Long, dentroAspas As Boolean
+
+    ReDim res(0 To 0)
+    campo = "": k = 0: dentroAspas = False: i = 1
+
+    Do While i <= Len(linha)
+        ch = Mid$(linha, i, 1)
+        If dentroAspas Then
+            If ch = """" Then
+                If i < Len(linha) And Mid$(linha, i + 1, 1) = """" Then
+                    campo = campo & """": i = i + 1
+                Else
+                    dentroAspas = False
+                End If
+            Else
+                campo = campo & ch
+            End If
+        Else
+            If ch = """" Then
+                dentroAspas = True
+            ElseIf ch = delim Then
+                ReDim Preserve res(0 To k)
+                res(k) = campo
+                k = k + 1: campo = ""
+            Else
+                campo = campo & ch
+            End If
+        End If
+        i = i + 1
+    Loop
+
+    ReDim Preserve res(0 To k)
+    res(k) = campo
+    ParseCSVLinha = res
+End Function
+
+'------------------------------------------------------------------
+' Fatia linhas de um array 2D (1-based)
+'------------------------------------------------------------------
+Private Function FatiaLinhas(ByRef arr As Variant, ByVal deLinha As Long, ByVal ateLinha As Long) As Variant
+    Dim nc As Long, r As Long, c As Long, k As Long
+    Dim out() As Variant
+    nc = UBound(arr, 2)
+    ReDim out(1 To ateLinha - deLinha + 1, 1 To nc)
+    k = 0
+    For r = deLinha To ateLinha
+        k = k + 1
+        For c = 1 To nc
+            out(k, c) = arr(r, c)
+        Next c
+    Next r
+    FatiaLinhas = out
+End Function
+
+'------------------------------------------------------------------
+' Salvar no formato conforme extensao do caminho escolhido
+'------------------------------------------------------------------
+Private Sub SalvarComo(ByRef wb As Workbook, ByVal path As String)
+    Dim ext As String
+    ext = LCase$(FSO.GetExtensionName(path))
+    Select Case ext
+        Case "csv"
+            On Error Resume Next
+            wb.SaveAs path, 62          ' xlCSVUTF8
+            If Err.Number <> 0 Then Err.Clear: wb.SaveAs path, 6   ' xlCSV (ANSI)
+            On Error GoTo 0
+        Case "xlsb"
+            wb.SaveAs path, 50          ' xlExcel12
+        Case "xlsm"
+            wb.SaveAs path, 52          ' xlOpenXMLWorkbookMacroEnabled
+        Case "txt"
+            wb.SaveAs path, -4158       ' xlTextWindows (tab)
+        Case Else
+            wb.SaveAs path, 51          ' xlOpenXMLWorkbook (.xlsx)
+    End Select
+End Sub
+
+'------------------------------------------------------------------
+Private Function ExtSuportada(ByVal ext As String) As Boolean
+    Select Case ext
+        Case "csv", "txt", "xls", "xlsx", "xlsm", "xlsb", "xltx", "xltm"
+            ExtSuportada = True
+    End Select
+End Function
+
+'------------------------------------------------------------------
+Private Function FSO() As Object
+    If mFso Is Nothing Then Set mFso = CreateObject("Scripting.FileSystemObject")
+    Set FSO = mFso
+End Function
+
+'------------------------------------------------------------------
+' Ordenacao rapida de strings
+'------------------------------------------------------------------
+Private Sub QuickSortStrings(ByRef A() As String, ByVal first As Long, ByVal last As Long)
+    Dim i As Long, j As Long, pivot As String, tmp As String
+    i = first: j = last
+    pivot = A((first + last) \ 2)
+    Do While i <= j
+        Do While StrComp(A(i), pivot, vbTextCompare) < 0: i = i + 1: Loop
+        Do While StrComp(A(j), pivot, vbTextCompare) > 0: j = j - 1: Loop
+        If i <= j Then tmp = A(i): A(i) = A(j): A(j) = tmp: i = i + 1: j = j - 1
+    Loop
+    If first < j Then QuickSortStrings A, first, j
+    If i < last Then QuickSortStrings A, i, last
+End Sub
