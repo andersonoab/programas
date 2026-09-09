@@ -42,6 +42,10 @@ Ajuste LTS — modo travado por campos:
     das duas capturas concluídas.
   - Guia flutuante permanece visivel sobre o SSA durante as etapas 1/2 e 2/2.
   - Filtro global permite selecionar varios colaboradores antes de gerar o rateio.
+  - Total e linhas do rateio podem ser copiados para a area de transferencia.
+  - CDC e Valor podem ser corrigidos diretamente na tabela, com desfazer.
+  - Ao corrigir para um CDC existente, o aplicativo oferece uma uniao segura.
+  - CDC/Valor originais e descricao do ajuste seguem no CSV para auditoria.
 
 Autor: Anderson Souza
 """
@@ -57,6 +61,7 @@ import re
 import json
 import io
 import threading
+import copy
 from pathlib import Path
 from collections import defaultdict
 
@@ -311,7 +316,8 @@ def resumo_verbas(lancamentos):
 def calcular_rateio(lancamentos, verbas_sel, casas=2):
     """Agrega por CDC apenas as verbas selecionadas e calcula o percentual de rateio.
 
-    Retorna (linhas, total). Cada linha: CDC, VALOR, PCT, QTD, PESSOAS, VERBAS.
+    Retorna (linhas, total). Alem dos totais visiveis, cada linha preserva os
+    identificadores de origem para permitir corrigir/unir CDCs com auditoria.
     O percentual e arredondado e a sobra e ajustada no maior CDC para fechar 100,00%.
     """
     sel = set(str(v) for v in verbas_sel)
@@ -332,7 +338,12 @@ def calcular_rateio(lancamentos, verbas_sel, casas=2):
     linhas = []
     for cdc, a in agg.items():
         linhas.append({"CDC": cdc, "VALOR": round(a["VALOR"], 2), "QTD": a["QTD"],
-                       "PESSOAS": len(a["PESSOAS_IDS"]), "VERBAS": len(a["VERBAS"]), "PCT": 0.0})
+                       "PESSOAS": len(a["PESSOAS_IDS"]), "VERBAS": len(a["VERBAS"]),
+                       "PESSOAS_IDS": set(a["PESSOAS_IDS"]),
+                       "VERBAS_IDS": set(a["VERBAS"]),
+                       "CDCS_ORIGINAIS": {cdc},
+                       "VALOR_ORIGINAL": round(a["VALOR"], 2),
+                       "CDC_EDITADO": False, "VALOR_EDITADO": False, "PCT": 0.0})
 
     total = round(sum(l["VALOR"] for l in linhas), 2)
     if total:
@@ -346,6 +357,32 @@ def calcular_rateio(lancamentos, verbas_sel, casas=2):
 
     linhas.sort(key=lambda x: -abs(x["VALOR"]))
     return linhas, total
+
+
+def unir_linhas_rateio(destino, origem):
+    """Une dois CDCs agregados sem perder contagens nem dados de auditoria."""
+    valor_destino_original = destino.get("VALOR_ORIGINAL", destino["VALOR"])
+    valor_origem_original = origem.get("VALOR_ORIGINAL", origem["VALOR"])
+    destino["VALOR"] = round(destino["VALOR"] + origem["VALOR"], 2)
+    destino["VALOR_ORIGINAL"] = round(valor_destino_original + valor_origem_original, 2)
+    destino["QTD"] += origem["QTD"]
+
+    pessoas_ids = set(destino.get("PESSOAS_IDS", set())) | set(origem.get("PESSOAS_IDS", set()))
+    verbas_ids = set(destino.get("VERBAS_IDS", set())) | set(origem.get("VERBAS_IDS", set()))
+    destino["PESSOAS_IDS"] = pessoas_ids
+    destino["VERBAS_IDS"] = verbas_ids
+    destino["PESSOAS"] = (len(pessoas_ids) if pessoas_ids
+                          else destino["PESSOAS"] + origem["PESSOAS"])
+    destino["VERBAS"] = (len(verbas_ids) if verbas_ids
+                         else max(destino["VERBAS"], origem["VERBAS"]))
+    destino["CDCS_ORIGINAIS"] = (
+        set(destino.get("CDCS_ORIGINAIS", {destino["CDC"]})) |
+        set(origem.get("CDCS_ORIGINAIS", {origem["CDC"]})))
+    destino["SEL"] = destino.get("SEL", False) or origem.get("SEL", False)
+    destino["CDC_EDITADO"] = True
+    destino["VALOR_EDITADO"] = (destino.get("VALOR_EDITADO", False) or
+                                origem.get("VALOR_EDITADO", False))
+    return destino
 
 
 def faixas_tercis(valores):
@@ -595,6 +632,7 @@ class PreenchedorSSA:
         self.verbas_sel = set()          # codigos de verba selecionados
         self.rateio = []                 # linhas do rateio por CDC
         self.rateio_total = 0.0
+        self._historico_rateio = []      # snapshots para desfazer ajustes manuais
         self.faixas = (0.0, 0.0)
         self.cadastro_map = {}           # cpf -> cdc (opcional)
         self.cadastro_nome = ""
@@ -1204,6 +1242,8 @@ class PreenchedorSSA:
         self.verbas = resumo_verbas(self._lanc_ativos())
         self.verbas_sel = set()
         self.rateio, self.rateio_total = [], 0.0
+        self._historico_rateio.clear()
+        self._atualizar_botao_desfazer_rateio()
 
         self._render_preview()
         self._render_verbas()
@@ -1316,6 +1356,8 @@ class PreenchedorSSA:
         self.verbas = resumo_verbas(ativos)
         self.verbas_sel = set()
         self.rateio, self.rateio_total = [], 0.0
+        self._historico_rateio.clear()
+        self._atualizar_botao_desfazer_rateio()
         self._atualizar_info_filtros()
         self._render_preview()
         self._render_verbas()
@@ -1331,6 +1373,8 @@ class PreenchedorSSA:
         self.verbas = resumo_verbas(ativos)
         self.verbas_sel = set()
         self.rateio, self.rateio_total = [], 0.0
+        self._historico_rateio.clear()
+        self._atualizar_botao_desfazer_rateio()
         self._atualizar_info_filtros()
         self._render_preview()
         self._render_verbas()
@@ -1491,6 +1535,8 @@ class PreenchedorSSA:
         self.verbas = []
         self.verbas_sel = set()
         self.rateio, self.rateio_total = [], 0.0
+        self._historico_rateio.clear()
+        self._atualizar_botao_desfazer_rateio()
         self.cmb_aba.configure(values=[])
         self.cmb_aba.set("")
         for cb in self.cmb_map.values():
@@ -1741,7 +1787,7 @@ class PreenchedorSSA:
         top = self.card(parent)
         top.grid(row=0, column=0, sticky="ew", pady=(0, 8))
         self.titulo(top, "Rateio por centro de custo",
-                    "Valores agregados por CDC. Escolha lancar por VALOR ou por PERCENTUAL — o percentual fecha em 100,00%.")
+                    "Valores agregados por CDC. Edite CDC/Valor na tabela, copie os dados e escolha lancar por VALOR ou PERCENTUAL.")
 
         bar = ctk.CTkFrame(top, fg_color=self.PAINEL, corner_radius=10,
                            border_width=1, border_color=self.BORDA)
@@ -1773,7 +1819,15 @@ class PreenchedorSSA:
         self.botao(l2, "Marcar todos", lambda: self._marcar_rateio(True), self.AZUL, self.AZUL_HV, 130).pack(side="left", padx=(0, 8))
         self.botao(l2, "Desmarcar todos", lambda: self._marcar_rateio(False), self.AZUL_CLARO, self.AZUL_CLARO_HV, 145).pack(side="left", padx=(0, 8))
         self.botao(l2, "Inverter selecao", self._inverter_rateio, self.TEAL, self.TEAL_HV, 145).pack(side="left", padx=(0, 8))
-        self.botao(l2, "Exportar rateio (CSV)", self.exportar_rateio, self.NEUTRA, self.NEUTRA_HV, 175).pack(side="left")
+        self.botao(l2, "Copiar total", self._copiar_total_rateio,
+                   self.AZUL, self.AZUL_HV, 120).pack(side="left", padx=(0, 8))
+        self.botao(l2, "Exportar CSV", self.exportar_rateio,
+                   self.NEUTRA, self.NEUTRA_HV, 125).pack(side="left", padx=(0, 8))
+        self.btn_desfazer_rateio = self.botao(
+            l2, "Desfazer ajuste", self._desfazer_ajuste_rateio,
+            self.AMBAR, self.AMBAR_HV, 135)
+        self.btn_desfazer_rateio.pack(side="left")
+        self.btn_desfazer_rateio.configure(state="disabled")
         self.botao(l2, "Enviar para o SSA  >", self.enviar_para_ssa, self.SUCESSO, self.SUCESSO_HV, 190).pack(side="right")
 
         kf = ctk.CTkFrame(top, fg_color="transparent")
@@ -1783,21 +1837,34 @@ class PreenchedorSSA:
         k1, self.kv_rateio, self.kd_rateio = self.kpi(kf, "TOTAL SELECIONADO A LANCAR NO SSA")
         k1.grid(row=0, column=0, sticky="ew", padx=(0, 6))
         self._kpi_rateio_frame = k1
+        for widget in (k1, self.kv_rateio, self.kd_rateio):
+            widget.bind("<Button-1>", lambda _e: self._copiar_total_rateio())
         k2, self.kv_pct, self.kd_pct = self.kpi(kf, "SOMA DOS PERCENTUAIS")
         k2.grid(row=0, column=1, sticky="ew", padx=(6, 0))
         self._kpi_pct_frame = k2
 
         body = self.card(parent)
         body.grid(row=1, column=0, sticky="nsew")
-        cols = [("SEL", "Sel.", 55, "center"), ("CDC", "CDC", 110, "center"),
-                ("PESSOAS", "Pessoas", 90, "center"), ("QTD", "Lancamentos", 100, "center"),
-                ("VALOR", "Valor  (duplo clique p/ editar)", 200, "e"),
-                ("PCT", "% do total", 100, "e"), ("FAIXA", "Faixa", 90, "center")]
+        cols = [("SEL", "Sel.", 55, "center"), ("CDC", "CDC", 115, "center"),
+                ("PESSOAS", "Pessoas", 80, "center"), ("QTD", "Lanc.", 75, "center"),
+                ("VALOR", "Valor", 125, "e"), ("PCT", "Percentual", 105, "e"),
+                ("FAIXA", "Faixa", 80, "center"), ("AJUSTE", "Ajuste", 175, "w")]
         wrap, self.tv_rateio = self.tabela(body, cols, on_click=self._clique_rateio,
-                                           on_dclick=self._editar_valor_rateio, altura=10)
+                                           on_dclick=self._dclique_rateio, altura=10)
         wrap.pack(fill="both", expand=True, padx=16, pady=(14, 6))
+        self.tv_rateio.bind("<Control-c>", self._atalho_copiar_rateio)
+        self.tv_rateio.bind("<Button-3>", self._menu_contexto_rateio)
+        self.menu_rateio = tk.Menu(self.tv_rateio, tearoff=0)
+        self.menu_rateio.add_command(label="Copiar CDC", command=lambda: self._copiar_celula_rateio("CDC"))
+        self.menu_rateio.add_command(label="Copiar valor", command=lambda: self._copiar_celula_rateio("VALOR"))
+        self.menu_rateio.add_command(label="Copiar linha(s) (Ctrl+C)", command=self._copiar_linhas_rateio)
+        self.menu_rateio.add_separator()
+        self.menu_rateio.add_command(label="Editar CDC", command=lambda: self._editar_celula_rateio(self._rateio_context_iid, "CDC"))
+        self.menu_rateio.add_command(label="Editar valor", command=lambda: self._editar_celula_rateio(self._rateio_context_iid, "VALOR"))
+        self.menu_rateio.add_command(label="Desfazer ultimo ajuste", command=self._desfazer_ajuste_rateio)
+        self._rateio_context_iid = ""
         self.lbl_rateio_rodape = ctk.CTkLabel(
-            body, text="Selecione as verbas na aba 2 e clique em Gerar rateio.",
+            body, text="Duplo clique em CDC ou Valor para editar. Ctrl+C copia linhas; botao direito abre mais opcoes.",
             font=("Segoe UI", 10), text_color=self.TEXTO_SUAVE)
         self.lbl_rateio_rodape.pack(anchor="w", padx=16, pady=(0, 12))
 
@@ -1815,6 +1882,8 @@ class PreenchedorSSA:
             l["SEL"] = True
         self.rateio = linhas
         self.rateio_total = total
+        self._historico_rateio.clear()
+        self._atualizar_botao_desfazer_rateio()
         self.faixas = faixas_tercis([l["VALOR"] for l in linhas])
         for l in linhas:
             l["FAIXA"] = classe_faixa(l["VALOR"], self.faixas)
@@ -1826,7 +1895,8 @@ class PreenchedorSSA:
                      else f"{len(self.colaboradores_sel)} colaborador(es)")
         self.lbl_rateio_rodape.configure(
             text=f"Empresa: {self.empresa_sel}  |  Verba(s): {verbas_txt}  |  "
-                 f"Grupo: {grupo_txt}  |  {len(linhas)} CDC(s)  |  total {fmt_brl(total)}")
+                 f"Grupo: {grupo_txt}  |  {len(linhas)} CDC(s)  |  total {fmt_brl(total)}  |  "
+                 "duplo clique edita · Ctrl+C copia")
         self.log(f"Rateio gerado: {grupo_txt}, verbas [{verbas_txt}] -> "
                  f"{len(linhas)} CDC(s), total {fmt_brl(total)}.")
 
@@ -1870,7 +1940,7 @@ class PreenchedorSSA:
                                   values=("[x]" if sel else "[ ]", l["CDC"], l["PESSOAS"], l["QTD"],
                                           fmt_num(l["VALOR"]),
                                           (fmt_num(l["PCT"]) + " %") if sel else "—",
-                                          l.get("FAIXA", "—")))
+                                          l.get("FAIXA", "—"), self._descricao_ajuste_rateio(l)))
         self._sort_view(self.tv_rateio)
         self._kpi_rateio()
 
@@ -1883,7 +1953,7 @@ class PreenchedorSSA:
             self._kpi_rateio_frame.configure(fg_color=self.VERDE_KPI)
             self.kv_rateio.configure(text=fmt_brl(total))
             self.kd_rateio.configure(
-                text=f"{len(sel)} CDC(s)  ·  {sum(l['QTD'] for l in sel)} lancamento(s)  ·  lancar por {modo}",
+                text=f"{len(sel)} CDC(s)  ·  {sum(l['QTD'] for l in sel)} lancamento(s)  ·  {modo}  ·  clique para copiar",
                 text_color="#A8D5B5")
             fecha = abs(soma_pct - 100.0) < 0.005
             self._kpi_pct_frame.configure(fg_color=self.VERDE_KPI if fecha else self.ALERTA)
@@ -1927,7 +1997,44 @@ class PreenchedorSSA:
                 l["SEL"] = not l.get("SEL", False)
         self._render_rateio()
 
-    def _editar_valor_rateio(self, event):
+    def _linha_rateio(self, iid):
+        return next((l for l in self.rateio if str(l["CDC"]) == str(iid)), None)
+
+    def _descricao_ajuste_rateio(self, linha):
+        partes = []
+        origens = {str(c) for c in linha.get("CDCS_ORIGINAIS", {linha["CDC"]})}
+        atual = str(linha["CDC"])
+        if origens != {atual}:
+            if len(origens) == 1:
+                partes.append(f"{next(iter(origens))} -> {atual}")
+            else:
+                partes.append(f"{len(origens)} CDCs unidos -> {atual}")
+        if linha.get("VALOR_EDITADO"):
+            partes.append("valor corrigido")
+        return " | ".join(partes) if partes else "—"
+
+    def _registrar_ajuste_rateio(self, descricao):
+        self._historico_rateio.append({"descricao": descricao,
+                                       "rateio": copy.deepcopy(self.rateio)})
+        self._historico_rateio = self._historico_rateio[-30:]
+        self._atualizar_botao_desfazer_rateio()
+
+    def _atualizar_botao_desfazer_rateio(self):
+        if hasattr(self, "btn_desfazer_rateio"):
+            self.btn_desfazer_rateio.configure(
+                state="normal" if self._historico_rateio else "disabled")
+
+    def _desfazer_ajuste_rateio(self):
+        if not self._historico_rateio:
+            return
+        snapshot = self._historico_rateio.pop()
+        self.rateio = snapshot["rateio"]
+        self._render_rateio()
+        self._atualizar_botao_desfazer_rateio()
+        self.set_status(f"ajuste desfeito: {snapshot['descricao']}", self.TEAL)
+        self.log(f"Rateio: ajuste desfeito — {snapshot['descricao']}.")
+
+    def _dclique_rateio(self, event):
         tv = self.tv_rateio
         if tv.identify_region(event.x, event.y) != "cell":
             return
@@ -1937,43 +2044,155 @@ class PreenchedorSSA:
             return
         col_idx = int(col_id.replace("#", "")) - 1
         nome_col = tv["columns"][col_idx]
-        if nome_col != "VALOR":
-            # duplo clique fora da coluna Valor abre o detalhe do CDC
+        if nome_col in ("CDC", "VALOR"):
+            self._editar_celula_rateio(iid, nome_col)
+        else:
             itens = [l for l in self._lanc_ativos()
-                     if str(l["VERBA"]) in self.verbas_sel and (l["CDC"] or "(sem CDC)") == iid]
+                     if str(l["VERBA"]) in self.verbas_sel and
+                     (l["CDC"] or "(sem CDC)") in self._linha_rateio(iid).get("CDCS_ORIGINAIS", {iid})]
             self._janela_detalhe(f"CDC {iid} — lancamentos das verbas selecionadas", itens)
+
+    def _editar_celula_rateio(self, iid, nome_col):
+        linha = self._linha_rateio(iid)
+        if not linha or nome_col not in ("CDC", "VALOR"):
             return
-        bbox = tv.bbox(iid, column=col_id)
+        col_idx = list(self.tv_rateio["columns"]).index(nome_col)
+        col_id = f"#{col_idx + 1}"
+        bbox = self.tv_rateio.bbox(str(iid), column=col_id)
         if not bbox:
             return
         x, y, w, h = bbox
-        atual = tv.item(iid, "values")[col_idx]
-        ent = tk.Entry(tv, font=("Segoe UI", 11), justify="right", relief="flat", bd=1,
+        atual = str(linha["CDC"]) if nome_col == "CDC" else fmt_num(linha["VALOR"])
+        ent = tk.Entry(self.tv_rateio, font=("Segoe UI", 11),
+                       justify="center" if nome_col == "CDC" else "right", relief="flat", bd=1,
                        highlightthickness=1, highlightbackground=self.AZUL, highlightcolor=self.AZUL)
         ent.place(x=x, y=y, width=w, height=h)
         ent.insert(0, atual)
         ent.select_range(0, "end")
         ent.focus_set()
+        ativo = {"sim": True}
 
         def confirmar(e=None):
+            if not ativo["sim"]:
+                return
+            ativo["sim"] = False
             novo = ent.get().strip()
             ent.destroy()
-            v = parse_valor(novo)
-            if v is None:
+            if nome_col == "VALOR":
+                v = parse_valor(novo)
+                if v is None:
+                    messagebox.showwarning("Editar valor", "Informe um valor numerico valido.")
+                    self._render_rateio()
+                    return
+                if round(v, 2) == round(linha["VALOR"], 2):
+                    self._render_rateio()
+                    return
+                anterior = linha["VALOR"]
+                self._registrar_ajuste_rateio(f"valor do CDC {linha['CDC']}")
+                linha["VALOR"] = round(v, 2)
+                linha["VALOR_EDITADO"] = True
+                self._render_rateio()
+                self.set_status(f"valor do CDC {linha['CDC']} corrigido", self.SUCESSO)
+                self.log(f"Rateio: valor do CDC {linha['CDC']} corrigido de "
+                         f"{fmt_num(anterior)} para {fmt_num(v)}.")
                 return
-            for l in self.rateio:
-                if str(l["CDC"]) == iid:
-                    l["VALOR"] = round(v, 2)
-                    break
+
+            novo_cdc = norm_cdc(novo)
+            if not novo_cdc or novo_cdc == "(sem CDC)":
+                messagebox.showwarning("Editar CDC", "Informe um CDC valido.")
+                self._render_rateio()
+                return
+            if novo_cdc == str(linha["CDC"]):
+                self._render_rateio()
+                return
+
+            existente = self._linha_rateio(novo_cdc)
+            if existente is not None:
+                unir = messagebox.askyesno(
+                    "CDC ja existe",
+                    f"O CDC {novo_cdc} ja existe no rateio.\n\n"
+                    "Deseja unir os dois valores, lancamentos e colaboradores nesse CDC?")
+                if not unir:
+                    self._render_rateio()
+                    return
+
+            anterior = str(linha["CDC"])
+            self._registrar_ajuste_rateio(f"CDC {anterior} para {novo_cdc}")
+            if existente is None:
+                linha["CDC"] = novo_cdc
+                linha["CDC_EDITADO"] = True
+            else:
+                unir_linhas_rateio(existente, linha)
+                self.rateio.remove(linha)
             self._render_rateio()
+            acao = "unido ao" if existente is not None else "corrigido para"
+            self.set_status(f"CDC {anterior} {acao} {novo_cdc}", self.SUCESSO)
+            self.log(f"Rateio: CDC {anterior} {acao} {novo_cdc}.")
 
         def cancelar(e=None):
-            ent.destroy()
+            if ativo["sim"]:
+                ativo["sim"] = False
+                ent.destroy()
 
         ent.bind("<Return>", confirmar)
         ent.bind("<KP_Enter>", confirmar)
         ent.bind("<Escape>", cancelar)
         ent.bind("<FocusOut>", confirmar)
+
+    def _copiar_texto_rateio(self, texto, descricao):
+        pyperclip.copy(str(texto))
+        self.set_status(f"{descricao} copiado para a area de transferencia", self.SUCESSO)
+        self.log(f"Rateio: {descricao} copiado.")
+
+    def _copiar_total_rateio(self):
+        selecionados = [l for l in self.rateio if l.get("SEL")]
+        if not selecionados:
+            messagebox.showwarning("Copiar total", "Nao ha CDC selecionado no rateio.")
+            return
+        total = round(sum(l["VALOR"] for l in selecionados), 2)
+        self._copiar_texto_rateio(f"{total:.2f}".replace(".", ","), "total selecionado")
+
+    def _menu_contexto_rateio(self, event):
+        iid = self.tv_rateio.identify_row(event.y)
+        if not iid:
+            return
+        self._rateio_context_iid = iid
+        if iid not in self.tv_rateio.selection():
+            self.tv_rateio.selection_set(iid)
+        self.tv_rateio.focus(iid)
+        try:
+            self.menu_rateio.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.menu_rateio.grab_release()
+
+    def _copiar_celula_rateio(self, campo):
+        iid = self._rateio_context_iid or self.tv_rateio.focus()
+        linha = self._linha_rateio(iid)
+        if not linha:
+            return
+        texto = str(linha["CDC"]) if campo == "CDC" else f"{linha['VALOR']:.2f}".replace(".", ",")
+        self._copiar_texto_rateio(texto, campo.lower())
+
+    def _atalho_copiar_rateio(self, _event=None):
+        self._copiar_linhas_rateio()
+        return "break"
+
+    def _copiar_linhas_rateio(self):
+        iids = list(self.tv_rateio.selection())
+        linhas = [self._linha_rateio(i) for i in iids]
+        linhas = [l for l in linhas if l]
+        if not linhas:
+            linhas = [l for l in self.rateio if l.get("SEL")]
+        if not linhas:
+            return
+        dados = ["CDC\tPESSOAS\tLANCAMENTOS\tVALOR\tPERCENTUAL\tFAIXA\tAJUSTE"]
+        for l in linhas:
+            dados.append("\t".join([
+                str(l["CDC"]), str(l["PESSOAS"]), str(l["QTD"]),
+                f"{l['VALOR']:.2f}".replace(".", ","),
+                f"{l['PCT']:.2f}".replace(".", ","), l.get("FAIXA", ""),
+                self._descricao_ajuste_rateio(l)]))
+        self._copiar_texto_rateio("\n".join(dados), f"{len(linhas)} linha(s)")
 
     def exportar_rateio(self):
         if not self.rateio:
@@ -1987,7 +2206,10 @@ class PreenchedorSSA:
         try:
             sel = [l for l in self.rateio if l.get("SEL")]
             df = pd.DataFrame([{"CDC": l["CDC"], "PESSOAS": l["PESSOAS"], "LANCAMENTOS": l["QTD"],
-                                "VALOR": l["VALOR"], "PERCENTUAL": l["PCT"], "FAIXA": l.get("FAIXA", "")}
+                                "VALOR": l["VALOR"], "PERCENTUAL": l["PCT"], "FAIXA": l.get("FAIXA", ""),
+                                "CDC_ORIGINAL": ", ".join(sorted(str(c) for c in l.get("CDCS_ORIGINAIS", {l["CDC"]}))),
+                                "VALOR_ORIGINAL": l.get("VALOR_ORIGINAL", l["VALOR"]),
+                                "AJUSTE": self._descricao_ajuste_rateio(l)}
                                for l in sel])
             df.to_csv(caminho, sep=";", index=False, decimal=",", encoding="utf-8-sig")
             self.log(f"Rateio exportado: {caminho}")
