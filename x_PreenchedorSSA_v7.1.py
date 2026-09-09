@@ -10,17 +10,15 @@ Fluxo:
   4. SSA       -> preenche via F8 individual OU modo travado (loop automatico)
   5. Dados iniciais -> seleciona fornecedor/tipo no Excel e preenche via F8
 
-Novidades v6.5:
+Base herdada da v6.5:
   - Ao ativar Travar preenchimento, aplica automaticamente o preset seguro:
-    0,08 entre acoes, 0,08 de delay inicial e 0,40 entre linhas.
-  - Campo CDC tratado como controle de mascara fixa: nao usa Ctrl+A, Ctrl+C,
-    Backspace ou Delete. Mantem o ponto da mascara e usa HOME para colocar o
-    cursor no inicio antes de colar cada CDC.
-  - Modo travado: loop automatico dos CDCs com ancora XY (clique de retorno
-    ao primeiro campo do SSA antes de cada linha) para eliminar
-    desalinhamento por popup, foco perdido ou TAB extra.
+    0,10 entre acoes, 0,12 de delay inicial e 0,55 entre linhas.
+  - Campo CDC tratado como controle de mascara fixa: mantem o ponto da mascara,
+    usa HOME e cola o codigo completo de uma unica vez.
+  - Modo travado: loop automatico dos CDCs com coordenadas independentes para
+    os campos CDC e Valor/Percentual.
   - Pausa (F7 ou botao): interrompe o loop entre linhas, sem perder progresso.
-  - Reposicionar ancora: pausa, aguarda F8 para gravar nova posicao e retoma.
+  - Reposicionar campos: pausa, recaptura CDC e DADO e retoma.
   - Auto-pausa apos 2 falhas seguidas: nunca sai destruindo — pede intervencao.
   - F8 individual continua igual quando o modo travado esta desligado.
 
@@ -32,6 +30,18 @@ Novidades v7.1:
   - Documento recebe VALOR; Fornecedor recebe CODIGO; Tipo recebe
     CODIGO_DO_TIPO_DE_DOCUMENTO. TIPO_DE_DOCUMENTO e exibido pelas 3 primeiras
     letras para facilitar a conferencia.
+
+Ajuste LTS — modo travado por campos:
+  - O modo travado captura duas coordenadas: campo CDC e campo Valor/Percentual.
+  - O travado nao usa nenhum TAB: percorre CDC -> DADO -> CDC apenas por clique.
+  - O retorno ao CDC valida a saida do valor e prepara a proxima linha.
+  - No travado, o CDC recebe Ctrl+A e colagem integral depois de uma espera
+    adicional para o controle mascarado assumir o foco.
+  - "Reposicionar campos" refaz as duas capturas sem perder o progresso.
+  - Painel visual confirma separadamente CDC e DADO e inicia somente depois
+    das duas capturas concluídas.
+  - Guia flutuante permanece visivel sobre o SSA durante as etapas 1/2 e 2/2.
+  - Filtro global permite selecionar varios colaboradores antes de gerar o rateio.
 
 Autor: Anderson Souza
 """
@@ -127,6 +137,37 @@ def norm_cdc(v):
     return s
 
 
+def cdc_para_digitacao(v):
+    """Prepara o CDC para controles mascarados do SSA.
+
+    Quando o codigo e numerico, remove apenas sinais de formatacao (ponto,
+    hifen, barra etc.) para que a propria mascara do SSA reposicione o cursor.
+    Codigos alfanumericos sao preservados, retirando somente espacos.
+    """
+    s = str(v).strip()
+    if not s or s.lower() in ("nan", "none"):
+        return ""
+    compacto = re.sub(r"\s+", "", s)
+    if re.fullmatch(r"[\d.,/\-]+", compacto):
+        return re.sub(r"\D", "", compacto)
+    return compacto
+
+
+def chave_colaborador(lancamento):
+    """Identificador estavel: CPF; depois matricula; por fim nome normalizado."""
+    cpf = norm_cpf(lancamento.get("CPF_N") or lancamento.get("CPF") or "")
+    if cpf:
+        return f"CPF:{cpf}"
+    matricula = str(lancamento.get("MATRICULA") or "").strip()
+    if matricula:
+        return f"MAT:{matricula}"
+    nome = sem_acento(lancamento.get("NOME") or "").upper().strip()
+    nome = re.sub(r"\s+", " ", nome)
+    if nome:
+        return f"NOME:{nome}"
+    return f"LINHA:{lancamento.get('LINHA', '')}"
+
+
 def sem_acento(s):
     import unicodedata
     return "".join(c for c in unicodedata.normalize("NFKD", str(s))
@@ -192,13 +233,15 @@ def detectar_colunas(cols):
 def montar_lancamentos(df, mapa, cadastro_cpf_cdc=None):
     """Transforma o DataFrame bruto em lista de lancamentos normalizados.
 
-    mapa: dict com CPF/NOME/CDC/VERBA/DESCRICAO/VALOR/CLASSE (nomes de coluna, '' se ausente)
+    mapa: dict com CPF/MATRICULA/NOME/CDC/VERBA/DESCRICAO/VALOR/CLASSE
+    (nomes de coluna, '' se ausente)
     cadastro_cpf_cdc: dict opcional {cpf_normalizado: cdc} usado quando a planilha nao traz CDC
     Retorna (lancamentos, sem_cdc) — sem_cdc = lista de lancamentos sem CDC resolvido.
     """
     lanc = []
     sem_cdc = []
     c_cpf = mapa.get("CPF") or ""
+    c_matricula = mapa.get("MATRICULA") or ""
     c_nome = mapa.get("NOME") or ""
     c_cdc = mapa.get("CDC") or ""
     c_verba = mapa.get("VERBA") or ""
@@ -224,6 +267,7 @@ def montar_lancamentos(df, mapa, cadastro_cpf_cdc=None):
             "LINHA": int(i) + 2,
             "CPF": g(c_cpf),
             "CPF_N": cpf,
+            "MATRICULA": g(c_matricula),
             "NOME": g(c_nome),
             "CDC": cdc,
             "VERBA": g(c_verba),
@@ -246,19 +290,18 @@ def resumo_verbas(lancamentos):
         k = l["VERBA"] or "(sem codigo)"
         if k not in agg:
             agg[k] = {"VERBA": k, "DESCRICAO": l["DESCRICAO"], "CLASSE": l["CLASSE"],
-                      "QTD": 0, "TOTAL": 0.0, "CPFS": set(), "CDCS": set()}
+                      "QTD": 0, "TOTAL": 0.0, "PESSOAS_IDS": set(), "CDCS": set()}
         a = agg[k]
         a["QTD"] += 1
         a["TOTAL"] += l["VALOR"]
-        if l["CPF_N"]:
-            a["CPFS"].add(l["CPF_N"])
+        a["PESSOAS_IDS"].add(chave_colaborador(l))
         if l["CDC"]:
             a["CDCS"].add(l["CDC"])
         if not a["DESCRICAO"] and l["DESCRICAO"]:
             a["DESCRICAO"] = l["DESCRICAO"]
     out = []
     for k, a in agg.items():
-        a["PESSOAS"] = len(a["CPFS"])
+        a["PESSOAS"] = len(a["PESSOAS_IDS"])
         a["N_CDC"] = len(a["CDCS"])
         out.append(a)
     out.sort(key=lambda x: str(x["VERBA"]))
@@ -278,18 +321,18 @@ def calcular_rateio(lancamentos, verbas_sel, casas=2):
             continue
         cdc = l["CDC"] or "(sem CDC)"
         if cdc not in agg:
-            agg[cdc] = {"CDC": cdc, "VALOR": 0.0, "QTD": 0, "CPFS": set(), "VERBAS": set()}
+            agg[cdc] = {"CDC": cdc, "VALOR": 0.0, "QTD": 0,
+                        "PESSOAS_IDS": set(), "VERBAS": set()}
         a = agg[cdc]
         a["VALOR"] += l["VALOR"]
         a["QTD"] += 1
-        if l["CPF_N"]:
-            a["CPFS"].add(l["CPF_N"])
+        a["PESSOAS_IDS"].add(chave_colaborador(l))
         a["VERBAS"].add(str(l["VERBA"]))
 
     linhas = []
     for cdc, a in agg.items():
         linhas.append({"CDC": cdc, "VALOR": round(a["VALOR"], 2), "QTD": a["QTD"],
-                       "PESSOAS": len(a["CPFS"]), "VERBAS": len(a["VERBAS"]), "PCT": 0.0})
+                       "PESSOAS": len(a["PESSOAS_IDS"]), "VERBAS": len(a["VERBAS"]), "PCT": 0.0})
 
     total = round(sum(l["VALOR"] for l in linhas), 2)
     if total:
@@ -558,6 +601,8 @@ class PreenchedorSSA:
         self._sort_verbas = ("VERBA", False)
         self._sort_rateio = ("VALOR", True)
         self.empresa_sel = "(Todas as empresas)"
+        self.colaboradores_sel = None    # None = todos; set = grupo selecionado
+        self._colaborador_opcoes = []   # opcoes agregadas conforme empresa
         self._view_sort = {}          # ordenacao por clique nos cabecalhos
         self._head_txt = {}           # texto base de cada cabecalho
 
@@ -571,11 +616,18 @@ class PreenchedorSSA:
         self._local_f8_bound = False
 
         # Estado do modo travado (loop automatico dos CDCs)
-        self.anchor_xy = None            # (x, y) do primeiro campo do SSA
+        self.anchor_xy = None            # compatibilidade: ancora do campo CDC
+        self.field_anchors = {"CDC": None, "DADO": None}
+        self._anchor_capture_order = ("CDC", "DADO")
+        self._anchor_capture_index = 0
+        self._anchor_capture_temp = {}
         self._locked = False             # modo travado ativo
         self._paused = False             # loop pausado
-        self._awaiting_anchor = False    # aguardando F8 para capturar a ancora
+        self._awaiting_anchor = False    # aguardando F8 para capturar CDC/DADO
         self._lock_thread = None         # thread do loop
+        self._lock_config = None         # snapshot seguro dos parametros da GUI
+        self._anchor_start_after_id = None  # inicio visual apos as 2 capturas
+        self._capture_overlay = None      # aviso flutuante visivel sobre o SSA
         self._falhas_seguidas = 0        # auto-pausa apos 2 falhas seguidas
 
         # Estado dos dados iniciais do Contas a Pagar
@@ -840,22 +892,35 @@ class PreenchedorSSA:
                                       font=("Segoe UI", 12), text_color="#D6EAF6")
         self.lbl_passo.pack(anchor="e", pady=(2, 0))
 
-        # Barra de contexto — seletor de empresa (vale para todas as abas)
-        ctxt = ctk.CTkFrame(self.app, fg_color=self.CARD, corner_radius=0, height=54,
+        # Barra de contexto — empresa + grupo de colaboradores (todas as abas)
+        ctxt = ctk.CTkFrame(self.app, fg_color=self.CARD, corner_radius=0, height=96,
                             border_width=0)
         ctxt.pack(fill="x")
         ctxt.pack_propagate(False)
-        linha_ctx = ctk.CTkFrame(ctxt, fg_color="transparent")
-        linha_ctx.pack(fill="both", expand=True, padx=14, pady=8)
-        ctk.CTkLabel(linha_ctx, text="Empresa / estabelecimento:", font=self.F_LBL,
+        linha_empresa = ctk.CTkFrame(ctxt, fg_color="transparent")
+        linha_empresa.pack(fill="x", padx=14, pady=(7, 2))
+        ctk.CTkLabel(linha_empresa, text="Empresa / estabelecimento:", font=self.F_LBL,
                      text_color=self.AZUL_ESC).pack(side="left", padx=(0, 8))
-        self.cmb_empresa = self.combo(linha_ctx, ["(Todas as empresas)"],
-                                      command=self._ao_mudar_empresa, width=520)
+        self.cmb_empresa = self.combo(linha_empresa, ["(Todas as empresas)"],
+                                      command=self._ao_mudar_empresa, width=430)
         self.cmb_empresa.set("(Todas as empresas)")
         self.cmb_empresa.pack(side="left", padx=(0, 12))
-        self.lbl_empresa_info = ctk.CTkLabel(linha_ctx, text="carregue a planilha para listar as empresas",
+        self.lbl_empresa_info = ctk.CTkLabel(linha_empresa, text="carregue a planilha para listar as empresas",
                                              font=self.F_SUB, text_color=self.TEXTO_SUAVE)
         self.lbl_empresa_info.pack(side="left")
+
+        linha_colab = ctk.CTkFrame(ctxt, fg_color="transparent")
+        linha_colab.pack(fill="x", padx=14, pady=(2, 7))
+        ctk.CTkLabel(linha_colab, text="Colaboradores do rateio:", font=self.F_LBL,
+                     text_color=self.AZUL_ESC).pack(side="left", padx=(0, 8))
+        self.btn_colaboradores = self.botao(
+            linha_colab, "Selecionar colaboradores", self._abrir_filtro_colaboradores,
+            self.TEAL, self.TEAL_HV, 245, 32)
+        self.btn_colaboradores.pack(side="left", padx=(0, 12))
+        self.lbl_colaborador_info = ctk.CTkLabel(
+            linha_colab, text="nenhum dado carregado", font=self.F_SUB,
+            text_color=self.TEXTO_SUAVE)
+        self.lbl_colaborador_info.pack(side="left")
 
         self.tabs = ctk.CTkTabview(
             self.app, fg_color="transparent",
@@ -887,6 +952,7 @@ class PreenchedorSSA:
 
         self.atualizar_resumo()
         self.atualizar_linha_atual()
+        self._atualizar_ancora_ui()
 
     def _ao_trocar_aba(self):
         atual = self.tabs.get()
@@ -1132,7 +1198,9 @@ class PreenchedorSSA:
             return
         self._montar_cadastro_map()
         self.lancamentos, sem_cdc = montar_lancamentos(self.df_raw, self.mapa, self.cadastro_map)
+        self.colaboradores_sel = None
         self._popular_empresas()
+        self._popular_colaboradores()
         self.verbas = resumo_verbas(self._lanc_ativos())
         self.verbas_sel = set()
         self.rateio, self.rateio_total = [], 0.0
@@ -1154,12 +1222,79 @@ class PreenchedorSSA:
             self.tabs.set(self.T2)
             self._ao_trocar_aba()
 
-    # ---------- Filtro global por empresa ----------
-    def _lanc_ativos(self):
-        """Lancamentos da empresa selecionada (ou todos)."""
+    # ---------- Filtros globais: empresa + colaboradores ----------
+    def _lanc_empresa(self):
+        """Lancamentos limitados apenas pela empresa selecionada."""
         if self.empresa_sel.startswith("(Todas"):
             return self.lancamentos
         return [l for l in self.lancamentos if l.get("EMPRESA") == self.empresa_sel]
+
+    def _lanc_ativos(self):
+        """Base efetiva: empresa e, quando definido, grupo de colaboradores."""
+        base = self._lanc_empresa()
+        if self.colaboradores_sel is None:
+            return base
+        return [l for l in base if chave_colaborador(l) in self.colaboradores_sel]
+
+    def _montar_opcoes_colaboradores(self):
+        """Agrega pessoas da empresa atual para o seletor multiplo."""
+        agg = {}
+        for l in self._lanc_empresa():
+            chave = chave_colaborador(l)
+            if chave not in agg:
+                agg[chave] = {
+                    "CHAVE": chave,
+                    "NOME": str(l.get("NOME") or "(sem nome)"),
+                    "CPF": str(l.get("CPF") or l.get("MATRICULA") or ""),
+                    "CDCS": set(),
+                    "QTD": 0,
+                    "TOTAL": 0.0,
+                }
+            item = agg[chave]
+            cdc = str(l.get("CDC") or "").strip()
+            if cdc:
+                item["CDCS"].add(cdc)
+            item["QTD"] += 1
+            item["TOTAL"] += float(l.get("VALOR") or 0.0)
+
+        opcoes = []
+        for item in agg.values():
+            item["CDC"] = ", ".join(sorted(item.pop("CDCS"))) or "—"
+            item["TOTAL"] = round(item["TOTAL"], 2)
+            opcoes.append(item)
+        opcoes.sort(key=lambda x: (sem_acento(x["NOME"]).lower(), x["CPF"]))
+        return opcoes
+
+    def _popular_colaboradores(self):
+        self._colaborador_opcoes = self._montar_opcoes_colaboradores()
+        validos = {o["CHAVE"] for o in self._colaborador_opcoes}
+        if self.colaboradores_sel is not None:
+            self.colaboradores_sel.intersection_update(validos)
+            if not self.colaboradores_sel or self.colaboradores_sel == validos:
+                self.colaboradores_sel = None
+        self._atualizar_info_filtros()
+
+    def _atualizar_info_filtros(self):
+        base_empresa = self._lanc_empresa()
+        ativos = self._lanc_ativos()
+        total_pessoas = len(self._colaborador_opcoes)
+        selecionadas = total_pessoas if self.colaboradores_sel is None else len(self.colaboradores_sel)
+
+        if hasattr(self, "lbl_empresa_info"):
+            empresas = {str(l.get("EMPRESA") or "(sem empresa)") for l in self.lancamentos}
+            self.lbl_empresa_info.configure(
+                text=f"{len(empresas)} empresa(s) na planilha  |  {len(base_empresa)} lancamento(s) na empresa")
+        if hasattr(self, "btn_colaboradores"):
+            texto = (f"Todos os colaboradores ({total_pessoas})"
+                     if self.colaboradores_sel is None
+                     else f"Grupo selecionado ({selecionadas})")
+            self.btn_colaboradores.configure(text=texto)
+        if hasattr(self, "lbl_colaborador_info"):
+            self.lbl_colaborador_info.configure(
+                text=(f"{selecionadas} de {total_pessoas} pessoa(s)  |  "
+                      f"{len(ativos)} lancamento(s) em uso  |  "
+                      f"{fmt_brl(sum(l['VALOR'] for l in ativos))}"),
+                text_color=self.SUCESSO if self.colaboradores_sel is not None else self.TEXTO_SUAVE)
 
     def _popular_empresas(self):
         agg = {}
@@ -1171,21 +1306,170 @@ class PreenchedorSSA:
         if self.empresa_sel not in opcoes:
             self.empresa_sel = "(Todas as empresas)"
         self.cmb_empresa.set(self.empresa_sel)
-        self.lbl_empresa_info.configure(
-            text=f"{len(agg)} empresa(s) na planilha  |  {len(self._lanc_ativos())} lancamento(s) em uso")
+        self._atualizar_info_filtros()
 
     def _ao_mudar_empresa(self, valor):
         self.empresa_sel = valor
+        self.colaboradores_sel = None
+        self._popular_colaboradores()
         ativos = self._lanc_ativos()
         self.verbas = resumo_verbas(ativos)
         self.verbas_sel = set()
         self.rateio, self.rateio_total = [], 0.0
-        self.lbl_empresa_info.configure(
-            text=f"{len(ativos)} lancamento(s) em uso  |  total {fmt_brl(sum(l['VALOR'] for l in ativos))}")
+        self._atualizar_info_filtros()
         self._render_preview()
         self._render_verbas()
         self._render_rateio()
         self.log(f"Empresa selecionada: {valor} ({len(ativos)} lancamentos).")
+
+    def _aplicar_filtro_colaboradores(self, chaves):
+        validos = {o["CHAVE"] for o in self._colaborador_opcoes}
+        escolhidos = set(chaves) & validos
+        self.colaboradores_sel = None if escolhidos == validos else escolhidos
+
+        ativos = self._lanc_ativos()
+        self.verbas = resumo_verbas(ativos)
+        self.verbas_sel = set()
+        self.rateio, self.rateio_total = [], 0.0
+        self._atualizar_info_filtros()
+        self._render_preview()
+        self._render_verbas()
+        self._render_rateio()
+        grupo = "todos" if self.colaboradores_sel is None else str(len(self.colaboradores_sel))
+        self.log(f"Filtro de colaboradores aplicado: {grupo} ({len(ativos)} lancamentos).")
+
+    def _abrir_filtro_colaboradores(self):
+        """Janela de selecao multipla por nome, CPF e CDC."""
+        if not self.lancamentos:
+            messagebox.showwarning("Colaboradores", "Carregue e processe a planilha primeiro.")
+            return
+        if not self._colaborador_opcoes:
+            messagebox.showwarning("Colaboradores", "Nao ha colaboradores na empresa selecionada.")
+            return
+
+        janela = ctk.CTkToplevel(self.app)
+        janela.title("Selecionar colaboradores para o rateio")
+        janela.geometry("820x650")
+        janela.minsize(680, 520)
+        janela.transient(self.app)
+        janela.grab_set()
+
+        cab = ctk.CTkFrame(janela, fg_color=self.AZUL, corner_radius=0, height=76)
+        cab.pack(fill="x")
+        cab.pack_propagate(False)
+        ctk.CTkLabel(cab, text="Grupo de colaboradores do rateio",
+                     font=("Segoe UI", 20, "bold"), text_color="white").pack(
+                         anchor="w", padx=20, pady=(12, 0))
+        ctk.CTkLabel(cab,
+                     text="Marque varias pessoas. O filtro sera combinado com a empresa selecionada.",
+                     font=self.F_SUB, text_color="#D6EAF6").pack(anchor="w", padx=20)
+
+        barra = ctk.CTkFrame(janela, fg_color=self.PAINEL, corner_radius=10,
+                             border_width=1, border_color=self.BORDA)
+        barra.pack(fill="x", padx=16, pady=(14, 8))
+        ctk.CTkLabel(barra, text="Buscar:", font=self.F_LBL,
+                     text_color=self.TEXTO).pack(side="left", padx=(12, 6), pady=10)
+        ent_busca = self.entry(barra, width=390, placeholder="nome, CPF ou CDC...")
+        ent_busca.pack(side="left", padx=(0, 12), pady=10)
+        lbl_sel = ctk.CTkLabel(barra, text="", font=self.F_LBL,
+                               text_color=self.AZUL_ESC)
+        lbl_sel.pack(side="right", padx=12, pady=10)
+
+        todas = {o["CHAVE"] for o in self._colaborador_opcoes}
+        temporarias = set(todas if self.colaboradores_sel is None else self.colaboradores_sel)
+        opcoes_por_chave = {o["CHAVE"]: o for o in self._colaborador_opcoes}
+
+        corpo = ctk.CTkFrame(janela, fg_color="transparent")
+        corpo.pack(fill="both", expand=True, padx=16, pady=(0, 8))
+        cols = [("SEL", "Sel.", 55, "center"), ("NOME", "Colaborador", 280, "w"),
+                ("CPF", "CPF / Matricula", 130, "center"), ("CDC", "CDC", 120, "center"),
+                ("QTD", "Lanc.", 65, "center"), ("TOTAL", "Total", 120, "e")]
+        wrap, tv = self.tabela(corpo, cols, altura=15)
+        wrap.pack(fill="both", expand=True)
+        tv.tag_configure("sel", background="#DFF1E5", foreground=self.SUCESSO)
+        tv.tag_configure("sel_alt", background="#D3EADB", foreground=self.SUCESSO)
+
+        def opcoes_visiveis():
+            q = sem_acento(ent_busca.get()).lower().strip()
+            if not q:
+                return self._colaborador_opcoes
+            return [o for o in self._colaborador_opcoes
+                    if q in sem_acento(f"{o['NOME']} {o['CPF']} {o['CDC']}").lower()]
+
+        def renderizar():
+            pos = tv.yview()[0] if tv.get_children() else 0.0
+            for iid in tv.get_children():
+                tv.delete(iid)
+            for n, o in enumerate(opcoes_visiveis()):
+                marcado = o["CHAVE"] in temporarias
+                if marcado:
+                    tag = "sel" if n % 2 == 0 else "sel_alt"
+                else:
+                    tag = "par" if n % 2 == 0 else "impar"
+                tv.insert("", "end", iid=o["CHAVE"], tags=(tag,),
+                          values=("[x]" if marcado else "[ ]", o["NOME"], o["CPF"],
+                                  o["CDC"], o["QTD"], fmt_num(o["TOTAL"])))
+            if tv.get_children():
+                tv.yview_moveto(pos)
+            cor = self.SUCESSO if temporarias else self.ALERTA
+            lbl_sel.configure(text=f"{len(temporarias)} de {len(todas)} selecionado(s)",
+                              text_color=cor)
+
+        def clicar(event):
+            if tv.identify_region(event.x, event.y) != "cell":
+                return
+            iid = tv.identify_row(event.y)
+            if not iid or iid not in opcoes_por_chave:
+                return
+            if iid in temporarias:
+                temporarias.remove(iid)
+            else:
+                temporarias.add(iid)
+            renderizar()
+
+        def marcar_visiveis(marcar):
+            for o in opcoes_visiveis():
+                if marcar:
+                    temporarias.add(o["CHAVE"])
+                else:
+                    temporarias.discard(o["CHAVE"])
+            renderizar()
+
+        def aplicar():
+            if not temporarias:
+                messagebox.showwarning(
+                    "Colaboradores",
+                    "Selecione ao menos um colaborador ou use 'Selecionar todos'.",
+                    parent=janela)
+                return
+            self._aplicar_filtro_colaboradores(temporarias)
+            janela.destroy()
+
+        tv.bind("<Button-1>", clicar)
+        ent_busca.bind("<KeyRelease>", lambda e: renderizar())
+
+        acoes = ctk.CTkFrame(janela, fg_color="transparent")
+        acoes.pack(fill="x", padx=16, pady=(0, 6))
+        self.botao(acoes, "Marcar visiveis", lambda: marcar_visiveis(True),
+                   self.AZUL, self.AZUL_HV, 145, 34).pack(side="left", padx=(0, 6))
+        self.botao(acoes, "Desmarcar visiveis", lambda: marcar_visiveis(False),
+                   self.AZUL_CLARO, self.AZUL_CLARO_HV, 165, 34).pack(side="left", padx=(0, 6))
+        self.botao(acoes, "Selecionar todos", lambda: (temporarias.update(todas), renderizar()),
+                   self.NEUTRA, self.NEUTRA_HV, 145, 34).pack(side="left")
+
+        rodape = ctk.CTkFrame(janela, fg_color=self.PAINEL, corner_radius=0)
+        rodape.pack(fill="x", side="bottom")
+        ctk.CTkLabel(rodape,
+                     text="Ao aplicar, as verbas e o rateio anteriores serao limpos para evitar mistura de bases.",
+                     font=("Segoe UI", 10), text_color=self.TEXTO_SUAVE).pack(
+                         side="left", padx=16, pady=12)
+        self.botao(rodape, "Cancelar", janela.destroy, self.NEUTRA,
+                   self.NEUTRA_HV, 105, 34).pack(side="right", padx=(6, 16), pady=8)
+        self.botao(rodape, "Aplicar grupo", aplicar, self.SUCESSO,
+                   self.SUCESSO_HV, 135, 34).pack(side="right", pady=8)
+
+        renderizar()
+        janela.after(80, ent_busca.focus_set)
 
     def _render_preview(self):
         for i in self.tv_preview.get_children():
@@ -1213,9 +1497,14 @@ class PreenchedorSSA:
             cb.configure(values=["(nenhuma)"])
             cb.set("(nenhuma)")
         self.empresa_sel = "(Todas as empresas)"
+        self.colaboradores_sel = None
+        self._colaborador_opcoes = []
         self.cmb_empresa.configure(values=["(Todas as empresas)"])
         self.cmb_empresa.set("(Todas as empresas)")
         self.lbl_empresa_info.configure(text="carregue a planilha para listar as empresas")
+        self.btn_colaboradores.configure(text="Selecionar colaboradores")
+        self.lbl_colaborador_info.configure(text="nenhum dado carregado",
+                                             text_color=self.TEXTO_SUAVE)
         self.lbl_arquivo.configure(text="Nenhum arquivo carregado.", text_color=self.TEXTO_SUAVE)
         self.lbl_diag.configure(text="", text_color=self.TEXTO_SUAVE)
         self._render_preview()
@@ -1533,10 +1822,13 @@ class PreenchedorSSA:
         self.tabs.set(self.T3)
         self._ao_trocar_aba()
         verbas_txt = ", ".join(sorted(self.verbas_sel))
+        grupo_txt = ("todos os colaboradores" if self.colaboradores_sel is None
+                     else f"{len(self.colaboradores_sel)} colaborador(es)")
         self.lbl_rateio_rodape.configure(
             text=f"Empresa: {self.empresa_sel}  |  Verba(s): {verbas_txt}  |  "
-                 f"{len(linhas)} CDC(s)  |  total {fmt_brl(total)}")
-        self.log(f"Rateio gerado: verbas [{verbas_txt}] -> {len(linhas)} CDC(s), total {fmt_brl(total)}.")
+                 f"Grupo: {grupo_txt}  |  {len(linhas)} CDC(s)  |  total {fmt_brl(total)}")
+        self.log(f"Rateio gerado: {grupo_txt}, verbas [{verbas_txt}] -> "
+                 f"{len(linhas)} CDC(s), total {fmt_brl(total)}.")
 
     def _rateio_filtrado(self):
         q = self.ent_busca_cdc.get().strip().lower() if hasattr(self, "ent_busca_cdc") else ""
@@ -1732,7 +2024,7 @@ class PreenchedorSSA:
                             f"{len(registros)} CDC(s) carregado(s) por {modo}.\n"
                             f"Total: {fmt_brl(total)}\n\n"
                             "Clique no primeiro campo do SSA e pressione F8.\n"
-                            "Ou ative o Modo travado para preencher todos automaticamente.")
+                            "Ou ative o Modo travado e capture, com F8, o campo CDC e depois o campo Valor/Percentual.")
 
     # =========================================================
     # PERFIL (mapeamento + verbas favoritas)
@@ -1741,6 +2033,8 @@ class PreenchedorSSA:
         try:
             dados = {"mapa": self.mapa, "verbas": sorted(self.verbas_sel),
                      "empresa": self.empresa_sel,
+                     "colaboradores": (None if self.colaboradores_sel is None
+                                       else sorted(self.colaboradores_sel)),
                      "base_rateio": self.cmb_base_rateio.get() if hasattr(self, "cmb_base_rateio") else "VALOR",
                      "ssa": {"usar": self.cmb_usar.get(), "delay": self.entry_delay.get(),
                              "delay_inicial": self.entry_delay_inicial.get(),
@@ -1751,7 +2045,7 @@ class PreenchedorSSA:
                              "linha_inicial": self.entry_linha_inicial.get(),
                              "qtd": self.entry_qtd.get(),
                              "delay_loop": self.entry_delay_loop.get()
-                             if hasattr(self, "entry_delay_loop") else "0,40"}}
+                             if hasattr(self, "entry_delay_loop") else "0,55"}}
             caminho = filedialog.asksaveasfilename(
                 title="Salvar perfil", defaultextension=".json",
                 filetypes=[("JSON", "*.json")], initialfile="perfil_ssa.json")
@@ -1785,8 +2079,19 @@ class PreenchedorSSA:
             if emp in list(self.cmb_empresa.cget("values")):
                 self.empresa_sel = emp
                 self.cmb_empresa.set(emp)
+            if self.df_raw is not None:
+                self.colaboradores_sel = None
+                self._popular_colaboradores()
+                salvos = d.get("colaboradores")
+                if isinstance(salvos, list):
+                    validos = {o["CHAVE"] for o in self._colaborador_opcoes}
+                    grupo = {str(v) for v in salvos} & validos
+                    if grupo and grupo != validos:
+                        self.colaboradores_sel = grupo
+                self._atualizar_info_filtros()
                 self.verbas = resumo_verbas(self._lanc_ativos())
-            self.verbas_sel = set(str(v) for v in d.get("verbas", []))
+            verbas_validas = {str(v["VERBA"]) for v in self.verbas}
+            self.verbas_sel = {str(v) for v in d.get("verbas", [])} & verbas_validas
             if hasattr(self, "cmb_base_rateio"):
                 self.cmb_base_rateio.set(d.get("base_rateio", "VALOR"))
             s = d.get("ssa", {})
@@ -1799,7 +2104,7 @@ class PreenchedorSSA:
                          (self.entry_linha_inicial, "linha_inicial", "1"),
                          (self.entry_qtd, "qtd", "TODOS")]
                 if hasattr(self, "entry_delay_loop"):
-                    pares.append((self.entry_delay_loop, "delay_loop", "0,80"))
+                    pares.append((self.entry_delay_loop, "delay_loop", "0,55"))
                 for ent, key, dflt in pares:
                     ent.delete(0, "end")
                     ent.insert(0, s.get(key, dflt))
@@ -1825,14 +2130,14 @@ class PreenchedorSSA:
         c = self.card(parent)
         c.grid(row=0, column=0, sticky="nsew", padx=(0, 6), pady=(0, 8))
         self.titulo(c, "Configuracao do preenchimento",
-                    "Ajuste os TABs conforme a tela do SSA. Cole os dados manualmente se preferir.")
+                    "Travado = duas coordenadas e zero TAB. As configuracoes de TAB valem somente para o F8 individual.")
 
         grid = ctk.CTkFrame(c, fg_color="transparent")
         grid.pack(fill="x", padx=16, pady=(0, 8))
         for i in range(5):
             grid.grid_columnconfigure(i, weight=1)
 
-        rotulos1 = ["Usar campo", "Navegacao", "Delay entre acoes", "Delay inicial", "Qtd. a executar"]
+        rotulos1 = ["Usar campo", "Navegacao do F8", "Delay entre acoes", "Delay inicial", "Qtd. a executar"]
         for i, t in enumerate(rotulos1):
             ctk.CTkLabel(grid, text=t, font=self.F_LBL, text_color=self.TEXTO
                          ).grid(row=0, column=i, sticky="w", padx=5, pady=(0, 3))
@@ -1852,7 +2157,7 @@ class PreenchedorSSA:
         self.entry_qtd.grid(row=1, column=4, sticky="ew", padx=5, pady=(0, 8))
         self.entry_qtd.insert(0, "TODOS")
 
-        rotulos2 = ["TAB apos CDC", "TAB apos dado", "Limpar campo atual", "Acao final", "Linha inicial"]
+        rotulos2 = ["TAB apos CDC (F8)", "TAB apos dado (F8)", "Limpar campo atual", "Acao final (F8)", "Linha inicial"]
         for i, t in enumerate(rotulos2):
             ctk.CTkLabel(grid, text=t, font=self.F_LBL, text_color=self.TEXTO
                          ).grid(row=2, column=i, sticky="w", padx=5, pady=(6, 3))
@@ -1891,7 +2196,7 @@ class PreenchedorSSA:
         c2 = self.card(parent)
         c2.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=(6, 0), pady=(0, 0))
         self.titulo(c2, "Execucao por hotkey",
-                    "1. Clique no primeiro campo do SSA.  2. F8 = 1 linha  ·  Modo travado = loop automatico.  "
+                    "F8 individual = 1 linha por TAB. No modo travado: F8 captura CDC, depois F8 captura o dado.  "
                     "F6 pula, F7 pausa, F9 volta.")
 
         b1 = ctk.CTkFrame(c2, fg_color="transparent")
@@ -1920,13 +2225,13 @@ class PreenchedorSSA:
         b_lock.pack(fill="x", padx=16, pady=(0, 10))
         top_lock = ctk.CTkFrame(b_lock, fg_color="transparent")
         top_lock.pack(fill="x", padx=10, pady=(8, 4))
-        ctk.CTkLabel(top_lock, text="Modo travado (loop automatico dos CDCs)",
+        ctk.CTkLabel(top_lock, text="Modo travado (CDC -> DADO -> CDC | zero TAB)",
                      font=("Segoe UI", 12, "bold"),
                      text_color=self.AZUL_ESC).pack(side="left")
         ctk.CTkLabel(top_lock, text="Delay entre linhas:",
                      font=self.F_LBL, text_color=self.TEXTO).pack(side="left", padx=(16, 4))
         self.entry_delay_loop = self.entry(top_lock, width=80)
-        self.entry_delay_loop.insert(0, "0,40")
+        self.entry_delay_loop.insert(0, "0,55")
         self.entry_delay_loop.pack(side="left")
 
         row_lock = ctk.CTkFrame(b_lock, fg_color="transparent")
@@ -1937,8 +2242,33 @@ class PreenchedorSSA:
         self.btn_travar.pack(side="left", padx=(0, 6))
         self.botao(row_lock, "Pausar / Retomar (F7)",
                    self.toggle_pausa, self.AMBAR, self.AMBAR_HV, 175).pack(side="left", padx=(0, 6))
-        self.botao(row_lock, "Reposicionar ancora",
-                   self.reposicionar_ancora, self.TEAL, self.TEAL_HV, 165).pack(side="left")
+        self.botao(row_lock, "Reposicionar campos",
+                   self.reposicionar_ancora, self.TEAL, self.TEAL_HV, 175).pack(side="left")
+
+        painel_captura = ctk.CTkFrame(b_lock, fg_color="transparent")
+        painel_captura.pack(fill="x", padx=10, pady=(0, 5))
+        painel_captura.grid_columnconfigure(0, weight=1)
+        painel_captura.grid_columnconfigure(1, weight=1)
+        self.lbl_captura_cdc = ctk.CTkLabel(
+            painel_captura, text="1. CDC\nAguardando ativacao", height=48,
+            corner_radius=8, fg_color="#E9EEF2", text_color=self.TEXTO_SUAVE,
+            font=("Segoe UI", 11, "bold"))
+        self.lbl_captura_cdc.grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        self.lbl_captura_dado = ctk.CTkLabel(
+            painel_captura, text="2. VALOR\nAguardando ativacao", height=48,
+            corner_radius=8, fg_color="#E9EEF2", text_color=self.TEXTO_SUAVE,
+            font=("Segoe UI", 11, "bold"))
+        self.lbl_captura_dado.grid(row=0, column=1, sticky="ew", padx=(4, 0))
+
+        self.progresso_captura = ctk.CTkProgressBar(
+            b_lock, height=8, corner_radius=5, fg_color="#DDE5EB",
+            progress_color=self.SUCESSO)
+        self.progresso_captura.pack(fill="x", padx=12, pady=(1, 4))
+        self.progresso_captura.set(0)
+        self.lbl_captura_inicio = ctk.CTkLabel(
+            b_lock, text="Ative o travado para iniciar a captura 1/2.",
+            font=("Segoe UI", 10, "bold"), text_color=self.TEXTO_SUAVE)
+        self.lbl_captura_inicio.pack(anchor="w", padx=12, pady=(0, 4))
 
         self.lbl_ancora = ctk.CTkLabel(b_lock, text="Modo travado: desligado.",
                                        font=("Segoe UI", 11), text_color=self.TEXTO_SUAVE)
@@ -2348,6 +2678,9 @@ class PreenchedorSSA:
     # LOG / STATUS
     # =========================================================
     def log(self, msg):
+        if threading.current_thread() is not threading.main_thread():
+            self.app.after(0, lambda texto=msg: self.log(texto))
+            return
         linha = f"[{time.strftime('%H:%M:%S')}] {msg}\n"
         if hasattr(self, "txt_log"):
             self.txt_log.insert("end", linha)
@@ -2357,6 +2690,9 @@ class PreenchedorSSA:
             print(linha, end="")
 
     def set_status(self, msg, cor=None):
+        if threading.current_thread() is not threading.main_thread():
+            self.app.after(0, lambda texto=msg, cor_texto=cor: self.set_status(texto, cor_texto))
+            return
         self.lbl_status.configure(text=f"Status: {msg}", text_color=cor or self.AZUL_ESC)
         self.app.update_idletasks()
 
@@ -2386,7 +2722,7 @@ class PreenchedorSSA:
 
     def _acao_f8(self):
         """Roteamento do F8:
-        - se aguardando ancora   -> captura pyautogui.position() e inicia o loop
+        - se aguardando ancora   -> captura CDC e DADO, um F8 para cada campo
         - se modo travado ligado -> ignora (o loop cuida)
         - se aba Dados iniciais  -> executa Documento, Fornecedor ou Tipo, campo a campo
         - caso contrario         -> executa 1 linha (comportamento individual)
@@ -2394,15 +2730,44 @@ class PreenchedorSSA:
         if self._awaiting_anchor:
             try:
                 x, y = pyautogui.position()
-                self.anchor_xy = (int(x), int(y))
+                campo = self._anchor_capture_order[self._anchor_capture_index]
+                if campo == "DADO" and "CDC" in self._anchor_capture_temp:
+                    cdc_x, cdc_y = self._anchor_capture_temp["CDC"]
+                    if abs(int(x) - cdc_x) < 8 and abs(int(y) - cdc_y) < 8:
+                        self.log("Captura recusada: CDC e DADO ficaram na mesma posicao.")
+                        self.set_status(
+                            "clique no campo Valor/Percentual (posicao diferente do CDC) e pressione F8",
+                            self.ALERTA)
+                        return
+                self._anchor_capture_temp[campo] = (int(x), int(y))
+                self.log(f"Campo {campo} capturado em ({x}, {y}).")
+                try:
+                    self.app.bell()
+                except Exception:
+                    pass
+
+                if self._anchor_capture_index < len(self._anchor_capture_order) - 1:
+                    self._anchor_capture_index += 1
+                    proximo = self._anchor_capture_order[self._anchor_capture_index]
+                    self._atualizar_ancora_ui()
+                    self.set_status(
+                        f"campo CDC ok — clique em {self._nome_campo_ancora(proximo)} e pressione F8",
+                        self.AMBAR)
+                    return
+
+                self.field_anchors.update(self._anchor_capture_temp)
+                self.anchor_xy = self.field_anchors["CDC"]
+                self._anchor_capture_temp = {}
+                self._anchor_capture_index = 0
                 self._awaiting_anchor = False
+                self._paused = True
+                self._lock_config = self._capturar_config_execucao()
+                self._agendar_inicio_apos_captura()
                 self._atualizar_ancora_ui()
-                self.log(f"Ancora gravada em ({x}, {y}).")
-                self.set_status("ancora ok — loop rodando", self.SUCESSO)
-                self._iniciar_thread_travamento()
+                self.log("Captura 2/2 concluida. Inicio automatico confirmado em 1,2 segundo.")
+                self.set_status("CDC e DADO capturados — iniciando travado...", self.SUCESSO)
             except Exception as e:
-                self.log(f"Falha ao capturar ancora: {e}")
-                self._awaiting_anchor = False
+                self.log(f"Falha ao capturar campo: {e}")
                 self._atualizar_ancora_ui()
             return
         if self._locked:
@@ -2437,7 +2802,7 @@ class PreenchedorSSA:
                     self.global_on = True
                     self._sincronizar_botoes_hotkey()
                     self.lbl_hotkey_mode.configure(text="Hotkey: Global (pynput)")
-                    self.log("Hotkey global ativada (pynput): F8 preenche/ancora, F6 pula, F7 pausa, F9 volta.")
+                    self.log("Hotkey global ativada (pynput): F8 preenche/captura campos, F6 pula, F7 pausa, F9 volta.")
                     self.set_status("hotkey global ativada", self.SUCESSO)
                     return
                 if HAS_KEYBOARD_PACKAGE and kb_global is not None:
@@ -2597,11 +2962,21 @@ class PreenchedorSSA:
         self.df.at[idx, "STATUS"] = status
         if obs is not None:
             self.df.at[idx, "OBS"] = obs
-        self.tree.item(str(idx), tags=(self._tag_status(status),),
-                       values=(idx + 1, self.df.at[idx, "CDC"], self.df.at[idx, "DADO"],
-                               self.df.at[idx, "TIPO"], self.df.at[idx, "STATUS"],
-                               self.df.at[idx, "OBS"]))
-        self.atualizar_resumo()
+
+        def atualizar_interface():
+            try:
+                self.tree.item(str(idx), tags=(self._tag_status(status),),
+                               values=(idx + 1, self.df.at[idx, "CDC"], self.df.at[idx, "DADO"],
+                                       self.df.at[idx, "TIPO"], self.df.at[idx, "STATUS"],
+                                       self.df.at[idx, "OBS"]))
+                self.atualizar_resumo()
+            except Exception as e:
+                self.log(f"Falha ao atualizar a fila visual: {e}")
+
+        if threading.current_thread() is threading.main_thread():
+            atualizar_interface()
+        else:
+            self.app.after(0, atualizar_interface)
 
     def atualizar_resumo(self):
         if self.df.empty:
@@ -2624,6 +2999,9 @@ class PreenchedorSSA:
         return int(p[0]) if len(p) > 0 else None
 
     def atualizar_linha_atual(self):
+        if threading.current_thread() is not threading.main_thread():
+            self.app.after(0, self.atualizar_linha_atual)
+            return
         idx = self.obter_proxima_linha_pendente()
         if idx is None:
             self.lbl_linha.configure(text="Linha atual: concluido")
@@ -2670,6 +3048,19 @@ class PreenchedorSSA:
         except Exception:
             return 1
 
+    def _capturar_config_execucao(self):
+        """Le widgets somente na thread principal e congela os parametros do loop."""
+        return {
+            "usar": self.cmb_usar.get(),
+            "delay": self.obter_delay(),
+            "delay_inicial": self.obter_delay_inicial(),
+            "tabs_cdc": self.obter_tabs_cdc(),
+            "tabs_final": self.obter_tabs_final(),
+            "limpar": self.cmb_limpar.get(),
+            "acao_final": self.cmb_acao_final.get(),
+            "delay_loop": self._delay_loop(),
+        }
+
     # =========================================================
     # EXECUCAO SSA
     # =========================================================
@@ -2683,6 +3074,36 @@ class PreenchedorSSA:
         """
         pyautogui.press("home")
         time.sleep(max(0.05, delay))
+
+    def colar_cdc_mascarado_travado(self, cdc, delay=0.10):
+        """Seleciona a mascara inteira e cola todo o CDC de uma unica vez.
+
+        No modo travado, o clique pode deixar o cursor no segundo bloco da
+        mascara e gerar '.410'. O Ctrl+A elimina a posicao do cursor: o Ctrl+V
+        substitui todo o conteudo pelos seis digitos (ex.: 410000 -> 410.000).
+        O F8 individual permanece com seu comportamento original.
+        """
+        texto = cdc_para_digitacao(cdc)
+        if not texto:
+            raise ValueError("CDC vazio depois da normalizacao")
+        pyautogui.hotkey("ctrl", "a")
+        time.sleep(max(0.15, delay))
+        self.colar_texto(texto)
+        # Aguarda a mascara distribuir e validar todos os digitos antes de sair.
+        time.sleep(max(0.35, delay * 3))
+
+    def _ancoras_completas(self):
+        return all(self.field_anchors.get(campo) for campo in self._anchor_capture_order)
+
+    def _clicar_campo_ancorado(self, campo, delay):
+        xy = self.field_anchors.get(campo)
+        if not xy:
+            raise RuntimeError(f"Campo {campo} ainda nao foi capturado")
+        pyautogui.click(int(xy[0]), int(xy[1]))
+        # O CDC e um controle mascarado e demora mais para assumir foco que o
+        # campo comum de Valor/Percentual.
+        espera = max(0.45, delay * 4) if campo == "CDC" else max(0.12, delay)
+        time.sleep(espera)
 
     def colar_texto(self, texto, limpar=False):
         pyperclip.copy(str(texto))
@@ -2709,8 +3130,8 @@ class PreenchedorSSA:
             pyautogui.press("tab")
             time.sleep(delay)
 
-    def executar_acao_final(self, delay):
-        acao = self.cmb_acao_final.get()
+    def executar_acao_final(self, delay, acao=None):
+        acao = acao or self.cmb_acao_final.get()
         if acao in ("ENTER", "TAB"):
             pyautogui.press(acao.lower())
             time.sleep(delay)
@@ -2732,7 +3153,7 @@ class PreenchedorSSA:
         self.atualizar_linha_atual()
         self.log(f"Posicionado na linha {linha + 1}.")
 
-    def executar_linha(self, idx, bypass_debounce=False):
+    def executar_linha(self, idx, bypass_debounce=False, usar_ancoras=False, config=None):
         if idx is None or idx >= len(self.df) or self._sending:
             return False
         if not bypass_debounce:
@@ -2744,8 +3165,9 @@ class PreenchedorSSA:
         try:
             cdc = str(self.df.at[idx, "CDC"]).strip()
             dado = str(self.df.at[idx, "DADO"]).strip()
-            usar = self.cmb_usar.get()
-            delay = self.obter_delay()
+            cfg = config or self._capturar_config_execucao()
+            usar = cfg["usar"]
+            delay = cfg["delay"]
             if not cdc:
                 self.atualizar_status_linha(idx, "IGNORADO", "CDC vazio")
                 self.atualizar_linha_atual()
@@ -2754,22 +3176,51 @@ class PreenchedorSSA:
                 self.atualizar_status_linha(idx, "IGNORADO", "Dado vazio")
                 self.atualizar_linha_atual()
                 return True
-            di = self.obter_delay_inicial()
+            if usar_ancoras and not self._ancoras_completas():
+                raise RuntimeError("Capture os campos CDC e Valor/Percentual antes de iniciar")
+
+            di = cfg["delay_inicial"]
             if di > 0:
                 time.sleep(di)
-            # O CDC usa mascara fixa no SSA. Nao selecionar nem apagar o ponto:
-            # apenas garantir o cursor no inicio e colar como no fluxo original.
-            self.posicionar_cursor_cdc_mascarado(delay=max(0.08, delay))
-            self.colar_texto(cdc)
-            time.sleep(delay)
-            self.executar_tabs(self.obter_tabs_cdc(), delay)
-            if self.cmb_limpar.get() == "SIM":
+
+            # No travado, cada campo recebe um clique direto. Isso elimina a
+            # dependencia da ordem de TAB quando o SSA exibe/oculta algum icone.
+            if usar_ancoras:
+                self._clicar_campo_ancorado("CDC", delay)
+
+            if usar_ancoras:
+                # No travado, o clique pode posicionar o cursor depois do ponto.
+                # Ctrl+A + Ctrl+V garante a substituicao dos dois blocos da mascara.
+                self.colar_cdc_mascarado_travado(cdc, delay=max(0.10, delay))
+            else:
+                # Mantem o comportamento original do F8 individual, que ja
+                # funciona corretamente no SSA.
+                self.posicionar_cursor_cdc_mascarado(delay=max(0.08, delay))
+                self.colar_texto(cdc)
+                time.sleep(delay)
+
+            if usar_ancoras:
+                self._clicar_campo_ancorado("DADO", delay)
+            else:
+                self.executar_tabs(cfg["tabs_cdc"], delay)
+
+            # Coordenada fixa sempre substitui o valor anterior. A opcao
+            # Limpar continua configuravel somente no F8 individual.
+            if usar_ancoras or cfg["limpar"] == "SIM":
                 self.limpar_campo_atual(delay=max(0.05, delay))
             self.digitar_texto(self.preparar_dado(dado, usar), intervalo=max(0.01, delay / 5))
-            time.sleep(delay)
-            self.executar_tabs(self.obter_tabs_final(), delay)
-            self.executar_acao_final(delay)
-            self.atualizar_status_linha(idx, "OK", "Preenchido com F8")
+            time.sleep(max(0.12, delay))
+
+            if usar_ancoras:
+                # Sair do DADO por clique dispara a validacao do controle e ja
+                # deixa o CDC pronto para a proxima linha. Zero TAB no travado.
+                self._clicar_campo_ancorado("CDC", delay)
+                origem = "coordenadas CDC+DADO (zero TAB)"
+            else:
+                self.executar_tabs(cfg["tabs_final"], delay)
+                self.executar_acao_final(delay, cfg["acao_final"])
+                origem = "F8 por TAB"
+            self.atualizar_status_linha(idx, "OK", f"Preenchido por {origem}")
             self.log(f"Linha {idx + 1}: OK ({cdc} = {dado}).")
             self.set_status(f"linha {idx + 1} preenchida", self.SUCESSO)
             self.atualizar_linha_atual()
@@ -2853,23 +3304,150 @@ class PreenchedorSSA:
         try:
             return max(0.20, float(str(self.entry_delay_loop.get()).replace(",", ".")))
         except Exception:
-            return 0.40
+            return 0.55
 
     def _aplicar_tempos_modo_travado(self):
         """Aplica o preset de velocidade seguro sempre que o travamento e ativado."""
         preset = (
-            (self.entry_delay, "0,08"),
-            (self.entry_delay_inicial, "0,08"),
-            (self.entry_delay_loop, "0,40"),
+            (self.entry_delay, "0,10"),
+            (self.entry_delay_inicial, "0,12"),
+            (self.entry_delay_loop, "0,55"),
         )
         for campo, valor in preset:
             campo.delete(0, "end")
             campo.insert(0, valor)
-        self.log("Preset do modo travado aplicado: acoes 0,08 s | inicial 0,08 s | linhas 0,40 s.")
+        self.log("Preset do modo travado aplicado: acoes 0,10 s | inicial 0,12 s | linhas 0,55 s.")
+
+    def _nome_campo_ancora(self, campo):
+        if campo == "DADO":
+            usar = self.cmb_usar.get() if threading.current_thread() is threading.main_thread() else "DADO"
+            return "Valor" if usar == "VALOR" else "Percentual"
+        return "CDC"
+
+    def _cancelar_inicio_apos_captura(self):
+        if self._anchor_start_after_id is None:
+            return
+        try:
+            self.app.after_cancel(self._anchor_start_after_id)
+        except Exception:
+            pass
+        self._anchor_start_after_id = None
+
+    def _fechar_overlay_captura(self):
+        janela = self._capture_overlay
+        self._capture_overlay = None
+        if janela is None:
+            return
+        try:
+            if janela.winfo_exists():
+                janela.destroy()
+        except Exception:
+            pass
+
+    def _abrir_overlay_captura(self, reposicionando=False):
+        """Mostra uma guia pequena sobre o SSA sem bloquear os cliques externos."""
+        self._fechar_overlay_captura()
+        try:
+            janela = ctk.CTkToplevel(self.app)
+            janela.overrideredirect(True)
+            janela.attributes("-topmost", True)
+            try:
+                janela.attributes("-alpha", 0.97)
+            except Exception:
+                pass
+            largura, altura = 430, 156
+            sw, sh = self.app.winfo_screenwidth(), self.app.winfo_screenheight()
+            x, y = max(10, sw - largura - 24), max(10, sh - altura - 70)
+            janela.geometry(f"{largura}x{altura}+{x}+{y}")
+            janela.configure(fg_color=self.CARD)
+
+            topo = ctk.CTkFrame(janela, fg_color=self.AZUL_ESC, corner_radius=0,
+                                height=38)
+            topo.pack(fill="x")
+            topo.pack_propagate(False)
+            self.lbl_overlay_titulo = ctk.CTkLabel(
+                topo, text=("Reposicionando campos" if reposicionando
+                            else "Captura do modo travado"),
+                font=("Segoe UI", 13, "bold"), text_color="white")
+            self.lbl_overlay_titulo.pack(anchor="w", padx=14, pady=8)
+
+            self.lbl_overlay_etapa = ctk.CTkLabel(
+                janela, text="", font=("Segoe UI", 17, "bold"),
+                text_color=self.AMBAR)
+            self.lbl_overlay_etapa.pack(anchor="w", padx=14, pady=(10, 0))
+            self.lbl_overlay_instrucao = ctk.CTkLabel(
+                janela, text="", font=("Segoe UI", 11), text_color=self.TEXTO,
+                justify="left")
+            self.lbl_overlay_instrucao.pack(anchor="w", padx=14, pady=(2, 7))
+            self.progresso_overlay = ctk.CTkProgressBar(
+                janela, height=8, fg_color="#DDE5EB", progress_color=self.SUCESSO)
+            self.progresso_overlay.pack(fill="x", padx=14, pady=(0, 8))
+            self.progresso_overlay.set(0)
+            self._capture_overlay = janela
+            janela.lift()
+        except Exception as e:
+            self._capture_overlay = None
+            self.log(f"Nao foi possivel abrir o guia flutuante de captura: {e}")
+
+    def _atualizar_overlay_captura(self):
+        if self._capture_overlay is None:
+            return
+        try:
+            if not self._capture_overlay.winfo_exists():
+                self._capture_overlay = None
+                return
+            if self._awaiting_anchor and self._anchor_capture_index == 0:
+                etapa = "ETAPA 1/2 — CDC"
+                instrucao = "Clique dentro do campo CDC no SSA e pressione F8."
+                progresso, cor = 0.05, self.AMBAR
+            elif self._awaiting_anchor:
+                etapa = f"ETAPA 2/2 — {self._nome_campo_ancora('DADO').upper()}"
+                instrucao = "CDC capturado. Clique no segundo campo e pressione F8."
+                progresso, cor = 0.5, self.AMBAR
+            else:
+                etapa = "CAPTURA 2/2 CONCLUIDA"
+                instrucao = "CDC e DADO confirmados. Iniciando o preenchimento..."
+                progresso, cor = 1.0, self.SUCESSO
+            self.lbl_overlay_etapa.configure(text=etapa, text_color=cor)
+            self.lbl_overlay_instrucao.configure(text=instrucao)
+            self.progresso_overlay.set(progresso)
+            self._capture_overlay.lift()
+        except Exception:
+            self._fechar_overlay_captura()
+
+    def _agendar_inicio_apos_captura(self):
+        """Exibe 2/2 capturados antes de liberar o loop automatico."""
+        self._cancelar_inicio_apos_captura()
+        self._anchor_start_after_id = self.app.after(1200, self._iniciar_loop_apos_captura)
+
+    def _iniciar_loop_apos_captura(self):
+        self._anchor_start_after_id = None
+        if not self._locked or self._awaiting_anchor or not self._ancoras_completas():
+            return
+        self._paused = False
+        self._falhas_seguidas = 0
+        self._fechar_overlay_captura()
+        self._atualizar_ancora_ui()
+        self.log("Modo travado iniciado apos a confirmacao visual das duas capturas.")
+        self.set_status("modo travado rodando — coordenadas confirmadas", self.SUCESSO)
+        self._iniciar_thread_travamento()
+
+    def _iniciar_captura_ancoras(self, reposicionando=False):
+        """Inicia a captura guiada sem descartar as ancoras antigas ate concluir."""
+        self._cancelar_inicio_apos_captura()
+        self._paused = True
+        self._awaiting_anchor = True
+        self._anchor_capture_index = 0
+        self._anchor_capture_temp = {}
+        self._abrir_overlay_captura(reposicionando)
+        self._atualizar_ancora_ui()
+        acao = "Reposicionamento" if reposicionando else "Mapeamento"
+        self.log(f"{acao} iniciado. Clique no campo CDC do SSA e pressione F8.")
+        self.set_status("clique no campo CDC do SSA e pressione F8 (campo 1 de 2)",
+                        self.AMBAR)
 
     def toggle_travamento(self):
-        """Liga/desliga o modo travado. Ao ligar, aguarda F8 no primeiro campo do SSA
-        para gravar a ancora (coordenada XY de retorno antes de cada linha)."""
+        """Liga/desliga o modo travado e captura CDC + DADO por coordenadas."""
         if self._locked:
             self._parar_travamento("modo travado desativado manualmente")
             return
@@ -2879,16 +3457,22 @@ class PreenchedorSSA:
         if self.obter_proxima_linha_pendente() is None:
             messagebox.showinfo("Modo travado", "Nao ha linhas pendentes.")
             return
+
+        # A captura ocorre com o SSA em foco; portanto F8 precisa ser global.
+        if not self.global_on:
+            self.toggle_global()
+            if not self.global_on:
+                messagebox.showwarning(
+                    "Modo travado",
+                    "Ative a hotkey global antes de mapear os campos do SSA.")
+                return
+
         self._aplicar_tempos_modo_travado()
         self._locked = True
-        self._paused = False
-        self._awaiting_anchor = True
         self._falhas_seguidas = 0
         self.btn_travar.configure(text="Desativar travamento",
                                   fg_color=self.ALERTA, hover_color=self.ALERTA_HV)
-        self._atualizar_ancora_ui()
-        self.log("Modo travado ATIVADO. Clique no primeiro campo do SSA e pressione F8 (grava a ancora).")
-        self.set_status("clique no primeiro campo do SSA e pressione F8 (grava ancora)", self.AMBAR)
+        self._iniciar_captura_ancoras()
 
     def _iniciar_thread_travamento(self):
         if self._lock_thread and self._lock_thread.is_alive():
@@ -2897,8 +3481,7 @@ class PreenchedorSSA:
         self._lock_thread.start()
 
     def _loop_travado(self):
-        """Roda em thread separada. Reposiciona por clique na ancora antes de cada linha.
-        Auto-pausa apos 2 falhas seguidas. Respeita pausa e nova captura de ancora."""
+        """Roda em thread separada no ciclo CDC -> DADO -> CDC, sem TAB."""
         while self._locked:
             if self._paused or self._awaiting_anchor:
                 time.sleep(0.20)
@@ -2907,17 +3490,16 @@ class PreenchedorSSA:
             if idx is None:
                 self.app.after(0, lambda: self._parar_travamento("fila concluida"))
                 break
-            # Reposicionamento por ancora — garantia de posicao antes de cada linha
-            if self.anchor_xy:
-                try:
-                    pyautogui.click(self.anchor_xy[0], self.anchor_xy[1])
-                    time.sleep(self.obter_delay_inicial())
-                except Exception as e:
-                    self.app.after(0, lambda err=e: self.log(f"Falha ao reposicionar ancora: {err}"))
-                    self._paused = True
-                    self.app.after(0, self._atualizar_ancora_ui)
-                    continue
-            ok = self.executar_linha(idx, bypass_debounce=True)
+            config = self._lock_config
+            if not config or not self._ancoras_completas():
+                self._paused = True
+                self.app.after(0, self._atualizar_ancora_ui)
+                self.app.after(0, lambda: self.set_status(
+                    "campos incompletos — use Reposicionar campos", self.ALERTA))
+                continue
+
+            ok = self.executar_linha(
+                idx, bypass_debounce=True, usar_ancoras=True, config=config)
             if not ok:
                 self._falhas_seguidas += 1
                 if self._falhas_seguidas >= 2:
@@ -2930,12 +3512,16 @@ class PreenchedorSSA:
                         "Loop pausado automaticamente (falhas seguidas)."))
             else:
                 self._falhas_seguidas = 0
-            time.sleep(self._delay_loop())
+            time.sleep(config["delay_loop"])
 
     def toggle_pausa(self):
         """Pausa ou retoma o loop. Sem efeito quando o modo travado esta desligado."""
         if not self._locked:
             self.set_status("modo travado nao esta ativo", self.TEXTO_SUAVE)
+            return
+        if self._anchor_start_after_id is not None:
+            self.set_status("aguarde: as duas capturas foram confirmadas e o loop esta iniciando",
+                            self.SUCESSO)
             return
         self._paused = not self._paused
         self._atualizar_ancora_ui()
@@ -2949,22 +3535,22 @@ class PreenchedorSSA:
             self.set_status("loop retomado", self.SUCESSO)
 
     def reposicionar_ancora(self):
-        """Pausa o loop e aguarda um novo F8 para regravar a ancora. Nao apaga o progresso."""
+        """Recaptura CDC e DADO sem apagar o progresso da fila."""
         if not self._locked:
-            messagebox.showinfo("Reposicionar ancora",
+            messagebox.showinfo("Reposicionar campos",
                                 "Ative o modo travado antes de reposicionar a ancora.")
             return
-        self._paused = True
-        self._awaiting_anchor = True
-        self._atualizar_ancora_ui()
-        self.log("Aguardando nova ancora. Clique no primeiro campo do SSA e pressione F8.")
-        self.set_status("clique no primeiro campo do SSA e pressione F8 (nova ancora)",
-                        self.AMBAR)
+        self._iniciar_captura_ancoras(reposicionando=True)
 
     def _parar_travamento(self, motivo=""):
+        self._cancelar_inicio_apos_captura()
+        self._fechar_overlay_captura()
         self._locked = False
         self._paused = False
         self._awaiting_anchor = False
+        self._anchor_capture_index = 0
+        self._anchor_capture_temp = {}
+        self._lock_config = None
         self._falhas_seguidas = 0
         if hasattr(self, "btn_travar"):
             self.btn_travar.configure(text="Travar preenchimento",
@@ -2975,29 +3561,107 @@ class PreenchedorSSA:
             self.log(f"Modo travado desativado ({motivo}).")
             self.set_status(motivo, self.TEAL)
 
+    def _atualizar_painel_captura(self):
+        if not hasattr(self, "lbl_captura_cdc"):
+            return
+
+        neutro_bg, espera_bg, ok_bg = "#E9EEF2", "#FFF0C2", "#DFF1E5"
+        if not self._locked:
+            self.lbl_captura_cdc.configure(
+                text="1. CDC\nAguardando ativacao", fg_color=neutro_bg,
+                text_color=self.TEXTO_SUAVE)
+            self.lbl_captura_dado.configure(
+                text=f"2. {self._nome_campo_ancora('DADO').upper()}\nAguardando ativacao",
+                fg_color=neutro_bg, text_color=self.TEXTO_SUAVE)
+            self.progresso_captura.set(0)
+            self.lbl_captura_inicio.configure(
+                text="Ative o travado para iniciar a captura 1/2.",
+                text_color=self.TEXTO_SUAVE)
+            return
+
+        if self._awaiting_anchor:
+            if self._anchor_capture_index == 0:
+                self.lbl_captura_cdc.configure(
+                    text="1. CDC\nCLIQUE NO CAMPO + F8", fg_color=espera_bg,
+                    text_color=self.AMBAR)
+                self.lbl_captura_dado.configure(
+                    text=f"2. {self._nome_campo_ancora('DADO').upper()}\nAguardando CDC",
+                    fg_color=neutro_bg, text_color=self.TEXTO_SUAVE)
+                self.progresso_captura.set(0)
+                self.lbl_captura_inicio.configure(
+                    text="Etapa 1/2 — aguardando a coordenada do CDC.",
+                    text_color=self.AMBAR)
+            else:
+                cdc_xy = self._anchor_capture_temp.get("CDC")
+                cdc_txt = f"{cdc_xy[0]}, {cdc_xy[1]}" if cdc_xy else "capturado"
+                self.lbl_captura_cdc.configure(
+                    text=f"1. CDC  OK\nCoordenada {cdc_txt}", fg_color=ok_bg,
+                    text_color=self.SUCESSO)
+                self.lbl_captura_dado.configure(
+                    text=f"2. {self._nome_campo_ancora('DADO').upper()}\nCLIQUE NO CAMPO + F8",
+                    fg_color=espera_bg, text_color=self.AMBAR)
+                self.progresso_captura.set(0.5)
+                self.lbl_captura_inicio.configure(
+                    text="Etapa 2/2 — CDC confirmado; aguardando Valor/Percentual.",
+                    text_color=self.AMBAR)
+            return
+
+        cdc_xy = self.field_anchors.get("CDC")
+        dado_xy = self.field_anchors.get("DADO")
+        cdc_txt = f"{cdc_xy[0]}, {cdc_xy[1]}" if cdc_xy else "—"
+        dado_txt = f"{dado_xy[0]}, {dado_xy[1]}" if dado_xy else "—"
+        self.lbl_captura_cdc.configure(
+            text=f"1. CDC  OK\nCoordenada {cdc_txt}", fg_color=ok_bg,
+            text_color=self.SUCESSO)
+        self.lbl_captura_dado.configure(
+            text=f"2. {self._nome_campo_ancora('DADO').upper()}  OK\nCoordenada {dado_txt}",
+            fg_color=ok_bg, text_color=self.SUCESSO)
+        self.progresso_captura.set(1)
+        if self._anchor_start_after_id is not None:
+            texto = "Captura 2/2 concluida — iniciando automaticamente..."
+        elif self._paused:
+            texto = "Duas coordenadas confirmadas — preenchimento pausado."
+        else:
+            texto = "Duas coordenadas confirmadas — preenchimento em execucao."
+        self.lbl_captura_inicio.configure(text=texto, text_color=self.SUCESSO)
+
     def _atualizar_ancora_ui(self):
         if not hasattr(self, "lbl_ancora"):
             return
+        self._atualizar_painel_captura()
+        self._atualizar_overlay_captura()
         if not self._locked:
             self.lbl_ancora.configure(
                 text="Modo travado: desligado.",
                 text_color=self.TEXTO_SUAVE)
             return
         if self._awaiting_anchor:
+            campo = self._anchor_capture_order[self._anchor_capture_index]
+            numero = self._anchor_capture_index + 1
+            total = len(self._anchor_capture_order)
             self.lbl_ancora.configure(
-                text="Modo travado: AGUARDANDO ANCORA (clique no primeiro campo do SSA e pressione F8).",
+                text=(f"Modo travado: CAPTURA {numero}/{total} — clique em "
+                      f"{self._nome_campo_ancora(campo)} no SSA e pressione F8."),
                 text_color=self.AMBAR)
             return
-        xy = f"({self.anchor_xy[0]}, {self.anchor_xy[1]})" if self.anchor_xy else "—"
-        estado = "PAUSADO" if self._paused else "RODANDO"
+        cdc_xy = self.field_anchors.get("CDC")
+        dado_xy = self.field_anchors.get("DADO")
+        cdc_txt = f"({cdc_xy[0]}, {cdc_xy[1]})" if cdc_xy else "—"
+        dado_txt = f"({dado_xy[0]}, {dado_xy[1]})" if dado_xy else "—"
+        if self._anchor_start_after_id is not None:
+            estado = "CAPTURA OK — INICIANDO"
+        else:
+            estado = "PAUSADO" if self._paused else "RODANDO"
         self.lbl_ancora.configure(
-            text=f"Modo travado: {estado}  ·  ancora {xy}",
-            text_color=self.ALERTA if self._paused else self.SUCESSO)
+            text=f"Modo travado: {estado}  ·  CDC {cdc_txt}  ·  DADO {dado_txt}  ·  ZERO TAB",
+            text_color=self.ALERTA if self._paused and self._anchor_start_after_id is None else self.SUCESSO)
 
     # =========================================================
     # FECHAMENTO
     # =========================================================
     def fechar_app(self):
+        self._cancelar_inicio_apos_captura()
+        self._fechar_overlay_captura()
         self._locked = False
         self._paused = False
         self._awaiting_anchor = False
