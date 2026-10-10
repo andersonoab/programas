@@ -38,6 +38,8 @@ footer.app .assin{font-weight:500}
 .btn.sec:hover{background:#EAF4FB}
 .btn.warn{background:#fff;color:var(--terra);border-color:var(--terra)}
 .btn.warn:hover{background:#FBEEEA}
+.btn.danger{background:#fff;color:var(--vinho);border-color:var(--vinho)}
+.btn.danger:hover{background:#F7E8F0}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .hint{font-size:11px;color:var(--texto2);margin-left:auto}
 
@@ -218,6 +220,7 @@ input[type=file]{display:none}
   <label class="btn sec" for="jsonInput">Importar JSON</label>
   <input type="file" id="jsonInput" accept=".json">
   <button class="btn warn" id="btnLimpar" disabled>Limpar memória</button>
+  <button class="btn danger" id="btnReset" disabled title="Limpa a seleção de cobrança e todos os itens conferidos (inclusive os salvos), mantendo a planilha carregada">Resetar marcações</button>
   <label class="planchk" style="display:none" id="planWrap"><input type="checkbox" id="chkPlan" checked> Ignorar plano e vazios já faturados</label>
   <span class="hint" id="hintMem"></span>
 </div>
@@ -336,6 +339,7 @@ input[type=file]{display:none}
    Config
 ============================================================ */
 const LS_KEY = "leitor_faturamento_sonova_v1";
+const LS_CONF = "leitor_faturamento_sonova_conf_v1"; // conferidos duráveis (sobrevivem à troca/recarga de planilha)
 const RE_TRANS = /controle[_\s-]*faturamento/i;         // aba transacional (cresce por mês)
 const RE_SENSIVEL = /senha|password|credencial|login/i; // aba sensível: nunca persistida/exportada
 
@@ -381,7 +385,8 @@ let STATE = null;                 // dados persistidos
 let SENSITIVE = null;             // apenas em memória de sessão (nunca salvo)
 let sortState = { field:"mes", dir:"asc" };
 let SELECTED = new Set();   // ids marcados para cobrança (persistidos em memória)
-let CONFERIDO = new Set();   // ids conferidos (cinza) - conferência/follow-up
+let CONFERIDO = new Set();   // ids conferidos (cinza) da sessão atual - conferência/follow-up
+let CONF_KEYS = new Set();   // chaves de negócio conferidas (duráveis: persistem entre planilhas)
 let IGNORE_PLAN = true;      // ignora aba de plano/orçamento nas visões de execução
 function activeRows(){ if(!STATE||!STATE.transRows)return []; return IGNORE_PLAN?STATE.transRows.filter(r=>!r._plan && !r._stale):STATE.transRows; }
 let visibleCols = null;
@@ -602,12 +607,13 @@ function loadMem(){
 }
 function clearMem(){
   localStorage.removeItem(LS_KEY);
-  STATE=null; SENSITIVE=null; visibleCols=null; SELECTED=new Set(); CONFERIDO=new Set();
+  localStorage.removeItem(LS_CONF);
+  STATE=null; SENSITIVE=null; visibleCols=null; SELECTED=new Set(); CONFERIDO=new Set(); CONF_KEYS=new Set();
   document.getElementById("dropWrap").style.display="";
   document.getElementById("painelBody").innerHTML="";
   document.getElementById("selBar").classList.remove("on");
   document.getElementById("planWrap").style.display="none";
-  ["btnRecarregar","btnColunas","btnCSV","btnXLSX","btnBackup","btnLimpar"].forEach(id=>document.getElementById(id).disabled=true);
+  ["btnRecarregar","btnColunas","btnCSV","btnXLSX","btnBackup","btnLimpar","btnReset"].forEach(id=>document.getElementById(id).disabled=true);
   document.getElementById("metaTopo").textContent="Nenhuma planilha carregada";
   setHintMem("");
   renderAll();
@@ -615,13 +621,59 @@ function clearMem(){
 function setHintMem(t){ document.getElementById("hintMem").textContent=t; }
 
 /* ============================================================
+   Conferidos duráveis (chave de negócio; sobrevivem à troca de planilha)
+   - CONF_KEYS: conjunto persistente de chaves conferidas
+   - CONFERIDO: conjunto de _ids da sessão atual (para render), reconstruído a cada carga
+============================================================ */
+function confKey(r){
+  // serviço/alias (fallback fornecedor) + empresa + ano + mês = mesmo lançamento lógico entre versões
+  return norm(r.alias||r.categoria||r.fornecedor||"")+"|"+norm(r.empresa||"")+"|"+(r.ano??"")+"|"+(r.mes??"");
+}
+function loadConfKeys(){
+  try{ const raw=localStorage.getItem(LS_CONF); return raw?new Set(JSON.parse(raw)):new Set(); }
+  catch(e){ return new Set(); }
+}
+function saveConfKeys(){
+  try{ localStorage.setItem(LS_CONF, JSON.stringify([...CONF_KEYS])); }catch(e){}
+}
+// Reconstrói CONFERIDO (por _id) a partir das chaves duráveis, após qualquer carga de dados
+function rebuildConferido(){
+  CONFERIDO=new Set();
+  if(!STATE||!STATE.transRows) return;
+  STATE.transRows.forEach(r=>{ if(CONF_KEYS.has(confKey(r))) CONFERIDO.add(r._id); });
+}
+// Semeia o store durável a partir de conferidos antigos salvos por _id (migração / import de JSON)
+function seedConfKeysFromIds(){
+  if(!STATE||!STATE.transRows) return;
+  STATE.transRows.forEach(r=>{ if(CONFERIDO.has(r._id)) CONF_KEYS.add(confKey(r)); });
+  saveConfKeys();
+}
+// Marca/desmarca conferido para uma lista de _ids atualizando sessão E store durável
+function applyConferido(ids, on){
+  const map={}; (STATE&&STATE.transRows?STATE.transRows:[]).forEach(r=>{ map[r._id]=r; });
+  ids.forEach(id=>{
+    if(on) CONFERIDO.add(id); else CONFERIDO.delete(id);
+    const r=map[id]; if(r){ const k=confKey(r); if(on) CONF_KEYS.add(k); else CONF_KEYS.delete(k); }
+  });
+  saveConfKeys(); saveMem();
+}
+// Reset: limpa marcações de trabalho (seleção + conferidos, inclusive os salvos), mantém a planilha
+function resetMarcacoes(){
+  SELECTED=new Set(); CONFERIDO=new Set(); CONF_KEYS=new Set();
+  saveConfKeys(); saveMem();
+  const sb=document.getElementById("selBar"); if(sb) sb.classList.remove("on");
+  renderAll();
+  setHintMem("Marcações reiniciadas (seleção e conferidos limpos) em "+new Date().toLocaleString("pt-BR"));
+}
+
+/* ============================================================
    Ingestão a partir de arquivo
 ============================================================ */
 function ingestArrayBuffer(buf, fileName){
   const wb=XLSX.read(buf,{type:"array",cellDates:true});
   const parsed=readWorkbook(wb);
-  SELECTED=new Set();   // planilha nova: começa sem marcações
-  CONFERIDO=new Set();
+  SELECTED=new Set();   // seleção de cobrança é por arquivo: começa vazia
+  // CONFERIDO NÃO é zerado: será reconstruído a partir das chaves duráveis (CONF_KEYS) em afterLoad()
   STATE={
     fileName, loadedAt:new Date().toISOString(),
     sheets:parsed.sheets, transRows:parsed.transRows, refSheets:parsed.refSheets,
@@ -636,8 +688,11 @@ function ingestArrayBuffer(buf, fileName){
 }
 function afterLoad(fromFile){
   normalizeRows();
+  // Conferidos duráveis: migra marcações antigas (por _id) uma única vez e reconstrói o radar atual
+  if(CONF_KEYS.size===0 && CONFERIDO.size>0) seedConfKeysFromIds();
+  rebuildConferido();
   document.getElementById("dropWrap").style.display="none";
-  ["btnColunas","btnCSV","btnXLSX","btnBackup","btnLimpar"].forEach(id=>document.getElementById(id).disabled=false);
+  ["btnColunas","btnCSV","btnXLSX","btnBackup","btnLimpar","btnReset"].forEach(id=>document.getElementById(id).disabled=false);
   document.getElementById("btnRecarregar").disabled=false;
   const planW=document.getElementById("planWrap");
   const chk=document.getElementById("chkPlan");
@@ -854,11 +909,10 @@ function drawConsTable(){
   tbody.querySelectorAll(".rowconf").forEach(cb=>cb.addEventListener("click",e=>{
     e.stopPropagation();
     const id=cb.dataset.id;
-    if(cb.checked) CONFERIDO.add(id); else CONFERIDO.delete(id);
+    applyConferido([id], cb.checked);
     const tr=cb.closest("tr");
     tr.classList.toggle("conf",cb.checked);
     if(!cb.checked && SELECTED.has(id)) tr.classList.add("sel");
-    saveMem();
   }));
   // marcar/desmarcar todos os filtrados
   const selAll=document.getElementById("selAll");
@@ -1132,8 +1186,8 @@ function drawMapaGrid(){
   grid.querySelectorAll(".confmark").forEach(l=>l.addEventListener("click",e=>e.stopPropagation()));
   grid.querySelectorAll(".cardconf").forEach(cb=>cb.addEventListener("change",e=>{
     const c=cards[+cb.dataset.i];
-    if(cb.checked) c.ids.forEach(id=>CONFERIDO.add(id)); else c.ids.forEach(id=>CONFERIDO.delete(id));
-    saveMem(); drawMapaGrid();
+    applyConferido(c.ids, cb.checked);
+    drawMapaGrid();
   }));
   grid.querySelectorAll(".fcard").forEach(el=>el.addEventListener("click",()=>{
     const c=cards[+el.dataset.i];
@@ -1409,6 +1463,7 @@ document.getElementById("jsonInput").addEventListener("change",e=>{
     SENSITIVE=null; visibleCols=p.visibleCols||DEFAULT_COLS.filter(c=>STATE.colsUnion.includes(c));
     SELECTED=new Set(p.selected||[]);
     CONFERIDO=new Set(p.conferido||[]);
+    seedConfKeysFromIds(); // funde os conferidos do backup no store durável
     if(typeof p.ignorePlan==="boolean") IGNORE_PLAN=p.ignorePlan;
     afterLoad(false); saveMem();
   }catch(err){ alert("JSON inválido: "+err.message); } };
@@ -1435,6 +1490,7 @@ drop.addEventListener("drop",e=>{if(e.dataTransfer.files[0])handleFile(e.dataTra
 drop.addEventListener("click",()=>document.getElementById("fileInput").click());
 document.getElementById("btnColunas").addEventListener("click",()=>document.getElementById("colPanel").classList.toggle("on"));
 document.getElementById("btnLimpar").addEventListener("click",()=>{ if(confirm("Limpar os dados salvos em memória neste navegador?")) clearMem(); });
+document.getElementById("btnReset").addEventListener("click",()=>{ if(confirm("Resetar as marcações?\n\nIsto limpa a seleção de cobrança e TODOS os itens conferidos (inclusive os salvos), mas mantém a planilha carregada.")) resetMarcacoes(); });
 document.getElementById("chkPlan").addEventListener("change",e=>{ IGNORE_PLAN=e.target.checked; saveMem(); renderAll(); });
 
 document.getElementById("navTabs").addEventListener("click",e=>{
@@ -1449,6 +1505,7 @@ document.getElementById("navTabs").addEventListener("click",e=>{
    Boot: carrega da memória se existir
 ============================================================ */
 (function boot(){
+  CONF_KEYS=loadConfKeys();   // conferidos duráveis carregam sempre, mesmo antes de qualquer planilha
   const mem=loadMem();
   if(mem && mem.transRows){
     STATE={fileName:mem.fileName,loadedAt:mem.loadedAt,sheets:mem.sheets,transRows:mem.transRows,
