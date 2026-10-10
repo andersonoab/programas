@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visualizador de Custo de Funcionários — Sonova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root{
+    --azul:#0083CA; --azul-esc:#003C64; --verde-azul:#005A64; --azul-claro:#6EB4DC;
+    --vinho:#7D0041; --terra:#8C321E; --texto:#333333; --texto2:#646464;
+    --borda:#CCCCCC; --bg:#ffffff; --cinza-linha:#f4f6f8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Roboto',sans-serif;font-weight:300;color:var(--texto);background:#eef2f5;font-size:14px}
+  h1,h2,h3,h4{font-family:'Rufina',serif}
+  .wrap{max-width:1560px;margin:0 auto;padding:0 16px 60px}
+
+  /* Header bar */
+  .topbar{background:var(--azul);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .topbar .tt{display:flex;align-items:center;gap:16px}
+  .topbar h1{font-size:22px;font-weight:700;letter-spacing:.3px}
+  .topbar .sub{font-size:12px;font-weight:300;opacity:.9;margin-top:2px}
+  .wave{display:inline-flex;align-items:flex-end;gap:3px;height:26px}
+  .wave span{width:4px;background:#fff;border-radius:2px;opacity:.9}
+
+  /* Action bar */
+  .actionbar{background:#fff;border:1px solid var(--borda);border-top:none;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  button, .btn{font-family:'Roboto',sans-serif;font-weight:400;font-size:13px;border:none;border-radius:6px;padding:9px 14px;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:var(--azul);color:#fff}
+  .btn-primary:hover{background:#0075b3}
+  .btn-sec{background:#e7f1f8;color:var(--azul-esc)}
+  .btn-sec:hover{background:#d5e7f4}
+  .btn-aux{background:#eef1f4;color:var(--texto2)}
+  .btn-aux:hover{background:#e2e6ea}
+  .btn-danger{background:#fbe9e9;color:#a13a2a}
+  .btn-danger:hover{background:#f5d9d6}
+  .btn-import{background:var(--azul-esc);color:#fff}
+  .btn-import:hover{background:#012f52}
+  .spacer{flex:1}
+  input[type=file]{display:none}
+
+  /* Dropzone */
+  .dropzone{margin:16px 0;border:2px dashed var(--azul-claro);border-radius:10px;background:#fff;padding:34px 20px;text-align:center;color:var(--texto2);transition:.15s;cursor:pointer}
+  .dropzone.drag{background:#f0f7fc;border-color:var(--azul)}
+  .dropzone h3{color:var(--azul-esc);font-size:18px;margin-bottom:6px}
+  .dropzone p{font-size:13px;margin-bottom:4px}
+  .dropzone .hint{font-size:11px;color:#999;margin-top:8px}
+
+  /* Config strip */
+  .config{background:#fff;border:1px solid var(--borda);border-radius:8px;padding:14px 16px;margin:16px 0;display:none;flex-wrap:wrap;gap:18px;align-items:center}
+  .config.on{display:flex}
+  .config .grp{display:flex;flex-direction:column;gap:6px}
+  .config .lbl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--texto2)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 10px;border-radius:20px;border:1px solid var(--borda);cursor:pointer;user-select:none;background:#fafbfc}
+  .chip input{accent-color:var(--azul)}
+  .chip.on{background:#e7f1f8;border-color:var(--azul-claro);color:var(--azul-esc);font-weight:500}
+  .switch{display:inline-flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;user-select:none}
+  .switch input{accent-color:var(--azul);width:16px;height:16px}
+
+  /* KPIs */
+  .kpis{display:none;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:16px 0}
+  .kpis.on{display:grid}
+  .kpi{background:#fff;border:1px solid var(--borda);border-radius:10px;padding:16px 18px;border-left:4px solid var(--azul)}
+  .kpi.k2{border-left-color:var(--verde-azul)}
+  .kpi.k3{border-left-color:var(--azul-claro)}
+  .kpi.k4{border-left-color:var(--vinho)}
+  .kpi.k5{border-left-color:var(--terra)}
+  .kpi .v{font-family:'Rufina',serif;font-size:24px;font-weight:700;color:var(--azul-esc);line-height:1.1}
+  .kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--texto2);margin-top:6px}
+  .kpi .s{font-size:11px;color:#8a9299;margin-top:3px}
+
+  /* Tabs */
+  .tabs{display:none;gap:2px;margin:18px 0 0;border-bottom:2px solid var(--borda);flex-wrap:wrap}
+  .tabs.on{display:flex}
+  .tab{padding:10px 18px;font-size:13px;font-weight:400;color:var(--texto2);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+  .tab.active{color:var(--azul);border-bottom-color:var(--azul);font-weight:500}
+  .panel{display:none;background:#fff;border:1px solid var(--borda);border-top:none;padding:18px;border-radius:0 0 8px 8px}
+  .panel.active{display:block}
+
+  /* Filters row */
+  .filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center}
+  .filters input[type=text], .filters select{font-family:'Roboto';font-size:13px;padding:8px 10px;border:1px solid var(--borda);border-radius:6px;background:#fff;color:var(--texto)}
+  .filters input[type=text]{min-width:220px}
+
+  /* Table */
+  .tblwrap{overflow-x:auto;border:1px solid var(--borda);border-radius:6px}
+  table.data{border-collapse:collapse;width:100%;font-size:12px}
+  table.data th{background:var(--azul-esc);color:#fff;font-weight:500;padding:9px 10px;text-align:left;white-space:nowrap;cursor:pointer;position:sticky;top:0}
+  table.data th.num, table.data td.num{text-align:right}
+  table.data th:hover{background:#01426f}
+  table.data td{padding:7px 10px;border-bottom:1px solid #eef1f4;white-space:nowrap}
+  table.data tbody tr:nth-child(even){background:var(--cinza-linha)}
+  table.data tbody tr:hover{background:#eaf4fb;cursor:pointer}
+  table.data tfoot td{background:#e7f1f8;font-weight:500;color:var(--azul-esc);border-top:2px solid var(--azul-claro)}
+  .arrow{font-size:10px;opacity:.8;margin-left:3px}
+  .badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500}
+  .b-in{background:#e3f2e8;color:#2e7d46}
+  .b-out{background:#f3e6e4;color:#9a4230}
+  .muted{color:#aeb4ba}
+
+  /* charts */
+  .chartbox{position:relative;height:380px}
+  .chartrow{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
+  @media(max-width:900px){.chartrow{grid-template-columns:1fr}}
+
+  /* modal */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,30,55,.45);z-index:50;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+  .overlay.on{display:flex}
+  .modal{background:#fff;border-radius:12px;max-width:1100px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal-h{background:var(--azul);color:#fff;padding:16px 22px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center}
+  .modal-h h3{font-size:18px;font-weight:700}
+  .modal-h .x{background:rgba(255,255,255,.2);border-radius:6px;width:30px;height:30px;font-size:18px;color:#fff}
+  .modal-b{padding:20px 22px}
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px}
+  .info-grid .it{background:#f6f9fb;border:1px solid #e5ebf0;border-radius:6px;padding:8px 12px}
+  .info-grid .it .k{font-size:10px;text-transform:uppercase;color:var(--texto2);letter-spacing:.4px}
+  .info-grid .it .v{font-size:14px;color:var(--azul-esc);font-weight:500;margin-top:2px}
+
+  /* email box */
+  .emailbox{border:1px solid var(--borda);border-radius:8px;padding:0;overflow:hidden}
+  .email-preview{padding:16px;max-height:420px;overflow:auto;background:#fbfcfd}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--azul-esc);color:#fff;padding:12px 22px;border-radius:8px;font-size:13px;z-index:100;opacity:0;transition:.3s;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .toast.on{opacity:1}
+  .note{font-size:12px;color:var(--texto2);background:#fff8e9;border:1px solid #f0e2c0;border-radius:6px;padding:10px 12px;margin-bottom:12px}
+
+  /* footer */
+  .footer{background:var(--azul);color:#fff;padding:14px 24px;text-align:center;font-size:12px;margin-top:30px;font-weight:300}
+  .empty{display:none;text-align:center;padding:50px 20px;color:#9aa1a8}
+  .empty.on{display:block}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tt">
+    <div class="wave" id="wave"></div>
+    <div>
+      <h1>Visualizador de Custo de Funcionários</h1>
+      <div class="sub">Sonova Brasil — leitura de planilha de custo detalhado (rubricas por mês)</div>
+    </div>
+  </div>
+  <div class="sub" id="periodoTop"></div>
+</div>
+
+<div class="actionbar">
+  <label class="btn btn-import" for="fileInput">Importar planilha (.xlsx)</label>
+  <input type="file" id="fileInput" accept=".xlsx,.xlsm,.xls,.csv">
+  <button class="btn btn-sec" id="btnEmail" style="display:none">Copiar para e-mail</button>
+  <button class="btn btn-sec" id="btnCsv" style="display:none">Exportar CSV</button>
+  <button class="btn btn-sec" id="btnXlsx" style="display:none">Exportar Excel</button>
+  <div class="spacer"></div>
+  <button class="btn btn-aux" id="btnBackup" style="display:none">Backup JSON</button>
+  <label class="btn btn-aux" for="jsonInput">Importar JSON</label>
+  <input type="file" id="jsonInput" accept=".json">
+  <button class="btn btn-danger" id="btnClear" style="display:none">Limpar dados</button>
+</div>
+
+<div class="wrap">
+
+  <div class="dropzone" id="dropzone">
+    <h3>Arraste a planilha de custo aqui</h3>
+    <p>ou clique em <strong>Importar planilha</strong> na barra acima</p>
+    <p class="hint">Lê o layout "Detalhes" (Nome, Descrição da rubrica, Clas.-, Filtro e colunas MMM/AA - Valor). Nada é enviado para fora do navegador.</p>
+  </div>
+
+  <div class="config" id="config">
+    <div class="grp">
+      <span class="lbl">Mês de referência</span>
+      <select id="fMes"><option value="">Todos os meses (período)</option></select>
+    </div>
+    <div class="grp">
+      <span class="lbl">Categorias de custo (compõem "Custos de folha")</span>
+      <div class="chips" id="classChips"></div>
+    </div>
+    <div class="grp">
+      <span class="lbl">Regras de apuração</span>
+      <div class="chips">
+        <label class="switch"><input type="checkbox" id="chkFiltroIn" checked> Somente Filtro = in</label>
+        <label class="switch"><input type="checkbox" id="chkStock" checked> Ignorar rubricas de saldo/acumulado</label>
+      </div>
+    </div>
+    <div class="grp" style="flex:1;min-width:220px">
+      <span class="note" style="margin:0">Benefícios = rubricas "Custo Empresa". Descontos do empregado, bases e valores in natura não entram, para evitar dupla contagem. No período, o valor aglutinado exibe também a média/mês.</span>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="consol">Consolidado</div>
+    <div class="tab" data-tab="evol">Evolução Mensal</div>
+    <div class="tab" data-tab="comp">Composição por Categoria</div>
+    <div class="tab" data-tab="rubr">Detalhe de Rubricas</div>
+  </div>
+
+  <div class="panel active" id="p-consol">
+    <div class="filters">
+      <input type="text" id="fBusca" placeholder="Buscar por nome, matrícula, função...">
+      <select id="fEmpresa"><option value="">Todas as empresas</option></select>
+      <select id="fEstab"><option value="">Todos os estabelecimentos</option></select>
+      <span style="display:inline-flex;border:1px solid var(--borda);border-radius:6px;overflow:hidden">
+        <button id="viewCat" class="btn" style="border-radius:0;background:var(--azul);color:#fff;padding:7px 12px">Categorias</button>
+        <button id="viewMonth" class="btn" style="border-radius:0;background:#eef1f4;color:var(--texto2);padding:7px 12px">Meses</button>
+      </span>
+      <span class="muted" id="consolCount" style="font-size:12px"></span>
+    </div>
+    <div class="tblwrap">
+      <table class="data" id="tblConsol"><thead></thead><tbody></tbody><tfoot></tfoot></table>
+    </div>
+    <p class="hint" style="font-size:11px;color:#9aa1a8;margin-top:8px">Dê duplo clique em uma linha para ver o detalhamento por rubrica do funcionário.</p>
+  </div>
+
+  <div class="panel" id="p-evol">
+    <div class="chartbox"><canvas id="chartEvol"></canvas></div>
+  </div>
+
+  <div class="panel" id="p-comp">
+    <div class="chartrow">
+      <div class="chartbox"><canvas id="chartCompBar"></canvas></div>
+      <div class="chartbox"><canvas id="chartCompDough"></canvas></div>
+    </div>
+    <div class="tblwrap" style="margin-top:18px">
+      <table class="data" id="tblCat"><thead></thead><tbody></tbody><tfoot></tfoot></table>
+    </div>
+  </div>
+
+  <div class="panel" id="p-rubr">
+    <div class="filters">
+      <select id="rEmpregado"><option value="">Todos os funcionários</option></select>
+      <select id="rClasse"><option value="">Todas as classes</option></select>
+      <label class="switch"><input type="checkbox" id="rSoConta"> Apenas rubricas contabilizadas no custo</label>
+      <span class="muted" id="rubrCount" style="font-size:12px"></span>
+    </div>
+    <div class="tblwrap">
+      <table class="data" id="tblRubr"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="empty" id="empty">
+    <h3 style="color:#b8bec4;font-family:Rufina">Nenhum dado carregado</h3>
+    <p>Importe uma planilha de custo para começar.</p>
+  </div>
+
+</div>
+
+<!-- Modal detalhe funcionário -->
+<div class="overlay" id="ov-emp">
+  <div class="modal">
+    <div class="modal-h"><h3 id="empTitle">Detalhe</h3><button class="x" onclick="closeOv('ov-emp')">×</button></div>
+    <div class="modal-b" id="empBody"></div>
+  </div>
+</div>
+
+<!-- Modal email -->
+<div class="overlay" id="ov-email">
+  <div class="modal">
+    <div class="modal-h"><h3>Resumo para e-mail</h3><button class="x" onclick="closeOv('ov-email')">×</button></div>
+    <div class="modal-b">
+      <p class="note">Clique em <strong>Copiar</strong> e cole (Ctrl+V) diretamente no corpo do e-mail (Outlook). A formatação da tabela é preservada.</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-primary" id="btnCopyRich">Copiar (tabela formatada)</button>
+        <button class="btn btn-sec" id="btnCopyText">Copiar (texto simples)</button>
+      </div>
+      <div class="emailbox"><div class="email-preview" id="emailPreview"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">Anderson Souza</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Visualizador de Custo de Funcionários — Sonova
+   Single-file | SheetJS(xlsx-js-style) | Chart.js | localStorage
+   ============================================================ */
+const LS_KEY = 'custoFuncSonova_v1';
+const MONTHS = {JAN:1,FEV:2,MAR:3,ABR:4,MAI:5,JUN:6,JUL:7,AGO:8,SET:9,OUT:10,NOV:11,DEZ:12};
+const CLASSES = ['PGTO','ENCAR','PROV','DESC','BASE','OUTRO']; // classificação bruta da planilha
+// Categorias de custo apresentadas
+const CATS = ['Salário','Encargos','Benefícios','Provisões','PLR'];
+const CAT_COLOR = {'Salário':'#0083CA','Encargos':'#005A64','Benefícios':'#6EB4DC','Provisões':'#003C64','PLR':'#7D0041'};
+const TOTAL_COLOR = '#8C321E';
+const PLR_RE = /\bplr\b|\bppr\b|participa[çc][aã]o\s+nos\s+lucros|lucros?\s+e\s+resultados|remunera[çc][aã]o\s+vari[áa]vel|pr[êe]mio|b[ôo]nus|gratifica[çc]/i;
+const BENEF_RE = /custo empresa/i;
+
+// Estado
+let STATE = {
+  employees: [],        // [{key, info:{}, rubricas:[{codigo,desc,clas,filtro,conta,months:{lbl:val}, total}], }]
+  monthLabels: [],      // ['DEZ/25', ...] em ordem cronológica
+  config: { filtroIn:true, stock:true, month:'' },
+  sourceName: ''
+};
+let sort = { key:'nome', dir:1 };
+let charts = {};
+
+/* ---------- util ---------- */
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2600);}
+function brl(v){return (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function num(v){return (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function isStockDesc(d){return /(saldo|acu?m|anterior|atual)/i.test(d||'');}
+function monthKey(lbl){const m=lbl.match(/([A-ZÇ]{3})\/(\d{2})/i);if(!m)return 0;const mm=MONTHS[m[1].toUpperCase()]||0;return parseInt(m[2])*100+mm;}
+function normHead(h){return (h==null?'':String(h)).trim();}
+
+/* ---------- leitura de planilha ---------- */
+function parseWorkbook(wb){
+  const employees = {};
+  let monthLabelsSet = {};
+  wb.SheetNames.forEach(sn=>{
+    const ws = wb.Sheets[sn];
+    const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+    if(!rows.length) return;
+    // achar linha de cabeçalho: contém 'Nome' e 'Descrição' e alguma coluna '- Valor'
+    let hIdx=-1;
+    for(let i=0;i<Math.min(rows.length,15);i++){
+      const r=rows[i].map(normHead);
+      const has = r.some(c=>/^nome$/i.test(c)) && r.some(c=>/descri/i.test(c)) && r.some(c=>/-\s*Valor$/i.test(c));
+      if(has){hIdx=i;break;}
+    }
+    if(hIdx<0) return; // aba não transacional
+    const head = rows[hIdx].map(normHead);
+    // mapa de índices canônicos
+    const idx = {};
+    const find = re => head.findIndex(h=>re.test(h));
+    idx.empresa   = find(/^empresa$/i);
+    idx.matricula = find(/^matr[ií]cula$/i);
+    idx.nome      = find(/^nome$/i);
+    idx.cpf       = find(/^cpf(txt)?$/i);
+    idx.admissao  = find(/admiss/i);
+    idx.rescisao  = find(/rescis/i);
+    idx.estab     = find(/estabelec/i);
+    idx.cr        = find(/^c\.?r\.?$/i);
+    idx.codigo    = find(/^c[óo]digo$/i);
+    idx.desc      = find(/descri/i);
+    idx.clasG     = head.findIndex(h=>/^clas\.-$/i.test(h)); // grupo PGTO/DESC...
+    if(idx.clasG<0) idx.clasG = head.findIndex(h=>/^clas\.?$/i.test(h) && !/^clas\.-$/i.test(h));
+    idx.filtro    = find(/^filtro$/i);
+    idx.conta     = find(/^conta$/i);
+    idx.salario   = find(/^sal[áa]rio$/i);
+    idx.funcao    = find(/^fun[çc][ãa]o$/i);
+    idx.situacao  = find(/^situa[çc][ãa]o$/i);
+    idx.id        = find(/^id\s*sonova$/i);
+    // colunas de meses (Valor)
+    const monthCols = [];
+    head.forEach((h,i)=>{const m=h.match(/^([A-ZÇ]{3}\/\d{2})\s*-\s*Valor$/i);if(m){const lbl=m[1].toUpperCase();monthCols.push({i,lbl});monthLabelsSet[lbl]=true;}});
+    if(!monthCols.length) return;
+
+    for(let r=hIdx+1;r<rows.length;r++){
+      const row=rows[r]; if(!row) continue;
+      const nome = idx.nome>=0? normHead(row[idx.nome]) : '';
+      const desc = idx.desc>=0? normHead(row[idx.desc]) : '';
+      if(!nome && !desc) continue;
+      const cpf = idx.cpf>=0? normHead(row[idx.cpf]) : '';
+      const matricula = idx.matricula>=0? normHead(row[idx.matricula]) : '';
+      const key = (matricula||'') + '|' + (cpf||'') + '|' + nome;
+      let clasG = idx.clasG>=0? normHead(row[idx.clasG]) : '';
+      clasG = clasG.replace(/^\d+\s*-\s*/,'').toUpperCase(); // "3-OUTRO" -> "OUTRO"
+      const filtro = idx.filtro>=0? (normHead(row[idx.filtro]).toLowerCase()||'in') : 'in';
+      const months = {};
+      monthCols.forEach(mc=>{ const v=parseFloat(row[mc.i]); months[mc.lbl]= isNaN(v)?0:v; });
+      const total = Object.values(months).reduce((a,b)=>a+b,0);
+      const rub = {
+        codigo: idx.codigo>=0? normHead(row[idx.codigo]) : '',
+        desc, clas: clasG, filtro,
+        conta: idx.conta>=0? normHead(row[idx.conta]) : '',
+        months, total
+      };
+      if(!employees[key]){
+        employees[key] = {
+          key,
+          info:{
+            nome, matricula, cpf,
+            empresa: idx.empresa>=0? normHead(row[idx.empresa]) : '',
+            estab:   idx.estab>=0? normHead(row[idx.estab]) : '',
+            funcao:  idx.funcao>=0? normHead(row[idx.funcao]) : '',
+            situacao:idx.situacao>=0? normHead(row[idx.situacao]) : '',
+            salario: idx.salario>=0? (parseFloat(row[idx.salario])||0) : 0,
+            admissao:idx.admissao>=0? excelDate(row[idx.admissao]) : '',
+            rescisao:idx.rescisao>=0? excelDate(row[idx.rescisao]) : '',
+            id:      idx.id>=0? normHead(row[idx.id]) : ''
+          },
+          rubricas:[]
+        };
+      }
+      employees[key].rubricas.push(rub);
+    }
+  });
+  const monthLabels = Object.keys(monthLabelsSet).sort((a,b)=>monthKey(a)-monthKey(b));
+  return { employees: Object.values(employees), monthLabels };
+}
+function excelDate(v){
+  if(v==null||v==='') return '';
+  if(typeof v==='number'){ // serial excel
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    if(!isNaN(d)) return d.toLocaleDateString('pt-BR',{timeZone:'UTC'});
+  }
+  const s=String(v).trim(); return s;
+}
+
+/* ---------- categorização e cálculo de custo ---------- */
+// Retorna a categoria de custo da rubrica (ou null se não entra no custo de folha)
+function categorize(rub){
+  const c = STATE.config;
+  if(c.filtroIn && rub.filtro!=='in') return null;
+  if(c.stock && isStockDesc(rub.desc)) return null;
+  const d = rub.desc||'', cl = rub.clas;
+  if(PLR_RE.test(d)) return 'PLR';
+  if(cl==='ENCAR') return 'Encargos';
+  if(cl==='PROV') return 'Provisões';
+  if(BENEF_RE.test(d)) return 'Benefícios';
+  if(cl==='PGTO') return 'Salário';
+  return null; // DESC (descontos do empregado), BASE e OUTRO informativos não entram
+}
+/* ---------- mês ativo / média ---------- */
+function activeMonths(){return STATE.config.month?[STATE.config.month]:STATE.monthLabels;}
+function isPeriod(){return !STATE.config.month;}
+function avgDen(){ // denominador da média: meses (ativos) com valor
+  const am=activeMonths();const cmt=catMonthlyTotals();
+  const md=am.filter(l=>CATS.some(c=>cmt[c][l]!==0));
+  return md.length||am.length||1;
+}
+function empMonthly(emp){ // {lbl: custo de folha total do mês} (sempre todos os meses)
+  const out={}; STATE.monthLabels.forEach(l=>out[l]=0);
+  emp.rubricas.forEach(rub=>{ if(categorize(rub)){ STATE.monthLabels.forEach(l=>{ out[l]+=(rub.months[l]||0); }); } });
+  return out;
+}
+function empTotal(emp){ const m=empMonthly(emp); return activeMonths().reduce((a,l)=>a+m[l],0); }
+// {cat:{lbl:val}} de um funcionário (sempre todos os meses)
+function empCatMonthly(emp){
+  const out={}; CATS.forEach(c=>{out[c]={};STATE.monthLabels.forEach(l=>out[c][l]=0);});
+  emp.rubricas.forEach(rub=>{const cat=categorize(rub);if(cat)STATE.monthLabels.forEach(l=>out[cat][l]+=(rub.months[l]||0));});
+  return out;
+}
+// total por categoria respeitando o mês ativo
+function empCatTotal(emp){ const m=empCatMonthly(emp); const o={}; CATS.forEach(c=>o[c]=activeMonths().reduce((a,l)=>a+m[c][l],0)); return o; }
+// {cat:{lbl:val}} agregado (sempre todos os meses, para séries temporais)
+function catMonthlyTotals(list){
+  list=list||STATE.employees;
+  const out={}; CATS.forEach(c=>{out[c]={};STATE.monthLabels.forEach(l=>out[c][l]=0);});
+  list.forEach(emp=>emp.rubricas.forEach(rub=>{const cat=categorize(rub);if(cat)STATE.monthLabels.forEach(l=>out[cat][l]+=(rub.months[l]||0));}));
+  return out;
+}
+
+/* ---------- render ---------- */
+function renderAll(){
+  const has = STATE.employees.length>0;
+  document.getElementById('dropzone').style.display = has?'none':'block';
+  document.getElementById('config').classList.toggle('on',has);
+  document.getElementById('kpis').classList.toggle('on',has);
+  document.getElementById('tabs').classList.toggle('on',has);
+  document.getElementById('empty').classList.toggle('on',!has);
+  ['btnEmail','btnCsv','btnXlsx','btnBackup','btnClear'].forEach(id=>document.getElementById(id).style.display=has?'inline-flex':'none');
+  document.querySelectorAll('.panel').forEach(p=>p.style.display = has?'':'none');
+  if(!has){document.getElementById('periodoTop').textContent='';return;}
+  if(STATE.config.month && !STATE.monthLabels.includes(STATE.config.month)) STATE.config.month='';
+  const p0=STATE.monthLabels[0], p1=STATE.monthLabels[STATE.monthLabels.length-1];
+  const esc = isPeriod()? ('Período: '+p0+' a '+p1) : ('Mês: '+STATE.config.month);
+  document.getElementById('periodoTop').textContent = esc+(STATE.sourceName?('  •  '+STATE.sourceName):'');
+  renderConfig();
+  renderKPIs();
+  renderConsol();
+  renderCharts();
+  renderCatTable();
+  renderRubr();
+  fillSelectors();
+}
+function renderConfig(){
+  const box=document.getElementById('classChips'); box.innerHTML='';
+  CATS.forEach(cat=>{
+    const el=document.createElement('span'); el.className='chip on'; el.style.cursor='default';
+    el.innerHTML=`<span style="width:10px;height:10px;border-radius:50%;background:${CAT_COLOR[cat]};display:inline-block"></span> ${cat}`;
+    box.appendChild(el);
+  });
+  document.getElementById('chkFiltroIn').checked=STATE.config.filtroIn;
+  document.getElementById('chkStock').checked=STATE.config.stock;
+}
+function renderKPIs(){
+  const box=document.getElementById('kpis'); box.innerHTML='';
+  const n=STATE.employees.length;
+  const cmt=catMonthlyTotals();
+  const am=activeMonths(); const den=avgDen(); const period=isPeriod();
+  const catTot={}; let totalPeriodo=0;
+  CATS.forEach(c=>{catTot[c]=am.reduce((a,l)=>a+cmt[c][l],0);totalPeriodo+=catTot[c];});
+  const media=c=>catTot[c]/den;
+  const sub=c=>pct(catTot[c],totalPeriodo)+(period?' • média/mês '+brl(media(c)):'');
+  const escopo=period?'período':STATE.config.month;
+  const cards=[
+    {c:'',  v:brl(totalPeriodo), l:'Custos de folha ('+escopo+')', s:period?('média/mês '+brl(totalPeriodo/den)+' • '+am[0]+' a '+am[am.length-1]):('mês '+STATE.config.month)},
+    {c:'',  v:brl(catTot['Salário']),    l:'Salário', s:sub('Salário')},
+    {c:'k2',v:brl(catTot['Encargos']),   l:'Encargos', s:sub('Encargos')},
+    {c:'k3',v:brl(catTot['Benefícios']), l:'Benefícios', s:sub('Benefícios')},
+    {c:'k4',v:brl(catTot['Provisões']),  l:'Provisões', s:sub('Provisões')},
+    {c:'k5',v:brl(catTot['PLR']),        l:'PLR', s:sub('PLR')},
+    {c:'k3',v:String(n),                 l:'Funcionários', s:new Set(STATE.employees.map(e=>e.info.empresa)).size+' empresa(s)'}
+  ];
+  cards.forEach(cd=>{const d=document.createElement('div');d.className='kpi '+cd.c;d.innerHTML=`<div class="v">${cd.v}</div><div class="l">${cd.l}</div><div class="s">${cd.s}</div>`;box.appendChild(d);});
+}
+function pct(v,t){return t?(v/t*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'% do total':'—';}
+
+function filteredEmployees(){
+  const q=(document.getElementById('fBusca').value||'').toLowerCase().trim();
+  const emp=document.getElementById('fEmpresa').value;
+  const est=document.getElementById('fEstab').value;
+  return STATE.employees.filter(e=>{
+    if(emp && e.info.empresa!==emp) return false;
+    if(est && e.info.estab!==est) return false;
+    if(q){const hay=(e.info.nome+' '+e.info.matricula+' '+e.info.funcao+' '+e.info.cpf).toLowerCase();if(!hay.includes(q))return false;}
+    return true;
+  });
+}
+let consolView = 'cat'; // 'cat' | 'month'
+function renderConsol(){
+  const t=document.getElementById('tblConsol');
+  const thead=t.querySelector('thead'), tbody=t.querySelector('tbody'), tfoot=t.querySelector('tfoot');
+  const arrow=k=> sort.key===k?`<span class="arrow">${sort.dir>0?'▲':'▼'}</span>`:'';
+  const base=[{k:'nome',l:'Funcionário'},{k:'funcao',l:'Função'},{k:'empresa',l:'Empresa'}];
+  let list=filteredEmployees();
+
+  if(consolView==='cat'){
+    const period=isPeriod(); const den=avgDen();
+    let th='<tr>'+base.map(c=>`<th data-k="${c.k}">${c.l}${arrow(c.k)}</th>`).join('');
+    CATS.forEach(c=>th+=`<th class="num" data-k="cat:${c}">${c}${arrow('cat:'+c)}</th>`);
+    th+=`<th class="num" data-k="total">Custos de folha${arrow('total')}</th>`;
+    if(period) th+=`<th class="num" data-k="media">Média/mês${arrow('media')}</th>`;
+    th+='</tr>';thead.innerHTML=th;
+    let rows=list.map(e=>{const ct=empCatTotal(e);const tot=CATS.reduce((a,c)=>a+ct[c],0);return {e,ct,tot,media:tot/den};});
+    rows.sort((a,b)=>cmp(a,b));
+    tbody.innerHTML=rows.map(({e,ct,tot,media})=>{
+      let tds=`<td>${e.info.nome}</td><td>${e.info.funcao||'—'}</td><td>${e.info.empresa||'—'}</td>`;
+      CATS.forEach(c=>tds+=`<td class="num ${ct[c]?'':'muted'}">${ct[c]?num(ct[c]):'—'}</td>`);
+      tds+=`<td class="num" style="font-weight:500;color:#003C64">${num(tot)}</td>`;
+      if(period) tds+=`<td class="num" style="color:#005A64">${num(media)}</td>`;
+      return `<tr data-key="${e.key.replace(/"/g,'&quot;')}">${tds}</tr>`;
+    }).join('');
+    const totC={};CATS.forEach(c=>totC[c]=0);let grand=0;
+    rows.forEach(({ct,tot})=>{CATS.forEach(c=>totC[c]+=ct[c]);grand+=tot;});
+    let ft=`<tr><td colspan="3">TOTAL (${rows.length})</td>`;
+    CATS.forEach(c=>ft+=`<td class="num">${num(totC[c])}</td>`);
+    ft+=`<td class="num">${num(grand)}</td>`;
+    if(period) ft+=`<td class="num">${num(grand/den)}</td>`;
+    ft+='</tr>';tfoot.innerHTML=ft;
+    document.getElementById('consolCount').textContent=rows.length+' funcionário(s)'+(period?'':' • mês '+STATE.config.month);
+  } else {
+    let th='<tr>'+base.map(c=>`<th data-k="${c.k}">${c.l}${arrow(c.k)}</th>`).join('');
+    STATE.monthLabels.forEach(l=>th+=`<th class="num" data-k="m:${l}">${l}${arrow('m:'+l)}</th>`);
+    th+=`<th class="num" data-k="total">Total${arrow('total')}</th></tr>`;thead.innerHTML=th;
+    let rows=list.map(e=>{const m=empMonthly(e);const tot=Object.values(m).reduce((a,b)=>a+b,0);return {e,m,tot};});
+    rows.sort((a,b)=>cmp(a,b));
+    tbody.innerHTML=rows.map(({e,m,tot})=>{
+      let tds=`<td>${e.info.nome}</td><td>${e.info.funcao||'—'}</td><td>${e.info.empresa||'—'}</td>`;
+      STATE.monthLabels.forEach(l=>tds+=`<td class="num ${m[l]?'':'muted'}">${m[l]?num(m[l]):'—'}</td>`);
+      tds+=`<td class="num" style="font-weight:500;color:#003C64">${num(tot)}</td>`;
+      return `<tr data-key="${e.key.replace(/"/g,'&quot;')}">${tds}</tr>`;
+    }).join('');
+    const totM={};STATE.monthLabels.forEach(l=>totM[l]=0);let grand=0;
+    rows.forEach(({m,tot})=>{STATE.monthLabels.forEach(l=>totM[l]+=m[l]);grand+=tot;});
+    let ft=`<tr><td colspan="3">TOTAL (${rows.length})</td>`;
+    STATE.monthLabels.forEach(l=>ft+=`<td class="num">${num(totM[l])}</td>`);
+    ft+=`<td class="num">${num(grand)}</td></tr>`;tfoot.innerHTML=ft;
+    document.getElementById('consolCount').textContent=rows.length+' funcionário(s)';
+  }
+  thead.querySelectorAll('th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(sort.key===k)sort.dir*=-1;else{sort.key=k;sort.dir= k==='nome'?1:-1;}renderConsol();});
+  tbody.querySelectorAll('tr').forEach(tr=>tr.ondblclick=()=>openEmp(tr.dataset.key));
+}
+function cmp(a,b){
+  let av,bv;
+  if(sort.key==='total'||sort.key==='media'){av=a.tot;bv=b.tot;}
+  else if(sort.key.startsWith('m:')){const l=sort.key.slice(2);av=a.m[l];bv=b.m[l];}
+  else if(sort.key.startsWith('cat:')){const c=sort.key.slice(4);av=a.ct[c];bv=b.ct[c];}
+  else {av=a.e.info[sort.key]||'';bv=b.e.info[sort.key]||'';}
+  if(typeof av==='string')return av.localeCompare(bv,'pt-BR')*sort.dir;
+  return (av-bv)*sort.dir;
+}
+function renderCatTable(){
+  const t=document.getElementById('tblCat');if(!t)return;
+  const thead=t.querySelector('thead'),tbody=t.querySelector('tbody'),tfoot=t.querySelector('tfoot');
+  const cmt=catMonthlyTotals(); const den=avgDen(); const period=isPeriod();
+  const escopo=period?'Total período':('Total '+STATE.config.month);
+  let th='<tr><th>Categoria</th>';STATE.monthLabels.forEach(l=>th+=`<th class="num"${l===STATE.config.month?' style="background:#01426f"':''}>${l}</th>`);th+=`<th class="num">${escopo}</th><th class="num">Média/mês</th></tr>`;thead.innerHTML=th;
+  const totM={};STATE.monthLabels.forEach(l=>totM[l]=0);let grand=0;const am=activeMonths();
+  tbody.innerHTML=CATS.map(c=>{
+    const per=am.reduce((a,l)=>a+cmt[c][l],0);
+    let tds=`<td><span class="badge" style="background:${CAT_COLOR[c]}22;color:${CAT_COLOR[c]}">${c}</span></td>`;
+    STATE.monthLabels.forEach(l=>{totM[l]+=cmt[c][l];tds+=`<td class="num ${cmt[c][l]?'':'muted'}"${l===STATE.config.month?' style="background:#eaf4fb"':''}>${cmt[c][l]?num(cmt[c][l]):'—'}</td>`;});
+    grand+=per;tds+=`<td class="num" style="font-weight:500">${num(per)}</td><td class="num" style="color:#005A64">${num(per/den)}</td>`;
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  let ft='<tr><td>CUSTOS DE FOLHA</td>';STATE.monthLabels.forEach(l=>ft+=`<td class="num">${num(totM[l])}</td>`);ft+=`<td class="num">${num(grand)}</td><td class="num">${num(grand/den)}</td></tr>`;tfoot.innerHTML=ft;
+}
+
+function fmtLbl(v){return v?('R$ '+Math.round(v).toLocaleString('pt-BR')):'';}
+function renderCharts(){
+  Object.values(charts).forEach(c=>c&&c.destroy()); charts={};
+  const cmt=catMonthlyTotals();
+  const totalByMonth = STATE.monthLabels.map(l=>CATS.reduce((a,c)=>a+cmt[c][l],0));
+
+  // Evolução: linha total (com rótulos) + linhas por categoria + média
+  const dsCats = CATS.filter(c=>STATE.monthLabels.some(l=>cmt[c][l]!==0)).map(c=>({
+    label:c,data:STATE.monthLabels.map(l=>cmt[c][l]),borderColor:CAT_COLOR[c],backgroundColor:CAT_COLOR[c],
+    fill:false,tension:.25,borderWidth:2,pointRadius:3,_isTotal:false
+  }));
+  const dsTotal={label:'Custos de folha',data:totalByMonth,borderColor:TOTAL_COLOR,backgroundColor:'rgba(140,50,30,.08)',fill:true,tension:.25,borderWidth:3,pointRadius:4,pointBackgroundColor:TOTAL_COLOR,_isTotal:true};
+  const den=avgDen(); const mediaVal=activeMonths().reduce((a,l)=>a+totalByMonth[STATE.monthLabels.indexOf(l)],0)/den;
+  const dsMedia={label:'Média/mês',data:STATE.monthLabels.map(()=>mediaVal),borderColor:'#646464',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false,_isTotal:false};
+  charts.evol=new Chart(document.getElementById('chartEvol'),{
+    type:'line',
+    data:{labels:STATE.monthLabels,datasets:[dsTotal,...dsCats,dsMedia]},
+    plugins:[ChartDataLabels],
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},
+      plugins:{
+        legend:{labels:{font:{family:'Roboto'}}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+brl(c.raw)}},
+        datalabels:{display:ctx=>ctx.dataset._isTotal && ctx.dataset.data[ctx.dataIndex]>0,
+          align:'top',anchor:'end',color:TOTAL_COLOR,font:{family:'Roboto',size:10,weight:'500'},
+          formatter:v=>fmtLbl(v)}
+      },
+      scales:{y:{ticks:{callback:v=>'R$ '+num(v),font:{family:'Roboto'}}},x:{ticks:{font:{family:'Roboto'}}}}}
+  });
+
+  // Composição mensal empilhada por categoria (rótulos por segmento)
+  const shown=CATS.filter(c=>STATE.monthLabels.some(l=>cmt[c][l]!==0));
+  charts.compBar=new Chart(document.getElementById('chartCompBar'),{
+    type:'bar',
+    data:{labels:STATE.monthLabels,datasets:shown.map(c=>({label:c,data:STATE.monthLabels.map(l=>cmt[c][l]),backgroundColor:CAT_COLOR[c]}))},
+    plugins:[ChartDataLabels],
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        title:{display:true,text:'Composição mensal por categoria',font:{family:'Rufina',size:14},color:'#003C64'},
+        legend:{labels:{font:{family:'Roboto'}}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+brl(c.raw)}},
+        datalabels:{color:'#fff',font:{family:'Roboto',size:9,weight:'500'},
+          display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];if(!v)return false;const tot=ctx.chart.data.datasets.reduce((a,d)=>a+(d.data[ctx.dataIndex]||0),0);return tot>0 && v/tot>=0.08;},
+          formatter:v=>Math.round(v).toLocaleString('pt-BR')}
+      },
+      scales:{x:{stacked:true,ticks:{font:{family:'Roboto'}}},y:{stacked:true,ticks:{callback:v=>'R$ '+num(v),font:{family:'Roboto'}}}}}
+  });
+
+  // Doughnut categorias no escopo ativo (rótulos valor + %)
+  const am2=activeMonths();
+  const dough=CATS.map(c=>({c,v:am2.reduce((a,l)=>a+cmt[c][l],0)})).filter(x=>x.v!==0);
+  const doughTot=dough.reduce((a,x)=>a+x.v,0);
+  const doughTitle=isPeriod()?'Custos de folha por categoria (período)':('Custos de folha por categoria ('+STATE.config.month+')');
+  charts.compDough=new Chart(document.getElementById('chartCompDough'),{
+    type:'doughnut',
+    data:{labels:dough.map(x=>x.c),datasets:[{data:dough.map(x=>x.v),backgroundColor:dough.map(x=>CAT_COLOR[x.c]),borderColor:'#fff',borderWidth:2}]},
+    plugins:[ChartDataLabels],
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:16},
+      plugins:{
+        title:{display:true,text:doughTitle,font:{family:'Rufina',size:14},color:'#003C64'},
+        legend:{position:'bottom',labels:{font:{family:'Roboto'}}},
+        tooltip:{callbacks:{label:c=>c.label+': '+brl(c.raw)+' ('+(c.raw/doughTot*100).toFixed(1)+'%)'}},
+        datalabels:{color:'#fff',font:{family:'Roboto',size:10,weight:'500'},textAlign:'center',
+          display:ctx=>{const v=ctx.dataset.data[ctx.dataIndex];return v>0 && v/doughTot>=0.04;},
+          formatter:(v)=>fmtLbl(v)+'\n'+(v/doughTot*100).toFixed(0)+'%'}
+      }}
+  });
+}
+
+function fillSelectors(){
+  const emps=[...new Set(STATE.employees.map(e=>e.info.empresa).filter(Boolean))].sort();
+  const ests=[...new Set(STATE.employees.map(e=>e.info.estab).filter(Boolean))].sort();
+  fillSel('fEmpresa',emps,'Todas as empresas');
+  fillSel('fEstab',ests,'Todos os estabelecimentos');
+  fillSel('rEmpregado',STATE.employees.map(e=>({v:e.key,t:e.info.nome})),'Todos os funcionários');
+  fillSel('rClasse',CLASSES.map(c=>({v:c,t:c})),'Todas as classes (bruta)');
+  const mes=document.getElementById('fMes'); const cur=STATE.config.month||'';
+  mes.innerHTML='<option value="">Todos os meses (período)</option>'+STATE.monthLabels.map(l=>`<option value="${l}">${l}</option>`).join('');
+  mes.value=cur;
+}
+function fillSel(id,items,ph){
+  const s=document.getElementById(id);const cur=s.value;s.innerHTML=`<option value="">${ph}</option>`;
+  items.forEach(it=>{const o=document.createElement('option');if(typeof it==='string'){o.value=it;o.textContent=it;}else{o.value=it.v;o.textContent=it.t;}s.appendChild(o);});
+  if([...s.options].some(o=>o.value===cur))s.value=cur;
+}
+
+function renderRubr(){
+  const t=document.getElementById('tblRubr');
+  const empKey=document.getElementById('rEmpregado').value;
+  const cl=document.getElementById('rClasse').value;
+  const soConta=document.getElementById('rSoConta').checked;
+  const thead=t.querySelector('thead'),tbody=t.querySelector('tbody');
+  let th='<tr><th>Funcionário</th><th>Código</th><th>Descrição</th><th>Classe</th><th>Categoria</th><th>Filtro</th>';
+  STATE.monthLabels.forEach(l=>th+=`<th class="num">${l}</th>`);
+  th+='<th class="num">Total</th></tr>';thead.innerHTML=th;
+  let rows=[];
+  STATE.employees.forEach(e=>{
+    if(empKey && e.key!==empKey) return;
+    e.rubricas.forEach(rub=>{
+      if(cl && rub.clas!==cl) return;
+      const cat=categorize(rub);
+      if(soConta && !cat) return;
+      rows.push({e,rub,cat});
+    });
+  });
+  tbody.innerHTML=rows.map(({e,rub,cat})=>{
+    const catBadge = cat? `<span class="badge" style="background:${CAT_COLOR[cat]}22;color:${CAT_COLOR[cat]}">${cat}</span>` : '<span class="badge b-out">não entra</span>';
+    let tds=`<td>${e.info.nome}</td><td>${rub.codigo}</td><td>${rub.desc}</td><td><span class="badge" style="background:#eef1f4;color:#646464">${rub.clas||'—'}</span></td><td>${catBadge}</td><td><span class="badge ${rub.filtro==='in'?'b-in':'b-out'}">${rub.filtro}</span></td>`;
+    STATE.monthLabels.forEach(l=>tds+=`<td class="num ${rub.months[l]?'':'muted'}">${rub.months[l]?num(rub.months[l]):'—'}</td>`);
+    tds+=`<td class="num" style="font-weight:500">${num(rub.total)}</td>`;
+    return `<tr>${tds}</tr>`;
+  }).join('');
+  document.getElementById('rubrCount').textContent=rows.length+' rubrica(s)';
+}
+
+/* ---------- modal funcionário ---------- */
+function openEmp(key){
+  const e=STATE.employees.find(x=>x.key===key); if(!e)return;
+  document.getElementById('empTitle').textContent=e.info.nome;
+  const m=empMonthly(e); const tot=Object.values(m).reduce((a,b)=>a+b,0);
+  const inf=e.info;
+  let html=`<div class="info-grid">
+    <div class="it"><div class="k">Matrícula</div><div class="v">${inf.matricula||'—'}</div></div>
+    <div class="it"><div class="k">CPF</div><div class="v">${inf.cpf||'—'}</div></div>
+    <div class="it"><div class="k">Função</div><div class="v">${inf.funcao||'—'}</div></div>
+    <div class="it"><div class="k">Situação</div><div class="v">${inf.situacao||'—'}</div></div>
+    <div class="it"><div class="k">Empresa</div><div class="v">${inf.empresa||'—'}</div></div>
+    <div class="it"><div class="k">Estabelecimento</div><div class="v">${inf.estab||'—'}</div></div>
+    <div class="it"><div class="k">Salário base</div><div class="v">${brl(inf.salario)}</div></div>
+    <div class="it"><div class="k">Admissão</div><div class="v">${inf.admissao||'—'}</div></div>
+    <div class="it"><div class="k">Custo total período</div><div class="v" style="color:#0083CA">${brl(tot)}</div></div>
+  </div>`;
+  // custo por categoria/mês
+  const cmt=empCatMonthly(e);
+  const shown=CATS.filter(c=>STATE.monthLabels.some(l=>cmt[c][l]!==0));
+  html+=`<h4 style="color:#003C64;margin:6px 0 8px">Custos de folha por categoria/mês</h4><div class="tblwrap"><table class="data"><thead><tr><th>Categoria</th>`;
+  STATE.monthLabels.forEach(l=>html+=`<th class="num">${l}</th>`);
+  html+=`<th class="num">Total</th></tr></thead><tbody>`;
+  shown.forEach(c=>{let rt=0;html+=`<tr><td><span class="badge" style="background:${CAT_COLOR[c]}22;color:${CAT_COLOR[c]}">${c}</span></td>`;STATE.monthLabels.forEach(l=>{rt+=cmt[c][l];html+=`<td class="num ${cmt[c][l]?'':'muted'}">${cmt[c][l]?num(cmt[c][l]):'—'}</td>`;});html+=`<td class="num" style="font-weight:500">${num(rt)}</td></tr>`;});
+  html+=`</tbody><tfoot><tr><td>CUSTOS DE FOLHA</td>`;STATE.monthLabels.forEach(l=>html+=`<td class="num">${num(m[l])}</td>`);html+=`<td class="num">${num(tot)}</td></tr></tfoot></table></div>`;
+  document.getElementById('empBody').innerHTML=html;
+  document.getElementById('ov-emp').classList.add('on');
+}
+function closeOv(id){document.getElementById(id).classList.remove('on');}
+
+/* ---------- copiar para e-mail ---------- */
+function buildEmailHTML(){
+  const list=filteredEmployees().map(e=>{const ct=empCatTotal(e);const tot=CATS.reduce((a,c)=>a+ct[c],0);return {e,ct,tot};}).sort((a,b)=>b.tot-a.tot);
+  const totC={};CATS.forEach(c=>totC[c]=0);let grand=0;
+  list.forEach(({ct,tot})=>{CATS.forEach(c=>totC[c]+=ct[c]);grand+=tot;});
+  const period=isPeriod(); const den=avgDen();
+  const escopo=period?(STATE.monthLabels[0]+' a '+STATE.monthLabels[STATE.monthLabels.length-1]):('mês '+STATE.config.month);
+  const bd='1px solid #CCCCCC';
+  let h=`<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#333333">`;
+  h+=`<p style="margin:0 0 4px"><strong style="color:#003C64">Custos de Folha — Sonova</strong></p>`;
+  h+=`<p style="margin:0 0 10px;font-size:10pt;color:#646464">${escopo} • ${list.length} funcionário(s)${period?' • valores do período com média/mês':''}</p>`;
+  // Resumo por categoria
+  h+=`<table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:9pt;margin-bottom:12px"><thead><tr style="background:#003C64;color:#fff"><th style="border:${bd};padding:5px 8px;text-align:left">Categoria</th><th style="border:${bd};padding:5px 8px;text-align:right">${period?'Total período':'Total'}</th>${period?`<th style="border:${bd};padding:5px 8px;text-align:right">Média/mês</th>`:''}</tr></thead><tbody>`;
+  CATS.forEach(c=>{h+=`<tr><td style="border:${bd};padding:4px 8px">${c}</td><td style="border:${bd};padding:4px 8px;text-align:right">${num(totC[c])}</td>${period?`<td style="border:${bd};padding:4px 8px;text-align:right">${num(totC[c]/den)}</td>`:''}</tr>`;});
+  h+=`<tr style="background:#e7f1f8;font-weight:bold;color:#003C64"><td style="border:${bd};padding:5px 8px">CUSTOS DE FOLHA</td><td style="border:${bd};padding:5px 8px;text-align:right">${num(grand)}</td>${period?`<td style="border:${bd};padding:5px 8px;text-align:right">${num(grand/den)}</td>`:''}</tr></tbody></table>`;
+  // Por funcionário
+  h+=`<table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:9pt"><thead><tr style="background:#0083CA;color:#ffffff">`;
+  h+=`<th style="border:${bd};padding:5px 8px;text-align:left">Funcionário</th><th style="border:${bd};padding:5px 8px;text-align:left">Função</th>`;
+  CATS.forEach(c=>h+=`<th style="border:${bd};padding:5px 8px;text-align:right">${c}</th>`);
+  h+=`<th style="border:${bd};padding:5px 8px;text-align:right">Custos de folha</th>${period?`<th style="border:${bd};padding:5px 8px;text-align:right">Média/mês</th>`:''}</tr></thead><tbody>`;
+  list.forEach(({e,ct,tot},i)=>{
+    const bg=i%2?'#f4f6f8':'#ffffff';
+    h+=`<tr style="background:${bg}"><td style="border:${bd};padding:4px 8px">${e.info.nome}</td><td style="border:${bd};padding:4px 8px">${e.info.funcao||''}</td>`;
+    CATS.forEach(c=>h+=`<td style="border:${bd};padding:4px 8px;text-align:right">${ct[c]?num(ct[c]):'-'}</td>`);
+    h+=`<td style="border:${bd};padding:4px 8px;text-align:right;font-weight:bold;color:#003C64">${num(tot)}</td>${period?`<td style="border:${bd};padding:4px 8px;text-align:right;color:#005A64">${num(tot/den)}</td>`:''}</tr>`;
+  });
+  h+=`<tr style="background:#e7f1f8;font-weight:bold;color:#003C64"><td style="border:${bd};padding:5px 8px" colspan="2">TOTAL (${list.length})</td>`;
+  CATS.forEach(c=>h+=`<td style="border:${bd};padding:5px 8px;text-align:right">${num(totC[c])}</td>`);
+  h+=`<td style="border:${bd};padding:5px 8px;text-align:right">${num(grand)}</td>${period?`<td style="border:${bd};padding:5px 8px;text-align:right">${num(grand/den)}</td>`:''}</tr>`;
+  h+=`</tbody></table><p style="margin:10px 0 0;font-size:9pt;color:#646464">Anderson Souza</p></div>`;
+  return h;
+}
+function buildEmailText(){
+  const list=filteredEmployees().map(e=>{const ct=empCatTotal(e);const tot=CATS.reduce((a,c)=>a+ct[c],0);return {e,ct,tot};}).sort((a,b)=>b.tot-a.tot);
+  const totC={};CATS.forEach(c=>totC[c]=0);let grand=0;list.forEach(({ct,tot})=>{CATS.forEach(c=>totC[c]+=ct[c]);grand+=tot;});
+  const period=isPeriod(); const den=avgDen();
+  const escopo=period?(STATE.monthLabels[0]+' a '+STATE.monthLabels[STATE.monthLabels.length-1]):('mês '+STATE.config.month);
+  let t=`Custos de Folha — Sonova\n${escopo} | ${list.length} funcionário(s)\n\n`;
+  t+=`Resumo por categoria:\n`;
+  CATS.forEach(c=>t+=`  ${c}: ${brl(totC[c])}${period?'  (média/mês '+brl(totC[c]/den)+')':''}\n`);
+  t+=`  Custos de folha: ${brl(grand)}${period?'  (média/mês '+brl(grand/den)+')':''}\n\nPor funcionário:\n`;
+  list.forEach(({e,tot})=>{t+=`  ${e.info.nome} (${e.info.funcao||'-'}): ${brl(tot)}${period?'  (média/mês '+brl(tot/den)+')':''}\n`;});
+  t+=`\nAnderson Souza`;
+  return t;
+}
+function openEmail(){
+  document.getElementById('emailPreview').innerHTML=buildEmailHTML();
+  document.getElementById('ov-email').classList.add('on');
+}
+async function copyRich(){
+  const html=buildEmailHTML(); const text=buildEmailText();
+  try{
+    await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);
+    toast('Tabela copiada. Cole no e-mail com Ctrl+V.');
+  }catch(err){
+    // fallback: seleciona o preview
+    const range=document.createRange();range.selectNodeContents(document.getElementById('emailPreview'));
+    const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+    try{document.execCommand('copy');toast('Tabela copiada (modo alternativo).');}catch(e){toast('Não foi possível copiar automaticamente. Selecione e copie manualmente.');}
+    sel.removeAllRanges();
+  }
+}
+async function copyText(){
+  try{await navigator.clipboard.writeText(buildEmailText());toast('Texto copiado.');}
+  catch(e){toast('Falha ao copiar texto.');}
+}
+
+/* ---------- exports ---------- */
+function exportCSV(){
+  const period=isPeriod(); const den=avgDen();
+  const list=filteredEmployees().map(e=>{const ct=empCatTotal(e);const tot=CATS.reduce((a,c)=>a+ct[c],0);return {e,ct,tot};}).sort((a,b)=>b.tot-a.tot);
+  const head=['Funcionario','Matricula','Funcao','Empresa','Estabelecimento',...CATS,'Custos de folha',...(period?['Media/mes']:[])];
+  const lines=[head.join(';')];
+  list.forEach(({e,ct,tot})=>{
+    const row=[e.info.nome,e.info.matricula,e.info.funcao,e.info.empresa,e.info.estab,...CATS.map(c=>num(ct[c])),num(tot),...(period?[num(tot/den)]:[])];
+    lines.push(row.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(';'));
+  });
+  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  dl(blob,'Custo_Funcionarios_Sonova.csv');
+}
+function styleSheet(ws,head,nRows){
+  const nCols=head.length;const baseFont={name:'Calibri Light',sz:8};
+  for(let r=0;r<nRows;r++)for(let c=0;c<nCols;c++){
+    const ref=XLSX.utils.encode_cell({r,c});const cell=ws[ref];if(!cell)continue;
+    const isHead=r===0,isFoot=r===nRows-1,isNum=c>=5;
+    cell.s={font:{...baseFont,color:{rgb:isHead?'FFFFFF':(isFoot?'003C64':'333333')},bold:isHead||isFoot},
+      fill:isHead?{fgColor:{rgb:'0083CA'}}:(isFoot?{fgColor:{rgb:'E7F1F8'}}:{}),
+      alignment:{horizontal:isNum?'right':'left',vertical:'center'},
+      border:{top:{style:'thin',color:{rgb:'CCCCCC'}},bottom:{style:'thin',color:{rgb:'CCCCCC'}},left:{style:'thin',color:{rgb:'CCCCCC'}},right:{style:'thin',color:{rgb:'CCCCCC'}}}};
+    if(isNum&&!isHead)cell.z='#,##0.00';
+  }
+  ws['!cols']=head.map((h,i)=>({wch:i===0?28:(i<5?16:13)}));
+}
+function exportXLSX(){
+  const list=filteredEmployees().map(e=>{const ct=empCatTotal(e);const m=empMonthly(e);const tot=CATS.reduce((a,c)=>a+ct[c],0);return {e,ct,m,tot};}).sort((a,b)=>b.tot-a.tot);
+  const wb=XLSX.utils.book_new();
+  // Aba 1: por categoria
+  const period=isPeriod(); const den=avgDen();
+  const head1=['Funcionário','Matrícula','Função','Empresa','Estabelecimento',...CATS,'Custos de folha',...(period?['Média/mês']:[])];
+  const aoa1=[head1];
+  list.forEach(({e,ct,tot})=>aoa1.push([e.info.nome,e.info.matricula,e.info.funcao,e.info.empresa,e.info.estab,...CATS.map(c=>round2(ct[c])),round2(tot),...(period?[round2(tot/den)]:[])]));
+  const totC={};CATS.forEach(c=>totC[c]=0);let g1=0;list.forEach(({ct,tot})=>{CATS.forEach(c=>totC[c]+=ct[c]);g1+=tot;});
+  aoa1.push(['CUSTOS DE FOLHA','','','','',...CATS.map(c=>round2(totC[c])),round2(g1),...(period?[round2(g1/den)]:[])]);
+  const ws1=XLSX.utils.aoa_to_sheet(aoa1);styleSheet(ws1,head1,aoa1.length);
+  XLSX.utils.book_append_sheet(wb,ws1,'Por categoria');
+  // Aba 2: mensal
+  const head2=['Funcionário','Matrícula','Função','Empresa','Estabelecimento',...STATE.monthLabels,'Total'];
+  const aoa2=[head2];
+  list.forEach(({e,m,tot})=>aoa2.push([e.info.nome,e.info.matricula,e.info.funcao,e.info.empresa,e.info.estab,...STATE.monthLabels.map(l=>round2(m[l])),round2(tot)]));
+  const totM={};STATE.monthLabels.forEach(l=>totM[l]=0);let g2=0;list.forEach(({m,tot})=>{STATE.monthLabels.forEach(l=>totM[l]+=m[l]);g2+=tot;});
+  aoa2.push(['TOTAL','','','','',...STATE.monthLabels.map(l=>round2(totM[l])),round2(g2)]);
+  const ws2=XLSX.utils.aoa_to_sheet(aoa2);styleSheet(ws2,head2,aoa2.length);
+  XLSX.utils.book_append_sheet(wb,ws2,'Mensal');
+  XLSX.writeFile(wb,'Custo_Funcionarios_Sonova.xlsx');
+}
+function round2(v){return Math.round((v||0)*100)/100;}
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);}
+
+/* ---------- backup / restore ---------- */
+function save(){
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify({v:1,employees:STATE.employees,monthLabels:STATE.monthLabels,config:STATE.config,sourceName:STATE.sourceName}));
+  }catch(err){
+    if(err && err.name==='QuotaExceededError'){
+      // degradação: remove horas (não usadas) — aqui só valores, então tenta salvar só meta+config
+      try{localStorage.setItem(LS_KEY,JSON.stringify({v:1,employees:STATE.employees,monthLabels:STATE.monthLabels,config:STATE.config,sourceName:STATE.sourceName,partial:true}));}
+      catch(e2){toast('Dados grandes: sessão mantida apenas em memória.');}
+    }
+  }
+}
+function load(){
+  try{const raw=localStorage.getItem(LS_KEY);if(!raw)return false;const d=JSON.parse(raw);
+    STATE.employees=d.employees||[];STATE.monthLabels=d.monthLabels||[];
+    STATE.config=Object.assign({filtroIn:true,stock:true,month:''},d.config||{});
+    STATE.sourceName=d.sourceName||'';return STATE.employees.length>0;
+  }catch(e){return false;}
+}
+function exportBackup(){
+  const blob=new Blob([JSON.stringify({v:1,employees:STATE.employees,monthLabels:STATE.monthLabels,config:STATE.config,sourceName:STATE.sourceName},null,2)],{type:'application/json'});
+  dl(blob,'Backup_Custo_Funcionarios_Sonova.json');
+}
+
+/* ---------- file handling ---------- */
+function handleFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array',cellDates:false});
+      const {employees,monthLabels}=parseWorkbook(wb);
+      if(!employees.length){toast('Não encontrei o layout esperado (Nome, Descrição e colunas "MMM/AA - Valor").');return;}
+      STATE.employees=employees;STATE.monthLabels=monthLabels;STATE.sourceName=file.name;
+      sort={key:'total',dir:-1};
+      save();renderAll();
+      toast(employees.length+' funcionário(s) e '+monthLabels.length+' meses carregados.');
+    }catch(err){console.error(err);toast('Erro ao ler o arquivo: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ---------- init / eventos ---------- */
+(function initWave(){const w=document.getElementById('wave');[10,18,26,20,14,22,12].forEach(h=>{const s=document.createElement('span');s.style.height=h+'px';w.appendChild(s);});})();
+
+document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);e.target.value='';});
+document.getElementById('jsonInput').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);STATE.employees=d.employees||[];STATE.monthLabels=d.monthLabels||[];STATE.config=Object.assign({filtroIn:true,stock:true,month:''},d.config||{});STATE.sourceName=d.sourceName||f.name;sort={key:'total',dir:-1};save();renderAll();toast('Backup restaurado.');}catch(err){toast('JSON inválido.');}};r.readAsText(f);e.target.value='';});
+
+const dz=document.getElementById('dropzone');
+dz.addEventListener('click',()=>document.getElementById('fileInput').click());
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag');}));
+dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)handleFile(f);});
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>{if(!STATE.employees.length&&e.dataTransfer.files[0]){e.preventDefault();handleFile(e.dataTransfer.files[0]);}});
+
+document.getElementById('btnCsv').onclick=exportCSV;
+document.getElementById('btnXlsx').onclick=exportXLSX;
+document.getElementById('btnEmail').onclick=openEmail;
+document.getElementById('btnBackup').onclick=exportBackup;
+document.getElementById('btnCopyRich').onclick=copyRich;
+document.getElementById('btnCopyText').onclick=copyText;
+document.getElementById('btnClear').onclick=()=>{if(confirm('Limpar todos os dados carregados?')){localStorage.removeItem(LS_KEY);STATE.employees=[];STATE.monthLabels=[];STATE.sourceName='';renderAll();toast('Dados limpos.');}};
+
+document.getElementById('chkFiltroIn').addEventListener('change',e=>{STATE.config.filtroIn=e.target.checked;save();renderAll();});
+document.getElementById('chkStock').addEventListener('change',e=>{STATE.config.stock=e.target.checked;save();renderAll();});
+document.getElementById('fMes').addEventListener('change',e=>{STATE.config.month=e.target.value;save();renderAll();});
+['fBusca','fEmpresa','fEstab'].forEach(id=>document.getElementById(id).addEventListener('input',renderConsol));
+document.getElementById('viewCat').onclick=()=>{consolView='cat';setView();sort={key:'total',dir:-1};renderConsol();};
+document.getElementById('viewMonth').onclick=()=>{consolView='month';setView();sort={key:'total',dir:-1};renderConsol();};
+function setView(){
+  const a=document.getElementById('viewCat'),b=document.getElementById('viewMonth');
+  const on={background:'var(--azul)',color:'#fff'},off={background:'#eef1f4',color:'var(--texto2)'};
+  Object.assign(a.style,consolView==='cat'?on:off);Object.assign(b.style,consolView==='month'?on:off);
+}
+['rEmpregado','rClasse','rSoConta'].forEach(id=>document.getElementById(id).addEventListener('input',renderRubr));
+
+document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('p-'+tab.dataset.tab).classList.add('active');
+  if(tab.dataset.tab==='evol'||tab.dataset.tab==='comp')renderCharts();
+});
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on');}));
+window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('on'));});
+
+// boot
+setView();
+if(load()){sort={key:'total',dir:-1};renderAll();} else renderAll();
+</script>
+</body>
+</html>
